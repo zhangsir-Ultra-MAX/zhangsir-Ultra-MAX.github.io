@@ -73,39 +73,39 @@
             {{ $t('error.helpfulLinks') }}
           </h3>
           <div class="links-grid">
-            <router-link to="/dashboard" class="help-link">
+            <router-link to="/" class="help-link">
               <el-icon>
                 <DataBoard />
               </el-icon>
-              <span>{{ $t('nav.dashboard') }}</span>
+              <span>{{ $t('navigation.dashboard') }}</span>
             </router-link>
             
             <router-link to="/savings" class="help-link">
               <el-icon>
                 <Wallet />
               </el-icon>
-              <span>{{ $t('nav.savings') }}</span>
+              <span>{{ $t('navigation.savings') }}</span>
             </router-link>
             
             <router-link to="/wrap" class="help-link">
               <el-icon>
-                <RefreshRight />
+                <Switch />
               </el-icon>
-              <span>{{ $t('nav.wrap') }}</span>
+              <span>{{ $t('navigation.wrap') }}</span>
             </router-link>
             
             <router-link to="/bonds" class="help-link">
               <el-icon>
                 <Document />
               </el-icon>
-              <span>{{ $t('nav.bonds') }}</span>
+              <span>{{ $t('navigation.bonds') }}</span>
             </router-link>
             
             <router-link to="/portfolio" class="help-link">
               <el-icon>
                 <TrendCharts />
               </el-icon>
-              <span>{{ $t('nav.portfolio') }}</span>
+              <span>{{ $t('navigation.portfolio') }}</span>
             </router-link>
           </div>
         </div>
@@ -151,7 +151,7 @@ import {
   ArrowLeft,
   DataBoard,
   Wallet,
-  RefreshRight,
+  Switch,
   Document,
   TrendCharts,
   Search
@@ -163,14 +163,14 @@ const router = useRouter()
 const searchQuery = ref('')
 
 const goHome = () => {
-  router.push('/dashboard')
+  router.push('/')
 }
 
 const goBack = () => {
   if (window.history.length > 1) {
     router.go(-1)
   } else {
-    router.push('/dashboard')
+    router.push('/')
   }
 }
 
@@ -192,7 +192,7 @@ const handleSearch = () => {
   } else if (query.includes('portfolio') || query.includes('holding') || query.includes('balance')) {
     router.push('/portfolio')
   } else if (query.includes('dashboard') || query.includes('overview') || query.includes('home')) {
-    router.push('/dashboard')
+    router.push('/')
   } else {
     ElMessage.info(t('error.noSearchResults'))
   }
@@ -319,7 +319,7 @@ const handleSearch = () => {
 }
 
 .help-link {
-  @apply flex flex-col items-center space-y-2 p-4 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200 text-decoration-none;
+  @apply flex flex-col items-center space-y-2 p-4 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200;
 }
 
 .help-link:hover {

@@ -382,12 +382,5 @@
     "helpfulLinks": "有用链接",
     "searchSuggestion": "尝试搜索您需要的内容：",
     "searchPlaceholder": "搜索..."
-  },
-  "nav": {
-    "dashboard": "仪表板",
-    "savings": "储蓄",
-    "wrap": "包装",
-    "bonds": "债券",
-    "portfolio": "投资组合"
   }
 }

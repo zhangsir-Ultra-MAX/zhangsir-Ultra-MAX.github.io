@@ -123,11 +123,11 @@ import {
   Moon,
   Sunny,
   Position,
-  House,
+  DataBoard,
   Wallet,
   Switch,
   TrendCharts,
-  User
+  Document
 } from '@element-plus/icons-vue'
 
 import WalletConnect from '@/components/common/WalletConnect.vue'
@@ -147,7 +147,7 @@ const navigationItems = [
   {
     name: 'dashboard',
     path: '/',
-    icon: House
+    icon: DataBoard
   },
   {
     name: 'savings',
@@ -162,12 +162,12 @@ const navigationItems = [
   {
     name: 'bonds',
     path: '/bonds',
-    icon: TrendCharts
+    icon: Document
   },
   {
     name: 'portfolio',
     path: '/portfolio',
-    icon: User
+    icon: TrendCharts
   }
 ]
 

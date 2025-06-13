@@ -382,12 +382,5 @@
     "helpfulLinks": "Helpful Links",
     "searchSuggestion": "Try searching for what you need:",
     "searchPlaceholder": "Search..."
-  },
-  "nav": {
-    "dashboard": "Dashboard",
-    "savings": "Savings",
-    "wrap": "Wrap",
-    "bonds": "Bonds",
-    "portfolio": "Portfolio"
   }
 }
