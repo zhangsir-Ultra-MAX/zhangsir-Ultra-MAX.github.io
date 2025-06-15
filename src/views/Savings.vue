@@ -450,8 +450,8 @@ const handleWithdraw = async () => {
   
   transactionModalTitle.value = t('savings.withdrawTransaction')
   showTransactionModal.value = true
-  currentTransactionStep.value = 0
-  transactionStatus.value = 'pending'
+  currentTransactionStep.value = 1
+  transactionStatus.value = 'loading'
   
   try {
     await savingsStore.withdraw(withdrawAmount.value)
