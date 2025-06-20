@@ -36,8 +36,8 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ['wrmb-dapp.dev.isecsp.cn'],
-    port: 3000,
-    open: true
+    host: '0.0.0.0',
+    port: 3100,
   },
   build: {
     target: 'esnext',
