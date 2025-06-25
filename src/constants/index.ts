@@ -75,10 +75,10 @@ export const TOKENS = {
     name: 'Wrapped RMB',
     decimals: 18,
     addresses: {
-      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_WRMB_ADDRESS_ETHEREUM || '',
-      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_WRMB_ADDRESS_GOERLI || '',
-      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_WRMB_ADDRESS_SEPOLIA || '',
-      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_WRMB_ADDRESS_LOCAL || ''
+      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_WRMB_ADDRESS || '',
+      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_WRMB_ADDRESS || '',
+      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_WRMB_ADDRESS || '',
+      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_WRMB_ADDRESS || ''
     }
   },
   sWRMB: {
@@ -86,10 +86,10 @@ export const TOKENS = {
     name: 'Staked WRMB',
     decimals: 18,
     addresses: {
-      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_SWRMB_ADDRESS_ETHEREUM || '',
-      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_SWRMB_ADDRESS_GOERLI || '',
-      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SWRMB_ADDRESS_SEPOLIA || '',
-      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_SWRMB_ADDRESS_LOCAL || ''
+      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_SAVINGS_VAULT_ADDRESS || '',
+      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_SAVINGS_VAULT_ADDRESS || '',
+      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_SAVINGS_VAULT_ADDRESS || '',
+      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_SAVINGS_VAULT_ADDRESS || ''
     }
   },
   sRMB: {
@@ -97,10 +97,10 @@ export const TOKENS = {
     name: 'Staked RMB',
     decimals: 18,
     addresses: {
-      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_SRMB_ADDRESS_ETHEREUM || '',
-      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_SRMB_ADDRESS_GOERLI || '',
-      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SRMB_ADDRESS_SEPOLIA || '',
-      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_SRMB_ADDRESS_LOCAL || ''
+      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_SRMB_ADDRESS || '',
+      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_SRMB_ADDRESS || '',
+      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_SRMB_ADDRESS || '',
+      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_SRMB_ADDRESS || ''
     }
   },
   USDT: {
@@ -108,33 +108,64 @@ export const TOKENS = {
     name: 'Tether USD',
     decimals: 6,
     addresses: {
-      [NETWORKS.ETHEREUM.chainId]: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_USDT_ADDRESS_GOERLI || '',
-      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_USDT_ADDRESS_SEPOLIA || '',
-      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_USDT_ADDRESS_LOCAL || ''
+      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_USDT_ADDRESS || '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_USDT_ADDRESS || '',
+      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_USDT_ADDRESS || '',
+      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_USDT_ADDRESS || ''
     }
   }
 } as const
 
 // Contract addresses
 export const CONTRACTS = {
+  WRMB_MINTER: {
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_WRMB_MINTER_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_WRMB_MINTER_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_WRMB_MINTER_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_WRMB_MINTER_ADDRESS || ''
+  },
   SAVINGS_VAULT: {
-    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_SAVINGS_VAULT_ADDRESS_ETHEREUM || '',
-    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_SAVINGS_VAULT_ADDRESS_GOERLI || '',
-    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SAVINGS_VAULT_ADDRESS_SEPOLIA || '',
-    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_SAVINGS_VAULT_ADDRESS_LOCAL || ''
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_SAVINGS_VAULT_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_SAVINGS_VAULT_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_SAVINGS_VAULT_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_SAVINGS_VAULT_ADDRESS || ''
   },
   WRAP_MANAGER: {
-    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_WRAP_MANAGER_ADDRESS_ETHEREUM || '',
-    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_WRAP_MANAGER_ADDRESS_GOERLI || '',
-    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_WRAP_MANAGER_ADDRESS_SEPOLIA || '',
-    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_WRAP_MANAGER_ADDRESS_LOCAL || ''
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_WRAP_MANAGER_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_WRAP_MANAGER_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_WRAP_MANAGER_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_WRAP_MANAGER_ADDRESS || ''
   },
+  ACTIVE_LIQUIDITY_AMO: {
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_ACTIVE_LIQUIDITY_AMO_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_ACTIVE_LIQUIDITY_AMO_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_ACTIVE_LIQUIDITY_AMO_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_ACTIVE_LIQUIDITY_AMO_ADDRESS || ''
+  },
+  WRMB_BOND_POOL: {
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_WRMB_BOND_POOL_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_WRMB_BOND_POOL_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_WRMB_BOND_POOL_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_WRMB_BOND_POOL_ADDRESS || ''
+  },
+  BOND_LIQUIDITY_AMO: {
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_BOND_LIQUIDITY_AMO_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_BOND_LIQUIDITY_AMO_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_BOND_LIQUIDITY_AMO_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_BOND_LIQUIDITY_AMO_ADDRESS || ''
+  },
+  ORACLE_STUB: {
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_ORACLE_STUB_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_ORACLE_STUB_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_ORACLE_STUB_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_ORACLE_STUB_ADDRESS || ''
+  },
+  // Legacy BOND_POOL for backward compatibility
   BOND_POOL: {
-    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_BOND_POOL_ADDRESS_ETHEREUM || '',
-    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_BOND_POOL_ADDRESS_GOERLI || '',
-    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_BOND_POOL_ADDRESS_SEPOLIA || '',
-    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_BOND_POOL_ADDRESS_LOCAL || ''
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_WRMB_BOND_POOL_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_WRMB_BOND_POOL_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_WRMB_BOND_POOL_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_WRMB_BOND_POOL_ADDRESS || ''
   }
 } as const
 

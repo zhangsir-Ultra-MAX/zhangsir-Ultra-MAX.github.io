@@ -12,30 +12,32 @@ export const useSavingsStore = defineStore('savings', () => {
   const wrmbBalance = ref('0') // WRMB balance
   const totalAssets = ref('0') // Total assets in vault
   const currentNAV = ref('1.0') // Current NAV
+  const currentPrice = ref('0.14') // Current WRMB price in USD
   const totalSupply = ref('0') // Total sWRMB supply
   const apy = ref('0') // Annual percentage yield
   const isLoading = ref(false)
   const lastUpdateTime = ref(0)
-  
+  const historicalNAV = ref<Array<{ timestamp: number, nav: number }>>([]) // Historical NAV data for APY calculation
+
   // Form state
   const depositAmount = ref('')
   const withdrawAmount = ref('')
   const isDepositing = ref(false)
   const isWithdrawing = ref(false)
-  
+
   // Getters
   const userBalanceFormatted = computed(() => {
     return new BigNumber(formatUnits(userBalance.value, 18)).toFixed(6)
   })
-  
+
   const wrmbBalanceFormatted = computed(() => {
     return new BigNumber(formatUnits(wrmbBalance.value, 18)).toFixed(6)
   })
-  
+
   const totalAssetsFormatted = computed(() => {
     return new BigNumber(totalAssets.value).toFixed(2)
   })
-  
+
   const userSharePercentage = computed(() => {
     if (totalSupply.value === '0' || userBalance.value === '0') return '0'
     return new BigNumber(userBalance.value)
@@ -43,24 +45,24 @@ export const useSavingsStore = defineStore('savings', () => {
       .multipliedBy(100)
       .toFixed(4)
   })
-  
+
   const userAssetValue = computed(() => {
     if (userBalance.value === '0' || currentNAV.value === '0') return '0'
     return new BigNumber(userBalance.value)
       .multipliedBy(currentNAV.value)
       .toFixed(6)
   })
-  
+
   // Actions
   const fetchVaultData = async () => {
     const walletStore = useWalletStore()
     const appStore = useAppStore()
-    
+
     if (!walletStore.isConnected) return
-    
+
     try {
       isLoading.value = true
-      
+
       const contract = await contractService.getSavingsVaultContract()
       if (!contract) throw new Error('Contract not available')
 
@@ -70,17 +72,35 @@ export const useSavingsStore = defineStore('savings', () => {
         contract.totalSupply(),
         contract.getNAV_sWRMB()
       ])
-      
+
       totalAssets.value = formatUnits(vaultTotalAssets.toString(), 18)
       totalSupply.value = formatUnits(vaultTotalSupply.toString(), 18)
-      currentNAV.value = formatUnits(nav, 18)
-      
+      const navValue = formatUnits(nav, 18)
+      currentNAV.value = navValue
+
+      // Record historical NAV for APY calculation
+      const now = Date.now()
+      historicalNAV.value.push({
+        timestamp: now,
+        nav: parseFloat(navValue)
+      })
+
+      // Keep only last 30 days of data
+      const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000)
+      historicalNAV.value = historicalNAV.value.filter(entry => entry.timestamp > thirtyDaysAgo)
+
+      // Fetch WRMB price (placeholder - in real implementation, this would come from an oracle or API)
+      await fetchWRMBPrice()
+
+      // Calculate APY based on historical data
+      await calculateAPY()
+
       // Fetch user balances if connected
       if (walletStore.address) {
         await fetchUserBalances()
       }
-      
-      lastUpdateTime.value = Date.now()
+
+      lastUpdateTime.value = now
     } catch (error: any) {
       console.error('Failed to fetch vault data:', error)
       appStore.addNotification({
@@ -92,41 +112,41 @@ export const useSavingsStore = defineStore('savings', () => {
       isLoading.value = false
     }
   }
-  
+
   const fetchUserBalances = async () => {
     const walletStore = useWalletStore()
     if (!walletStore.address) return
-    
+
     try {
       const [savingsContract, wrmbContract] = await Promise.all([
         contractService.getSavingsVaultContract(),
         contractService.getWRMBContract()
       ])
-      
+
       if (!savingsContract || !wrmbContract) return
-      
+
       const [sWRMBBalance, wrmbUserBalance] = await Promise.all([
         savingsContract.balanceOf(walletStore.address),
         wrmbContract.balanceOf(walletStore.address)
       ])
-      
+
       userBalance.value = formatUnits(sWRMBBalance, 18)
       wrmbBalance.value = formatUnits(wrmbUserBalance, 18)
     } catch (error) {
       console.error('Failed to fetch user balances:', error)
     }
   }
-  
+
   const previewDeposit = async (amount: string) => {
     if (!amount || amount === '0') return { shares: '0', fee: '0' }
-    
+
     try {
       const contract = await contractService.getSavingsVaultContract()
       if (!contract) throw new Error('Contract not available')
-      
+
       const amountWei = parseUnits(amount, 18)
       const shares = await contract.previewDeposit(amountWei)
-      
+
       return {
         shares: formatUnits(shares, 18),
         fee: '0' // No fee for deposits in this implementation
@@ -136,55 +156,55 @@ export const useSavingsStore = defineStore('savings', () => {
       return { shares: '0', fee: '0' }
     }
   }
-  
+
   const previewWithdraw = async (amount: string) => {
-    if (!amount || amount === '0') return { assets: '0', fee: '0' }
-    
+    if (!amount || amount === '0') return { shares: '0', fee: '0' }
+
     try {
       const contract = await contractService.getSavingsVaultContract()
       if (!contract) throw new Error('Contract not available')
-      
-      const sharesWei = parseUnits(amount, 18)
-      const assets = await contract.previewRedeem(sharesWei)
-      
+
+      const assetsWei = parseUnits(amount, 18)
+      const shares = await contract.previewWithdraw(assetsWei)
+
       return {
-        assets: formatUnits(assets, 18),
+        shares: formatUnits(shares, 18),
         fee: '0' // No fee for withdrawals in this implementation
       }
     } catch (error) {
       console.error('Failed to preview withdraw:', error)
-      return { assets: '0', fee: '0' }
+      return { shares: '0', fee: '0' }
     }
   }
-  
+
   const deposit = async (amount: string) => {
     const walletStore = useWalletStore()
     const appStore = useAppStore()
-    
+
     if (!walletStore.signer || !amount || amount === '0') {
       throw new Error('Invalid parameters')
     }
-    
+
     try {
       isDepositing.value = true
-      
+
       const [savingsContract, wrmbContract] = await Promise.all([
         contractService.getSavingsVaultContract(true),
         contractService.getWRMBContract(true)
       ])
-      
+
       if (!savingsContract || !wrmbContract) {
         throw new Error('Contracts not available')
       }
-      
+
       const amountWei = parseUnits(amount, 18)
-      
+
       // Check allowance
       const allowance = await wrmbContract.allowance(
         walletStore.address,
         await savingsContract.getAddress()
       )
-      
+
       // Approve if needed
       if (allowance < amountWei) {
         appStore.addNotification({
@@ -192,43 +212,43 @@ export const useSavingsStore = defineStore('savings', () => {
           title: 'Approval Required',
           message: 'Please approve WRMB spending'
         })
-        
+
         const approveTx = await wrmbContract.approve(
           await savingsContract.getAddress(),
           amountWei
         )
         await approveTx.wait()
-        
+
         appStore.addNotification({
           type: 'success',
           title: 'Approval Successful',
           message: 'WRMB spending approved'
         })
       }
-      
+
       // Deposit
       const depositTx = await savingsContract.deposit(
         amountWei,
         walletStore.address
       )
-      
+
       appStore.addNotification({
         type: 'info',
         title: 'Transaction Submitted',
         message: 'Deposit transaction submitted'
       })
-      
+
       const receipt = await depositTx.wait()
-      
+
       appStore.addNotification({
         type: 'success',
         title: 'Deposit Successful',
         message: `Deposited ${amount} WRMB successfully`
       })
-      
+
       // Refresh data
       await fetchVaultData()
-      
+
       return receipt
     } catch (error: any) {
       console.error('Deposit failed:', error)
@@ -242,89 +262,217 @@ export const useSavingsStore = defineStore('savings', () => {
       isDepositing.value = false
     }
   }
-  
+
   const withdraw = async (amount: string) => {
     const walletStore = useWalletStore()
     const appStore = useAppStore()
-    
+
     if (!walletStore.signer || !amount || amount === '0') {
       throw new Error('Invalid parameters')
     }
-    
+
     try {
       isWithdrawing.value = true
-      
+
       const contract = await contractService.getSavingsVaultContract(true)
       if (!contract) throw new Error('Contract not available')
-      
-      const sharesWei = parseUnits(amount, 18)
-      
-      const withdrawTx = await contract.redeem(
-        sharesWei,
+
+      const assetsWei = parseUnits(amount, 18)
+
+      const withdrawTx = await contract.withdraw(
+        assetsWei,
         walletStore.address,
         walletStore.address
       )
-      
+
       appStore.addNotification({
         type: 'info',
         title: 'Transaction Submitted',
         message: 'Withdrawal transaction submitted'
       })
-      
+
       const receipt = await withdrawTx.wait()
-      
+
       appStore.addNotification({
         type: 'success',
         title: 'Withdrawal Successful',
-        message: `Withdrew ${amount} sWRMB successfully`
+        message: `Withdrew ${amount} WRMB successfully`
       })
-      
+
       // Refresh data
       await fetchVaultData()
-      
+
       return receipt
     } catch (error: any) {
       console.error('Withdrawal failed:', error)
       appStore.addNotification({
         type: 'error',
         title: 'Withdrawal Failed',
-        message: error.message || 'Failed to withdraw sWRMB'
+        message: error.message || 'Failed to withdraw WRMB'
       })
       throw error
     } finally {
       isWithdrawing.value = false
     }
   }
-  
-  const calculateAPY = () => {
-    // This would typically be calculated based on historical data
-    // For now, we'll use a placeholder calculation
-    const navNumber = new BigNumber(currentNAV.value)
-    if (navNumber.isGreaterThan(1)) {
-      // Simplified APY calculation - in reality this would be more complex
-      apy.value = navNumber.minus(1).multipliedBy(100).toFixed(2)
-    } else {
-      apy.value = '0'
+
+  const fetchWRMBPrice = async () => {
+    try {
+      // In a real implementation, this would fetch from an oracle or price API
+      // For now, we'll use a mock price with some variation
+      const basePrice = 0.14
+      const variation = (Math.random() - 0.5) * 0.02 // ±1% variation
+      currentPrice.value = (basePrice + variation).toFixed(4)
+    } catch (error) {
+      console.error('Failed to fetch WRMB price:', error)
+      // Fallback to default price
+      currentPrice.value = '0.14'
     }
   }
-  
+
+  const calculateAPY = async () => {
+    try {
+      // 首先尝试通过合约事件计算APY
+      const contract = await contractService.getSavingsVaultContract()
+      if (contract) {
+        try {
+          await calculateAPYFromEvents(contract)
+          return // 如果事件计算成功，直接返回
+        } catch (error) {
+          console.warn('Event-based APY calculation failed, falling back to historical data:', error)
+        }
+      }
+      
+      // 回退到基于历史NAV数据的计算
+      if (historicalNAV.value.length < 2) {
+        // Not enough data for calculation, use a default APY
+        apy.value = '8.50'
+        return
+      }
+
+      // Calculate APY based on NAV growth over time
+      const sortedData = [...historicalNAV.value].sort((a, b) => a.timestamp - b.timestamp)
+      const oldest = sortedData[0]
+      const newest = sortedData[sortedData.length - 1]
+
+      const timeDiffDays = (newest.timestamp - oldest.timestamp) / (1000 * 60 * 60 * 24)
+
+      if (timeDiffDays > 0 && oldest.nav > 0) {
+        // Calculate annualized return
+        const totalReturn = (newest.nav - oldest.nav) / oldest.nav
+        const annualizedReturn = Math.pow(1 + totalReturn, 365 / timeDiffDays) - 1
+        apy.value = Math.max(0, annualizedReturn * 100).toFixed(2)
+      } else {
+        // Fallback to estimated APY
+        apy.value = '8.50'
+      }
+    } catch (error) {
+      console.error('Failed to calculate APY:', error)
+      apy.value = '8.50'
+    }
+  }
+
+  // 通过事件计算APY
+  const calculateAPYFromEvents = async (contract: any) => {
+    try {
+      const walletStore = useWalletStore()
+      
+      // 检查provider是否可用
+      if (!walletStore.provider) {
+        console.warn('Provider not available for APY calculation')
+        apy.value = '8.50' // 使用默认值
+        return
+      }
+      
+      // 使用wallet store的provider而不是contract.provider
+      const currentBlock = await walletStore.provider.getBlockNumber()
+      const blocksPerDay = 7200 // 以太坊约12秒一个块
+      const blocks30Days = blocksPerDay * 30
+
+      // 获取NAV更新事件
+      const filter = contract.filters.WRMBMintedOnIncrease()
+      const events = await contract.queryFilter(
+        filter,
+        Math.max(0, currentBlock - blocks30Days),
+        currentBlock
+      )
+console.log(events);
+      if (events.length === 0) {
+        apy.value = '0.00'
+        return
+      }
+
+      // 按时间排序事件
+      const sortedEvents = events.sort((a: any, b: any) => a.blockNumber - b.blockNumber)
+      const oldestEvent = sortedEvents[0]
+      const newestEvent = sortedEvents[sortedEvents.length - 1]
+
+      // 获取时间戳
+      const [oldestBlock, newestBlock] = await Promise.all([
+        walletStore.provider.getBlock(oldestEvent.blockNumber),
+        walletStore.provider.getBlock(newestEvent.blockNumber)
+      ])
+
+      const timeDiffDays = (newestBlock.timestamp - oldestBlock.timestamp) / (24 * 60 * 60)
+
+      if (timeDiffDays > 0) {
+        const oldNAV = parseFloat(formatUnits(oldestEvent.args.oldNAV, 18))
+        const newNAV = parseFloat(formatUnits(newestEvent.args.newNAV, 18))
+
+        if (oldNAV > 0 && newNAV > oldNAV) {
+          const totalReturn = (newNAV - oldNAV) / oldNAV
+          const annualizedReturn = Math.pow(1 + totalReturn, 365 / timeDiffDays) - 1
+          apy.value = Math.max(0, annualizedReturn * 100).toFixed(2)
+          return
+        }
+      }
+
+      // 如果无法计算，使用当前NAV与基准NAV的比较
+      const currentNAV = parseFloat(formatUnits(await contract.getNAV_sWRMB(), 18))
+      const baseNAV = 1.0
+
+      if (currentNAV > baseNAV) {
+        // 假设这是年化收益（简化计算）
+        apy.value = ((currentNAV - baseNAV) * 100).toFixed(2)
+      } else {
+        apy.value = '0.00'
+      }
+
+    } catch (error) {
+      console.error('Failed to calculate APY from events:', error)
+      apy.value = '0.00'
+    }
+  }
+
   // Auto-refresh data
+  let refreshInterval: NodeJS.Timeout | null = null
+
   const startAutoRefresh = () => {
-    const interval = setInterval(() => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval)
+    }
+
+    refreshInterval = setInterval(() => {
       if (Date.now() - lastUpdateTime.value > 30000) { // 30 seconds
         fetchVaultData()
       }
     }, 30000)
-    
-    return () => clearInterval(interval)
   }
-  
+
+  const stopAutoRefresh = () => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval)
+      refreshInterval = null
+    }
+  }
+
   return {
     // State
     userBalance,
     wrmbBalance,
     totalAssets,
     currentNAV,
+    currentPrice,
     totalSupply,
     apy,
     isLoading,
@@ -332,22 +480,30 @@ export const useSavingsStore = defineStore('savings', () => {
     withdrawAmount,
     isDepositing,
     isWithdrawing,
-    
+    historicalNAV,
+
     // Getters
     userBalanceFormatted,
     wrmbBalanceFormatted,
     totalAssetsFormatted,
     userSharePercentage,
     userAssetValue,
-    
+
     // Actions
     fetchVaultData,
     fetchUserBalances,
+    fetchWRMBPrice,
     previewDeposit,
     previewWithdraw,
     deposit,
     withdraw,
     calculateAPY,
-    startAutoRefresh
+    startAutoRefresh,
+    stopAutoRefresh,
+
+    // Computed getters for reactive access
+    get depositInProgress() { return isDepositing.value },
+    get withdrawInProgress() { return isWithdrawing.value },
+    get loading() { return isLoading.value }
   }
 })

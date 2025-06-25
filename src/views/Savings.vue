@@ -11,7 +11,7 @@
             {{ $t('savings.subtitle') }}
           </p>
         </div>
-        
+
         <div class="header-actions">
           <el-button @click="refreshData" :loading="savingsStore.loading">
             <el-icon class="mr-2">
@@ -29,7 +29,7 @@
         <h2 class="section-title">
           {{ $t('savings.vaultOverview') }}
         </h2>
-        
+
         <div class="overview-grid">
           <!-- Total Assets -->
           <div class="overview-card">
@@ -47,10 +47,10 @@
             </div>
           </div>
 
-          <!-- Current NAV -->
+          <!-- sWRMB/WRMB Exchange Rate -->
           <div class="overview-card">
             <div class="card-header">
-              <h3 class="card-title">{{ $t('savings.currentNAV') }}</h3>
+              <h3 class="card-title">{{ $t('savings.exchangeRate') }}</h3>
               <el-icon class="card-icon">
                 <TrendCharts />
               </el-icon>
@@ -59,7 +59,7 @@
               {{ formatNumber(savingsStore.currentNAV, 6) }}
             </div>
             <div class="card-subtitle">
-              {{ $t('savings.navDescription') }}
+              {{ $t('savings.exchangeRateDescription') }}
             </div>
           </div>
 
@@ -114,34 +114,21 @@
 
                 <div class="input-section">
                   <div class="input-group">
-                    <el-input
-                      v-model="depositAmount"
-                      :placeholder="$t('savings.enterAmount')"
-                      size="large"
-                      class="amount-input"
-                      @input="handleDepositAmountChange"
-                    >
+                    <el-input v-model="depositAmount" :placeholder="$t('savings.enterAmount')" size="large"
+                      class="amount-input" @input="handleDepositAmountChange">
                       <template #suffix>
                         <span class="input-suffix">WRMB</span>
                       </template>
                     </el-input>
-                    <el-button
-                      text
-                      @click="setMaxDeposit"
-                      class="max-button"
-                    >
+                    <el-button text @click="setMaxDeposit" class="max-button">
                       {{ $t('common.max') }}
                     </el-button>
                   </div>
-                  
+
                   <!-- Quick Amount Buttons -->
                   <div class="quick-amounts">
-                    <el-button
-                      v-for="percentage in [25, 50, 75]"
-                      :key="percentage"
-                      size="small"
-                      @click="setDepositPercentage(percentage)"
-                    >
+                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                      @click="setDepositPercentage(percentage)">
                       {{ percentage }}%
                     </el-button>
                   </div>
@@ -158,14 +145,8 @@
                   </div>
                 </div>
 
-                <el-button
-                  type="primary"
-                  size="large"
-                  :loading="savingsStore.depositInProgress"
-                  :disabled="!isDepositValid"
-                  @click="handleDeposit"
-                  class="action-button"
-                >
+                <el-button type="primary" size="large" :loading="savingsStore.depositInProgress"
+                  :disabled="!isDepositValid" @click="handleDeposit" class="action-button">
                   {{ $t('savings.deposit') }}
                 </el-button>
               </div>
@@ -179,41 +160,28 @@
                 <div class="form-header">
                   <h3 class="form-title">{{ $t('savings.withdrawWRMB') }}</h3>
                   <div class="balance-info">
-                    <span class="balance-label">{{ $t('savings.sWRMBBalance') }}:</span>
-                    <span class="balance-value">{{ formatNumber(savingsStore.userBalance) }} sWRMB</span>
+                    <span class="balance-label">{{ $t('savings.availableToWithdraw') }}:</span>
+                    <span class="balance-value">{{ formatNumber(savingsStore.userAssetValue) }} WRMB</span>
                   </div>
                 </div>
 
                 <div class="input-section">
                   <div class="input-group">
-                    <el-input
-                      v-model="withdrawAmount"
-                      :placeholder="$t('savings.enterAmount')"
-                      size="large"
-                      class="amount-input"
-                      @input="handleWithdrawAmountChange"
-                    >
+                    <el-input v-model="withdrawAmount" :placeholder="$t('savings.enterAmount')" size="large"
+                      class="amount-input" @input="handleWithdrawAmountChange">
                       <template #suffix>
-                        <span class="input-suffix">sWRMB</span>
+                        <span class="input-suffix">WRMB</span>
                       </template>
                     </el-input>
-                    <el-button
-                      text
-                      @click="setMaxWithdraw"
-                      class="max-button"
-                    >
+                    <el-button text @click="setMaxWithdraw" class="max-button">
                       {{ $t('common.max') }}
                     </el-button>
                   </div>
-                  
+
                   <!-- Quick Amount Buttons -->
                   <div class="quick-amounts">
-                    <el-button
-                      v-for="percentage in [25, 50, 75]"
-                      :key="percentage"
-                      size="small"
-                      @click="setWithdrawPercentage(percentage)"
-                    >
+                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                      @click="setWithdrawPercentage(percentage)">
                       {{ percentage }}%
                     </el-button>
                   </div>
@@ -225,19 +193,17 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('savings.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.assets) }} WRMB</span>
+                      <span class="preview-value">{{ formatNumber(withdrawAmount) }} WRMB</span>
+                    </div>
+                    <div class="preview-row">
+                      <span>{{ $t('savings.sharesRequired') }}</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.shares) }} sWRMB</span>
                     </div>
                   </div>
                 </div>
 
-                <el-button
-                  type="primary"
-                  size="large"
-                  :loading="savingsStore.withdrawInProgress"
-                  :disabled="!isWithdrawValid"
-                  @click="handleWithdraw"
-                  class="action-button"
-                >
+                <el-button type="primary" size="large" :loading="savingsStore.withdrawInProgress"
+                  :disabled="!isWithdrawValid" @click="handleWithdraw" class="action-button">
                   {{ $t('savings.withdraw') }}
                 </el-button>
               </div>
@@ -251,23 +217,23 @@
         <h2 class="section-title">
           {{ $t('savings.statistics') }}
         </h2>
-        
+
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.totalSupply') }}</div>
             <div class="stat-value">{{ formatNumber(savingsStore.totalSupply) }} sWRMB</div>
           </div>
-          
+
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.yourShare') }}</div>
             <div class="stat-value">{{ formatNumber(savingsStore.userSharePercentage) }}%</div>
           </div>
-          
+
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.totalValue') }}</div>
             <div class="stat-value">${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}</div>
           </div>
-          
+
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.yourValue') }}</div>
             <div class="stat-value">${{ formatNumber(parseFloat(savingsStore.userAssetValue) * 0.14) }}</div>
@@ -277,19 +243,10 @@
     </div>
 
     <!-- Transaction Modal -->
-    <TransactionModal
-      v-model:visible="showTransactionModal"
-      :title="transactionModalTitle"
-      :steps="transactionSteps"
-      :current-step="currentTransactionStep"
-      :status="transactionStatus"
-      :transaction-details="transactionDetails"
-      :gas-info="gasInfo"
-      :transaction-hash="transactionHash"
-      :error-message="transactionError"
-      @close="handleTransactionModalClose"
-      @retry="handleTransactionRetry"
-    />
+    <TransactionModal v-model:visible="showTransactionModal" :title="transactionModalTitle" :steps="transactionSteps"
+      :current-step="currentTransactionStep" :status="transactionStatus" :transaction-details="transactionDetails"
+      :transaction-hash="transactionHash" :error-message="transactionError"
+      @close="handleTransactionModalClose" @retry="handleTransactionRetry" />
   </div>
 </template>
 
@@ -318,8 +275,14 @@ const walletStore = useWalletStore()
 const activeTab = ref('deposit')
 const depositAmount = ref('')
 const withdrawAmount = ref('')
-const depositPreview = ref(null)
-const withdrawPreview = ref(null)
+const depositPreview = ref({
+  shares: '',
+  fee: '0'
+})
+const withdrawPreview = ref({
+  shares: '',
+  fee: '0'
+})
 
 // Transaction Modal
 const showTransactionModal = ref(false)
@@ -328,7 +291,6 @@ const currentTransactionStep = ref(0)
 const transactionStatus = ref<'pending' | 'loading' | 'success' | 'error'>('pending')
 const transactionHash = ref('')
 const transactionError = ref('')
-const gasInfo = ref(null)
 
 const transactionSteps = ref([
   { label: t('transaction.approve'), description: t('transaction.approveDescription') },
@@ -338,7 +300,7 @@ const transactionSteps = ref([
 
 const transactionDetails = computed(() => {
   const details = []
-  
+
   if (activeTab.value === 'deposit' && depositAmount.value) {
     details.push(
       { label: t('savings.depositAmount'), value: `${depositAmount.value} WRMB`, highlight: true },
@@ -346,11 +308,11 @@ const transactionDetails = computed(() => {
     )
   } else if (activeTab.value === 'withdraw' && withdrawAmount.value) {
     details.push(
-      { label: t('savings.withdrawAmount'), value: `${withdrawAmount.value} sWRMB`, highlight: true },
-      { label: t('savings.estimatedAssets'), value: `${withdrawPreview.value?.assets || '0'} WRMB` }
+      { label: t('savings.withdrawAmount'), value: `${withdrawAmount.value} WRMB`, highlight: true },
+      { label: t('savings.sharesRequired'), value: `${withdrawPreview.value?.shares || '0'} sWRMB` }
     )
   }
-  
+
   return details
 })
 
@@ -361,7 +323,8 @@ const isDepositValid = computed(() => {
 
 const isWithdrawValid = computed(() => {
   const amount = parseFloat(withdrawAmount.value)
-  return amount > 0 && amount <= parseFloat(savingsStore.userBalance)
+  const maxWithdrawable = parseFloat(savingsStore.userAssetValue)
+  return amount > 0 && amount <= maxWithdrawable
 })
 
 // Debounced preview functions
@@ -373,7 +336,7 @@ const debouncedDepositPreview = debounce(async (amount: string) => {
       console.error('Failed to preview deposit:', error)
     }
   } else {
-    depositPreview.value = null
+    depositPreview.value = { shares: '', fee: '0' }
   }
 }, 500)
 
@@ -385,7 +348,7 @@ const debouncedWithdrawPreview = debounce(async (amount: string) => {
       console.error('Failed to preview withdraw:', error)
     }
   } else {
-    withdrawPreview.value = null
+    withdrawPreview.value = { shares: '', fee: '0' }
   }
 }, 500)
 
@@ -403,7 +366,7 @@ const setMaxDeposit = () => {
 }
 
 const setMaxWithdraw = () => {
-  withdrawAmount.value = savingsStore.userBalance
+  withdrawAmount.value = savingsStore.userAssetValue
   handleWithdrawAmountChange(withdrawAmount.value)
 }
 
@@ -414,29 +377,29 @@ const setDepositPercentage = (percentage: number) => {
 }
 
 const setWithdrawPercentage = (percentage: number) => {
-  const amount = (parseFloat(savingsStore.userBalance) * percentage / 100).toString()
+  const amount = (parseFloat(savingsStore.userAssetValue) * percentage / 100).toString()
   withdrawAmount.value = amount
   handleWithdrawAmountChange(amount)
 }
 
 const handleDeposit = async () => {
   if (!isDepositValid.value) return
-  
+
   transactionModalTitle.value = t('savings.depositTransaction')
   showTransactionModal.value = true
   currentTransactionStep.value = 0
   transactionStatus.value = 'pending'
-  
+
   try {
     await savingsStore.deposit(depositAmount.value)
-    
+
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
-    
+
     // Reset form
     depositAmount.value = ''
-    depositPreview.value = null
-    
+    depositPreview.value = { shares: '', fee: '0' }
+
     ElMessage.success(t('savings.depositSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'
@@ -447,22 +410,22 @@ const handleDeposit = async () => {
 
 const handleWithdraw = async () => {
   if (!isWithdrawValid.value) return
-  
+
   transactionModalTitle.value = t('savings.withdrawTransaction')
   showTransactionModal.value = true
   currentTransactionStep.value = 1
   transactionStatus.value = 'loading'
-  
+
   try {
     await savingsStore.withdraw(withdrawAmount.value)
-    
+
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
-    
+
     // Reset form
     withdrawAmount.value = ''
-    withdrawPreview.value = null
-    
+    withdrawPreview.value = { shares: '', fee: '0' }
+
     ElMessage.success(t('savings.withdrawSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'
@@ -488,7 +451,8 @@ const handleTransactionRetry = () => {
 const refreshData = async () => {
   await Promise.all([
     savingsStore.fetchVaultData(),
-    savingsStore.fetchUserBalances()
+    savingsStore.fetchUserBalances(),
+    savingsStore.fetchWRMBPrice()
   ])
 }
 
@@ -496,6 +460,9 @@ onMounted(async () => {
   if (walletStore.isConnected) {
     await refreshData()
     savingsStore.startAutoRefresh()
+  } else {
+    // Even if wallet is not connected, fetch basic vault data and price
+    await savingsStore.fetchVaultData()
   }
 })
 
@@ -714,23 +681,23 @@ watch(
   .savings-header {
     @apply px-4 py-6;
   }
-  
+
   .header-content {
     @apply flex-col items-start space-y-4;
   }
-  
+
   .savings-content {
     @apply px-4 py-6;
   }
-  
+
   .overview-grid {
     @apply grid-cols-1 gap-4;
   }
-  
+
   .stats-grid {
     @apply grid-cols-2 gap-4;
   }
-  
+
   .action-form {
     @apply max-w-full;
   }

@@ -122,6 +122,10 @@
     "wrmbBalance": "您的 WRMB 余额",
     "totalAssets": "总资产",
     "currentNAV": "当前净值",
+    "currentPrice": "当前价格",
+    "priceDescription": "WRMB 当前市场价格",
+    "exchangeRate": "sWRMB/WRMB 汇率",
+    "exchangeRateDescription": "1 sWRMB 可兑换的 WRMB 数量",
     "apy": "年化收益率",
     "sharePercentage": "您的份额",
     "assetValue": "资产价值",
@@ -144,7 +148,9 @@
     "depositTransaction": "存款交易",
     "withdrawTransaction": "提取交易",
     "depositFailed": "存款失败",
-    "withdrawFailed": "提取失败"
+    "withdrawFailed": "提取失败",
+    "availableToWithdraw": "可提取数量",
+    "sharesRequired": "所需份额"
   },
   "wrap": {
     "title": "包装与解包",

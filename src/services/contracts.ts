@@ -24,12 +24,15 @@ const SAVINGS_VAULT_ABI = [
   'function getNAV_sWRMB() view returns (uint256)',
   'function previewDeposit(uint256) view returns (uint256)',
   'function previewRedeem(uint256) view returns (uint256)',
+  'function previewMint(uint256) view returns (uint256)',
+  'function previewWithdraw(uint256) view returns (uint256)',
   'function deposit(uint256, address) returns (uint256)',
   'function redeem(uint256, address, address) returns (uint256)',
   'function withdraw(uint256, address, address) returns (uint256)',
   'function asset() view returns (address)',
   'event Deposit(address indexed caller, address indexed owner, uint256 assets, uint256 shares)',
-  'event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)'
+  'event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)',
+  'event WRMBMintedOnIncrease(uint256 amount, uint256 oldNAV, uint256 newNAV)'
 ]
 
 const WRAP_MANAGER_ABI = [
