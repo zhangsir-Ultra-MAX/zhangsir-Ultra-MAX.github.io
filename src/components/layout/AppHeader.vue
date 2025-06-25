@@ -127,7 +127,8 @@ import {
   Wallet,
   Switch,
   TrendCharts,
-  Document
+  Document,
+  Link
 } from '@element-plus/icons-vue'
 
 import WalletConnect from '@/components/common/WalletConnect.vue'
@@ -168,6 +169,11 @@ const navigationItems = [
     name: 'portfolio',
     path: '/portfolio',
     icon: TrendCharts
+  },
+  {
+    name: 'status',
+    path: '/status',
+    icon: Link
   }
 ]
 

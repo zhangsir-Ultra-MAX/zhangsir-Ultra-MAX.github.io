@@ -43,7 +43,8 @@
     "savings": "Savings",
     "wrap": "Wrap",
     "bonds": "Bonds",
-    "portfolio": "Portfolio"
+    "portfolio": "Portfolio",
+    "status": "Status"
   },
   "wallet": {
     "connectWallet": "Connect Wallet",

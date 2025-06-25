@@ -7,6 +7,7 @@ export const NETWORKS = {
   LOCAL: {
     chainId: 31337,
     name: 'Local Testnet',
+    blockExplorer: 'https://localhost:8545',
   },
   ETHEREUM: {
     chainId: 1,
@@ -83,7 +84,7 @@ export const TOKENS = {
   },
   sWRMB: {
     symbol: 'sWRMB',
-    name: 'Staked WRMB',
+    name: 'Savings WRMB',
     decimals: 18,
     addresses: {
       [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_SAVINGS_VAULT_ADDRESS || '',
@@ -94,7 +95,7 @@ export const TOKENS = {
   },
   sRMB: {
     symbol: 'sRMB',
-    name: 'Staked RMB',
+    name: 'Savings RMB',
     decimals: 18,
     addresses: {
       [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_SRMB_ADDRESS || '',

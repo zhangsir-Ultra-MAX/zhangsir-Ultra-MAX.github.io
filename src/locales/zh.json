@@ -43,7 +43,8 @@
     "savings": "储蓄",
     "wrap": "包装",
     "bonds": "债券",
-    "portfolio": "投资组合"
+    "portfolio": "投资组合",
+    "status": "合约状态"
   },
   "wallet": {
     "connectWallet": "连接钱包",
