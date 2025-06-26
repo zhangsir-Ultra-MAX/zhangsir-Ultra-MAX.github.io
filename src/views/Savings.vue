@@ -144,7 +144,7 @@
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
-                      <span class="preview-value">1 WRMB = {{ formatNumber(savingsStore.currentNAV, 6) }} sWRMB</span>
+                      <span class="preview-value">1 WRMB = {{ formatNumber((1 / parseFloat(savingsStore.currentNAV || '1')), 6) }} sWRMB</span>
                     </div>
                   </div>
                 </div>
@@ -205,7 +205,7 @@
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
-                      <span class="preview-value">1 sWRMB = {{ formatNumber((1 / parseFloat(savingsStore.currentNAV || '1')), 6) }} WRMB</span>
+                      <span class="preview-value">1 sWRMB = {{ formatNumber(savingsStore.currentNAV, 6) }} WRMB</span>
                     </div>
                   </div>
                 </div>
