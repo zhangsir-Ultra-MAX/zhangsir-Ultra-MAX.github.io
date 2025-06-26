@@ -159,8 +159,11 @@
     "subtitle": "Convert between sRMB and sWRMB tokens",
     "balanceOverview": "Balance Overview",
     "balance": "Balance",
+    "totalBalance": "Total Balance",
     "availableToWrap": "Available to Wrap",
     "availableToUnwrap": "Available to Unwrap",
+    "unwrappableAmount": "Unwrappable Amount",
+    "maxUnwrappableAmount": "Maximum Unwrappable Amount",
     "from": "From",
     "to": "To",
     "enterAmount": "Enter amount",
@@ -205,7 +208,14 @@
     "wrapTransaction": "Wrap Transaction",
     "unwrapTransaction": "Unwrap Transaction",
     "wrapFailed": "Wrap transaction failed",
-    "unwrapFailed": "Unwrap transaction failed"
+    "unwrapFailed": "Unwrap transaction failed",
+    "insufficientUnwrappableAmount": "Insufficient unwrappable amount. You can only unwrap tokens that you have previously wrapped.",
+    "desiredAmount": "Desired Amount",
+    "requiredBurn": "Required Burn",
+    "estimatedBurn": "Estimated Burn Amount",
+    "actualReceived": "Actual Received",
+    "sWRMBRequired": "sWRMB Required",
+    "enterDesiredAmount": "Enter desired sRMB amount"
   },
   "bonds": {
     "title": "Bond Trading",

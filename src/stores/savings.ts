@@ -15,6 +15,7 @@ export const useSavingsStore = defineStore('savings', () => {
   const currentPrice = ref('0.14') // Current WRMB price in USD
   const totalSupply = ref('0') // Total sWRMB supply
   const apy = ref('0') // Annual percentage yield
+  const userAssetValue = ref('0') // User's asset value in maxWithdraw 
   const isLoading = ref(false)
   const lastUpdateTime = ref(0)
   const historicalNAV = ref<Array<{ timestamp: number, nav: number }>>([]) // Historical NAV data for APY calculation
@@ -46,13 +47,6 @@ export const useSavingsStore = defineStore('savings', () => {
       .toFixed(4)
   })
 
-  const userAssetValue = computed(() => {
-    if (userBalance.value === '0' || currentNAV.value === '0') return '0'
-    return new BigNumber(userBalance.value)
-      .multipliedBy(currentNAV.value)
-      .toFixed(6)
-  })
-
   // Actions
   const fetchVaultData = async () => {
     const walletStore = useWalletStore()
@@ -67,14 +61,17 @@ export const useSavingsStore = defineStore('savings', () => {
       if (!contract) throw new Error('Contract not available')
 
       // Fetch vault data
-      const [vaultTotalAssets, vaultTotalSupply, nav] = await Promise.all([
+      const [vaultTotalAssets, vaultTotalSupply, nav, maxWithdraw] = await Promise.all([
         contract.totalAssets(),
         contract.totalSupply(),
-        contract.getNAV_sWRMB()
+        contract.getNAV_sWRMB(),
+        contract.maxWithdraw(walletStore.address) 
       ])
 
       totalAssets.value = formatUnits(vaultTotalAssets.toString(), 18)
       totalSupply.value = formatUnits(vaultTotalSupply.toString(), 18)
+      userAssetValue.value = formatUnits(maxWithdraw.toString(), 18)
+
       const navValue = formatUnits(nav, 18)
       currentNAV.value = navValue
 
@@ -396,7 +393,7 @@ export const useSavingsStore = defineStore('savings', () => {
         Math.max(0, currentBlock - blocks30Days),
         currentBlock
       )
-console.log(events);
+
       if (events.length === 0) {
         apy.value = '0.00'
         return
@@ -413,7 +410,10 @@ console.log(events);
         walletStore.provider.getBlock(newestEvent.blockNumber)
       ])
 
-      const timeDiffDays = (newestBlock.timestamp - oldestBlock.timestamp) / (24 * 60 * 60)
+      // 检查区块是否存在，并计算时间差
+      const timeDiffDays = newestBlock && oldestBlock ? 
+        parseInt(((newestBlock.timestamp - oldestBlock.timestamp) / (24 * 60 * 60)).toString()) : 
+        0
 
       if (timeDiffDays > 0) {
         const oldNAV = parseFloat(formatUnits(oldestEvent.args.oldNAV, 18))

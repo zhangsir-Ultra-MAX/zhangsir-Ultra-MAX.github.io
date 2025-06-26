@@ -26,6 +26,7 @@ const SAVINGS_VAULT_ABI = [
   'function previewRedeem(uint256) view returns (uint256)',
   'function previewMint(uint256) view returns (uint256)',
   'function previewWithdraw(uint256) view returns (uint256)',
+  'function maxWithdraw(address) view returns (uint256)',
   'function deposit(uint256, address) returns (uint256)',
   'function redeem(uint256, address, address) returns (uint256)',
   'function withdraw(uint256, address, address) returns (uint256)',
@@ -37,9 +38,9 @@ const SAVINGS_VAULT_ABI = [
 
 const WRAP_MANAGER_ABI = [
   'function wrap(uint256) returns (uint256, uint256)',
-  'function unwrap(uint256) returns (uint256, uint256)',
+  'function unwrap(uint256 sRMBAmount) returns (uint256 sWRMBBurned, uint256 sRMBReceived)',
   'function previewWrap(uint256) view returns (uint256, uint256, uint256)',
-  'function previewUnwrap(uint256) view returns (uint256, uint256, uint256)',
+  'function previewUnwrap(uint256 sRMBAmount) view returns (uint256 sWRMBBurned, uint256 sRMBReceived, uint256 fee)',
   'function getConfiguration() view returns (address, address, address, address, uint256, uint256, uint256, uint256, uint256, uint256)',
   'function minWrapAmount() view returns (uint256)',
   'function maxWrapAmount() view returns (uint256)',
@@ -48,6 +49,10 @@ const WRAP_MANAGER_ABI = [
   'function wrapFee() view returns (uint256)',
   'function unwrapFee() view returns (uint256)',
   'function getSRMBLiquidity() view returns (uint256)',
+  'function getUserUnwrappableAmount(address) view returns (uint256)',
+  'function getUserWrapStats(address) view returns (uint256, uint256, uint256, uint256)',
+  'function userWrappedAmount(address) view returns (uint256)',
+  'function userUnwrappedAmount(address) view returns (uint256)',
   'event Wrapped(address indexed user, uint256 sRMBAmount, uint256 sWRMBReceived, uint256 wrmBMinted, uint256 fee)',
   'event Unwrapped(address indexed user, uint256 sWRMBAmount, uint256 sRMBReceived, uint256 wrmBBurned, uint256 fee)'
 ]

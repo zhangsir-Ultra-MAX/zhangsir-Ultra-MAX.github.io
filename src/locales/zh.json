@@ -159,8 +159,11 @@
     "subtitle": "在 sRMB 和 sWRMB 代币之间转换",
     "balanceOverview": "余额概览",
     "balance": "余额",
+    "totalBalance": "总余额",
     "availableToWrap": "可包装数量",
     "availableToUnwrap": "可解包数量",
+    "unwrappableAmount": "可解包数量",
+    "maxUnwrappableAmount": "最大可解包数量",
     "from": "从",
     "to": "到",
     "enterAmount": "输入金额",
@@ -205,7 +208,14 @@
     "wrapTransaction": "包装交易",
     "unwrapTransaction": "解包交易",
     "wrapFailed": "包装交易失败",
-    "unwrapFailed": "解包交易失败"
+    "unwrapFailed": "解包交易失败",
+    "insufficientUnwrappableAmount": "可解包数量不足。您只能解包之前包装的代币。",
+    "desiredAmount": "期望数量",
+    "requiredBurn": "需要燃烧",
+    "estimatedBurn": "预估燃烧数量",
+    "actualReceived": "实际接收",
+    "sWRMBRequired": "需要 sWRMB",
+    "enterDesiredAmount": "输入期望的 sRMB 数量"
   },
   "bonds": {
     "title": "债券交易",

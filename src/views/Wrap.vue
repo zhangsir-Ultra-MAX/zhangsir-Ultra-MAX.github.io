@@ -57,6 +57,21 @@
               {{ formatNumber(sWRMBBalance) }} sWRMB
             </div>
             <div class="card-subtitle">
+              {{ $t('wrap.totalBalance') }}
+            </div>
+          </div>
+          
+          <div class="balance-card">
+            <div class="card-header">
+              <h3 class="card-title">{{ $t('wrap.unwrappableAmount') }}</h3>
+              <el-icon class="card-icon">
+                <Switch />
+              </el-icon>
+            </div>
+            <div class="card-value">
+              {{ formatNumber(userUnwrappableAmount) }} sRMB
+            </div>
+            <div class="card-subtitle">
               {{ $t('wrap.availableToUnwrap') }}
             </div>
           </div>
@@ -196,24 +211,24 @@
             <div class="form-section">
               <div class="token-input">
                 <div class="input-header">
-                  <span class="input-label">{{ $t('wrap.from') }}</span>
+                  <span class="input-label">{{ $t('wrap.desiredAmount') }}</span>
                   <span class="balance-info">
-                    {{ $t('wrap.balance') }}: {{ formatNumber(sWRMBBalance) }} sWRMB
+                    {{ $t('wrap.maxUnwrappableAmount') }}: {{ formatNumber(userMaxUnwrappableAmount) }} sRMB
                   </span>
                 </div>
                 
                 <div class="input-container">
                   <el-input
                     v-model="unwrapAmount"
-                    :placeholder="$t('wrap.enterAmount')"
+                    :placeholder="$t('wrap.enterDesiredAmount')"
                     size="large"
                     class="amount-input"
                     @input="handleUnwrapAmountChange"
                   />
                   <div class="token-selector">
                     <div class="token-info">
-                      <div class="token-icon swrmb">sWRMB</div>
-                      <span class="token-name">sWRMB</span>
+                      <div class="token-icon srmb">sRMB</div>
+                      <span class="token-name">sRMB</span>
                     </div>
                   </div>
                 </div>
@@ -245,24 +260,24 @@
 
               <div class="token-input">
                 <div class="input-header">
-                  <span class="input-label">{{ $t('wrap.to') }}</span>
+                  <span class="input-label">{{ $t('wrap.requiredBurn') }}</span>
                   <span class="balance-info">
-                    {{ $t('wrap.balance') }}: {{ formatNumber(sRMBBalance) }} sRMB
+                    {{ $t('wrap.balance') }}: {{ formatNumber(sWRMBBalance) }} sWRMB
                   </span>
                 </div>
                 
                 <div class="input-container">
                   <el-input
-                    :value="unwrapPreview?.outputAmount || '0'"
-                    :placeholder="$t('wrap.estimatedAmount')"
+                    :value="unwrapPreview?.sWRMBBurned || '0'"
+                    :placeholder="$t('wrap.estimatedBurn')"
                     size="large"
                     class="amount-input"
                     readonly
                   />
                   <div class="token-selector">
                     <div class="token-info">
-                      <div class="token-icon srmb">sRMB</div>
-                      <span class="token-name">sRMB</span>
+                      <div class="token-icon swrmb">sWRMB</div>
+                      <span class="token-name">sWRMB</span>
                     </div>
                   </div>
                 </div>
@@ -274,22 +289,20 @@
               <h4 class="details-title">{{ $t('wrap.transactionDetails') }}</h4>
               <div class="details-list">
                 <div class="detail-row">
-                  <span>{{ $t('wrap.exchangeRate') }}</span>
-                  <span>1 sWRMB = {{ formatNumber(unwrapPreview.exchangeRate, 6) }} sRMB</span>
+                  <span>{{ $t('wrap.desiredAmount') }}</span>
+                  <span>{{ formatNumber(unwrapAmount) }} sRMB</span>
                 </div>
                 <div class="detail-row">
                   <span>{{ $t('wrap.fee') }}</span>
-                  <span class="fee-value">{{ formatNumber(unwrapPreview.fee) }} sWRMB ({{ formatNumber(unwrapPreview.feePercentage) }}%)</span>
+                  <span class="fee-value">{{ formatNumber(unwrapPreview.fee) }} sRMB ({{ formatNumber(unwrapPreview.feePercentage) }}%)</span>
                 </div>
                 <div class="detail-row">
-                  <span>{{ $t('wrap.minimumReceived') }}</span>
-                  <span>{{ formatNumber(unwrapPreview.minimumReceived) }} sRMB</span>
+                  <span>{{ $t('wrap.actualReceived') }}</span>
+                  <span>{{ formatNumber(unwrapPreview.sRMBReceived) }} sRMB</span>
                 </div>
                 <div class="detail-row">
-                  <span>{{ $t('wrap.priceImpact') }}</span>
-                  <span :class="getPriceImpactClass(unwrapPreview.priceImpact)">
-                    {{ formatNumber(unwrapPreview.priceImpact) }}%
-                  </span>
+                  <span>{{ $t('wrap.sWRMBRequired') }}</span>
+                  <span>{{ formatNumber(unwrapPreview.sWRMBBurned) }} sWRMB</span>
                 </div>
               </div>
             </div>
@@ -358,7 +371,6 @@
       :current-step="currentTransactionStep"
       :status="transactionStatus"
       :transaction-details="transactionDetails"
-      :gas-info="gasInfo"
       :transaction-hash="transactionHash"
       :error-message="transactionError"
       @close="handleTransactionModalClose"
@@ -404,6 +416,9 @@ const unwrapInProgress = ref(false)
 const sRMBBalance = ref('0')
 const sWRMBBalance = ref('0')
 const wrapConfig = ref(null)
+const userUnwrappableAmount = ref('0')
+const userMaxUnwrappableAmount = ref('0')
+const userWrapStats = ref(null)
 
 // Transaction Modal
 const showTransactionModal = ref(false)
@@ -464,7 +479,10 @@ const isWrapValid = computed(() => {
 const isUnwrapValid = computed(() => {
   const amount = parseFloat(unwrapAmount.value)
   if (!amount || amount <= 0) return false
-  if (amount > parseFloat(sWRMBBalance.value)) return false
+  
+  // Check if user has enough wrapped amount to unwrap
+  const unwrappableAmount = parseFloat(userMaxUnwrappableAmount.value)
+  if (amount > unwrappableAmount) return false
 
   // Check min/max amounts if config is loaded
   if (wrapConfig.value) {
@@ -517,22 +535,20 @@ const generateUnwrapPreview = async (amount: string) => {
     const wrapManager = contractService.getWrapManagerContract()
     if (!wrapManager) return null
     
+    // Now passing sRMB amount as input parameter
     const amountWei = parseUnits(amount, 18)
-    const [sRMBReceived, wrmBBurned, fee] = await wrapManager.previewUnwrap(amountWei)
+    const [sRMBReceived, sWRMBBurned, fee, currentNAV] = await wrapManager.previewUnwrap(amountWei)
     
-    const outputAmount = formatUnits(sRMBReceived, 18)
+    const sWRMBBurnedAmount = formatUnits(sWRMBBurned, 18)
+    const sRMBReceivedAmount = formatUnits(sRMBReceived, 18)
     const feeAmount = formatUnits(fee, 18)
     const feePercentage = (parseFloat(feeAmount) / inputAmount * 100)
-    const exchangeRate = parseFloat(outputAmount) / inputAmount
-    const priceImpact = Math.abs((1 - exchangeRate) * 100)
     
     return {
-      outputAmount: parseFloat(outputAmount).toFixed(6),
+      sWRMBBurned: parseFloat(sWRMBBurnedAmount).toFixed(6),
+      sRMBReceived: parseFloat(sRMBReceivedAmount).toFixed(6),
       fee: parseFloat(feeAmount).toFixed(6),
-      feePercentage: feePercentage.toFixed(2),
-      exchangeRate: exchangeRate.toFixed(6),
-      minimumReceived: (parseFloat(outputAmount) * 0.995).toFixed(6), // 0.5% slippage
-      priceImpact: priceImpact.toFixed(2)
+      feePercentage: feePercentage.toFixed(2)
     }
   } catch (error) {
     console.error('Failed to generate unwrap preview:', error)
@@ -578,7 +594,8 @@ const setWrapPercentage = (percentage: number) => {
 }
 
 const setUnwrapPercentage = (percentage: number) => {
-  const amount = (parseFloat(sWRMBBalance.value) * percentage / 100).toString()
+  const maxUnwrappable = parseFloat(userMaxUnwrappableAmount.value)
+  const amount = (maxUnwrappable * percentage / 100).toString()
   unwrapAmount.value = amount
   handleUnwrapAmountChange(amount)
 }
@@ -636,7 +653,7 @@ const handleWrap = async () => {
     // Reset form and refresh balances
     wrapAmount.value = ''
     wrapPreview.value = null
-    await loadBalances()
+    await Promise.all([loadBalances(), loadUserWrapStats()])
     
     ElMessage.success(t('wrap.wrapSuccess'))
   } catch (error: any) {
@@ -651,6 +668,14 @@ const handleWrap = async () => {
 const handleUnwrap = async () => {
   if (!isUnwrapValid.value || !walletStore.isConnected) return
   
+  // Additional runtime check for unwrappable amount
+  const amount = parseFloat(unwrapAmount.value)
+  const unwrappableAmount = parseFloat(userMaxUnwrappableAmount.value)
+  if (amount > unwrappableAmount) {
+    ElMessage.error(t('wrap.insufficientUnwrappableAmount'))
+    return
+  }
+  
   transactionModalTitle.value = t('wrap.unwrapTransaction')
   showTransactionModal.value = true
   currentTransactionStep.value = 0
@@ -658,7 +683,14 @@ const handleUnwrap = async () => {
   unwrapInProgress.value = true
   
   try {
-    const amountWei = parseUnits(unwrapAmount.value, 18)
+    const sRMBAmountWei = parseUnits(unwrapAmount.value, 18)
+    
+    // Get required sWRMB amount from preview
+    if (!unwrapPreview.value) {
+      throw new Error('Unable to calculate required sWRMB amount')
+    }
+    
+    const sWRMBRequiredWei = parseUnits(unwrapPreview.value.sWRMBBurned, 18)
     
     // Step 1: Check and approve sWRMB if needed
     const savingsVault = contractService.getSavingsVaultContract(true)
@@ -670,22 +702,22 @@ const handleUnwrap = async () => {
     
     const allowance = await savingsVault.allowance(walletStore.address, wrapManagerAddress)
     
-    if (allowance < amountWei) {
+    if (allowance < sWRMBRequiredWei) {
       transactionStatus.value = 'loading'
-      const approveTx = await savingsVault.approve(wrapManagerAddress, amountWei)
+      const approveTx = await savingsVault.approve(wrapManagerAddress, sWRMBRequiredWei)
       await approveTx.wait()
     }
     
     currentTransactionStep.value = 1
     
-    // Step 2: Execute unwrap
+    // Step 2: Execute unwrap with sRMB amount
     const wrapManager = contractService.getWrapManagerContract(true)
     if (!wrapManager) {
       throw new Error('Wrap manager contract not available')
     }
     
     transactionStatus.value = 'loading'
-    const unwrapTx = await wrapManager.unwrap(amountWei)
+    const unwrapTx = await wrapManager.unwrap(sRMBAmountWei)
     const receipt = await unwrapTx.wait()
     
     transactionHash.value = receipt.hash
@@ -695,7 +727,7 @@ const handleUnwrap = async () => {
     // Reset form and refresh balances
     unwrapAmount.value = ''
     unwrapPreview.value = null
-    await loadBalances()
+    await Promise.all([loadBalances(), loadUserWrapStats()])
     
     ElMessage.success(t('wrap.unwrapSuccess'))
   } catch (error: any) {
@@ -718,6 +750,34 @@ const handleTransactionRetry = () => {
     handleWrap()
   } else {
     handleUnwrap()
+  }
+}
+
+// Load user wrap statistics
+const loadUserWrapStats = async () => {
+  if (!walletStore.isConnected || !walletStore.address) {
+    userMaxUnwrappableAmount.value = '0'
+    userWrapStats.value = null
+    return
+  }
+  
+  try {
+    const wrapManager = contractService.getWrapManagerContract()
+    if (!wrapManager) return
+    
+    const [wrappedAmount, unwrappedAmount, availableToUnwrap, userMaxUnwrappedAmount] = await wrapManager.getUserWrapStats(walletStore.address)
+    
+    userUnwrappableAmount.value = formatUnits(availableToUnwrap, 18)
+    userMaxUnwrappableAmount.value = formatUnits(userMaxUnwrappedAmount, 18)
+    userWrapStats.value = {
+      totalWrapped: formatUnits(wrappedAmount, 18),
+      totalUnwrapped: formatUnits(unwrappedAmount, 18),
+      availableToUnwrap: formatUnits(availableToUnwrap, 18)
+    }
+  } catch (error) {
+    console.error('Failed to load user wrap stats:', error)
+    userMaxUnwrappableAmount.value = '0'
+    userWrapStats.value = null
   }
 }
 
@@ -777,7 +837,8 @@ const refreshData = async () => {
   try {
     await Promise.all([
       loadBalances(),
-      loadWrapConfig()
+      loadWrapConfig(),
+      loadUserWrapStats()
     ])
   } catch (error) {
     console.error('Failed to refresh data:', error)
@@ -794,6 +855,8 @@ watch(() => walletStore.isConnected, (connected) => {
     sRMBBalance.value = '0'
     sWRMBBalance.value = '0'
     wrapConfig.value = null
+    userMaxUnwrappableAmount.value = '0'
+    userWrapStats.value = null
   }
 })
 
@@ -837,7 +900,7 @@ onMounted(() => {
 }
 
 .balance-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
 }
 
 .balance-card {
