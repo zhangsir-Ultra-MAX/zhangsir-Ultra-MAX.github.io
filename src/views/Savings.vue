@@ -142,6 +142,10 @@
                       <span>{{ $t('savings.youWillReceive') }}</span>
                       <span class="preview-value">{{ formatNumber(depositPreview.shares) }} sWRMB</span>
                     </div>
+                    <div class="preview-row exchange-rate">
+                      <span>{{ $t('savings.currentExchangeRate') }}</span>
+                      <span class="preview-value">1 WRMB = {{ formatNumber(savingsStore.currentNAV, 6) }} sWRMB</span>
+                    </div>
                   </div>
                 </div>
 
@@ -198,6 +202,10 @@
                     <div class="preview-row">
                       <span>{{ $t('savings.sharesRequired') }}</span>
                       <span class="preview-value">{{ formatNumber(withdrawPreview.shares) }} sWRMB</span>
+                    </div>
+                    <div class="preview-row exchange-rate">
+                      <span>{{ $t('savings.currentExchangeRate') }}</span>
+                      <span class="preview-value">1 sWRMB = {{ formatNumber((1 / parseFloat(savingsStore.currentNAV || '1')), 6) }} WRMB</span>
                     </div>
                   </div>
                 </div>
@@ -261,10 +269,12 @@ import {
   User,
   Refresh
 } from '@element-plus/icons-vue'
+import { parseUnits } from 'ethers'
 
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import { useSavingsStore } from '@/stores/savings'
 import { useWalletStore } from '@/stores/wallet'
+import { contractService } from '@/services/contracts'
 import { formatNumber } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
 
@@ -383,7 +393,7 @@ const setWithdrawPercentage = (percentage: number) => {
 }
 
 const handleDeposit = async () => {
-  if (!isDepositValid.value) return
+  if (!isDepositValid.value || !walletStore.isConnected) return
 
   transactionModalTitle.value = t('savings.depositTransaction')
   showTransactionModal.value = true
@@ -391,15 +401,41 @@ const handleDeposit = async () => {
   transactionStatus.value = 'pending'
 
   try {
-    await savingsStore.deposit(depositAmount.value)
-
+    const amountWei = parseUnits(depositAmount.value, 18)
+    
+    // Step 1: Check and approve WRMB if needed
+    const wrmbContract = contractService.getWRMBContract(true)
+    const savingsContract = contractService.getSavingsVaultContract(true)
+    
+    if (!wrmbContract || !savingsContract) {
+      throw new Error('Contract not available')
+    }
+    
+    const savingsAddress = await savingsContract.getAddress()
+    const allowance = await wrmbContract.allowance(walletStore.address, savingsAddress)
+    
+    if (allowance < amountWei) {
+      transactionStatus.value = 'loading'
+      const approveTx = await wrmbContract.approve(savingsAddress, amountWei)
+      await approveTx.wait()
+    }
+    
+    currentTransactionStep.value = 1
+    
+    // Step 2: Execute deposit
+    transactionStatus.value = 'loading'
+    const depositTx = await savingsContract.customDeposit(amountWei, walletStore.address)
+    const receipt = await depositTx.wait()
+    
+    transactionHash.value = receipt.hash
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
-
-    // Reset form
+    
+    // Reset form and refresh data
     depositAmount.value = ''
     depositPreview.value = { shares: '', fee: '0' }
-
+    await savingsStore.fetchVaultData()
+    
     ElMessage.success(t('savings.depositSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'
@@ -409,7 +445,7 @@ const handleDeposit = async () => {
 }
 
 const handleWithdraw = async () => {
-  if (!isWithdrawValid.value) return
+  if (!isWithdrawValid.value || !walletStore.isConnected) return
 
   transactionModalTitle.value = t('savings.withdrawTransaction')
   showTransactionModal.value = true
@@ -417,15 +453,30 @@ const handleWithdraw = async () => {
   transactionStatus.value = 'loading'
 
   try {
-    await savingsStore.withdraw(withdrawAmount.value)
-
+    const amountWei = parseUnits(withdrawAmount.value, 18)
+    
+    // Execute withdraw
+    const savingsContract = contractService.getSavingsVaultContract(true)
+    if (!savingsContract) {
+      throw new Error('Contract not available')
+    }
+    
+    const withdrawTx = await savingsContract.customWithdraw(
+      amountWei,
+      walletStore.address,
+      walletStore.address
+    )
+    const receipt = await withdrawTx.wait()
+    
+    transactionHash.value = receipt.hash
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
-
-    // Reset form
+    
+    // Reset form and refresh data
     withdrawAmount.value = ''
     withdrawPreview.value = { shares: '', fee: '0' }
-
+    await savingsStore.fetchVaultData()
+    
     ElMessage.success(t('savings.withdrawSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'
@@ -627,6 +678,18 @@ watch(
 
 .preview-row {
   @apply flex items-center justify-between text-sm;
+}
+
+.preview-row.exchange-rate {
+  @apply border-t border-gray-200 dark:border-gray-600 pt-2 mt-2;
+}
+
+.preview-row.exchange-rate span:first-child {
+  @apply text-primary-600 dark:text-primary-400 font-medium;
+}
+
+.preview-row.exchange-rate .preview-value {
+  @apply text-primary-700 dark:text-primary-300 font-semibold;
 }
 
 .preview-value {

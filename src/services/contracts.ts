@@ -30,6 +30,8 @@ const SAVINGS_VAULT_ABI = [
   'function deposit(uint256, address) returns (uint256)',
   'function redeem(uint256, address, address) returns (uint256)',
   'function withdraw(uint256, address, address) returns (uint256)',
+  'function customDeposit(uint256, address) returns (uint256)',
+  'function customWithdraw(uint256, address, address) returns (uint256)',
   'function asset() view returns (address)',
   'event Deposit(address indexed caller, address indexed owner, uint256 assets, uint256 shares)',
   'event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)',

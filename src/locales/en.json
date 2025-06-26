@@ -151,7 +151,8 @@
     "depositFailed": "Deposit failed",
     "withdrawFailed": "Withdraw failed",
     "availableToWithdraw": "Available to Withdraw",
-    "sharesRequired": "Shares Required"
+    "sharesRequired": "Shares Required",
+    "currentExchangeRate": "Exchange Rate"
   },
   "wrap": {
     "title": "Wrap & Unwrap",

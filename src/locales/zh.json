@@ -151,7 +151,8 @@
     "depositFailed": "存款失败",
     "withdrawFailed": "提取失败",
     "availableToWithdraw": "可提取数量",
-    "sharesRequired": "所需份额"
+    "sharesRequired": "所需份额",
+    "currentExchangeRate": "当前汇率"
   },
   "wrap": {
     "title": "包装与解包",
