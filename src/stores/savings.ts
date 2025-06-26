@@ -14,6 +14,7 @@ export const useSavingsStore = defineStore('savings', () => {
   const currentNAV = ref('1.0') // Current NAV
   const currentPrice = ref('0.14') // Current WRMB price in USD
   const totalSupply = ref('0') // Total sWRMB supply
+  const contractExternalShares = ref('0') // External shares held by contract
   const apy = ref('0') // Annual percentage yield
   const userAssetValue = ref('0') // User's asset value in maxWithdraw 
   const isLoading = ref(false)
@@ -47,6 +48,14 @@ export const useSavingsStore = defineStore('savings', () => {
       .toFixed(4)
   })
 
+  const currentAPY = computed(() => {
+    if (totalSupply.value === '0' || apy.value === '0') return '0'
+    return new BigNumber(apy.value)
+      .multipliedBy(totalSupply.value)
+      .dividedBy(contractExternalShares.value)
+      .toFixed(4)
+  })
+
   // Actions
   const fetchVaultData = async () => {
     const walletStore = useWalletStore()
@@ -61,16 +70,18 @@ export const useSavingsStore = defineStore('savings', () => {
       if (!contract) throw new Error('Contract not available')
 
       // Fetch vault data
-      const [vaultTotalAssets, vaultTotalSupply, nav, maxWithdraw] = await Promise.all([
+      const [vaultTotalAssets, vaultTotalSupply, nav, maxWithdraw, externalShares] = await Promise.all([
         contract.totalAssets(),
         contract.totalSupply(),
         contract.getNAV_sWRMB(),
-        contract.maxWithdraw(walletStore.address) 
+        contract.maxWithdraw(walletStore.address),
+        contract.contractExternalShares()
       ])
 
       totalAssets.value = formatUnits(vaultTotalAssets.toString(), 18)
       totalSupply.value = formatUnits(vaultTotalSupply.toString(), 18)
       userAssetValue.value = formatUnits(maxWithdraw.toString(), 18)
+      contractExternalShares.value = formatUnits(externalShares.toString(), 18)
 
       const navValue = formatUnits(nav, 18)
       currentNAV.value = navValue
@@ -335,7 +346,9 @@ export const useSavingsStore = defineStore('savings', () => {
     currentNAV,
     currentPrice,
     totalSupply,
+    contractExternalShares,
     apy,
+    currentAPY,
     isLoading,
     depositAmount,
     withdrawAmount,

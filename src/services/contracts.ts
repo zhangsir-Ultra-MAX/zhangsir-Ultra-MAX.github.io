@@ -27,6 +27,7 @@ const SAVINGS_VAULT_ABI = [
   'function previewMint(uint256) view returns (uint256)',
   'function previewWithdraw(uint256) view returns (uint256)',
   'function maxWithdraw(address) view returns (uint256)',
+  'function contractExternalShares() view returns (uint256)',
   'function deposit(uint256, address) returns (uint256)',
   'function redeem(uint256, address, address) returns (uint256)',
   'function withdraw(uint256, address, address) returns (uint256)',

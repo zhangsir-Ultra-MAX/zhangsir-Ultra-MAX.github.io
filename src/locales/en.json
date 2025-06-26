@@ -152,7 +152,9 @@
     "withdrawFailed": "Withdraw failed",
     "availableToWithdraw": "Available to Withdraw",
     "sharesRequired": "Shares Required",
-    "currentExchangeRate": "Exchange Rate"
+    "currentExchangeRate": "Exchange Rate",
+    "externalShares": "External Shares",
+    "externalSharesDescription": "External share withdrawn"
   },
   "wrap": {
     "title": "Wrap & Unwrap",

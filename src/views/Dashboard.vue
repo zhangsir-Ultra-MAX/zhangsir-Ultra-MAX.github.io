@@ -116,7 +116,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-value">
-                {{ formatNumber(savingsStore.apy) }}%
+                {{ formatNumber(savingsStore.currentAPY) }}%
               </div>
               <div class="stat-subtitle">
                 {{ $t('dashboard.annualReturn') }}

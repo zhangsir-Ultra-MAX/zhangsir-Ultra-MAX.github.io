@@ -152,7 +152,9 @@
     "withdrawFailed": "提取失败",
     "availableToWithdraw": "可提取数量",
     "sharesRequired": "所需份额",
-    "currentExchangeRate": "当前汇率"
+    "currentExchangeRate": "当前汇率",
+    "externalShares": "外部份额",
+    "externalSharesDescription": "已被提取的外部份额"
   },
   "wrap": {
     "title": "包装与解包",

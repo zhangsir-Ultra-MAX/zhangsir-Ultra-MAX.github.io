@@ -47,19 +47,19 @@
             </div>
           </div>
 
-          <!-- sWRMB/WRMB Exchange Rate -->
+          <!-- External Shares -->
           <div class="overview-card">
             <div class="card-header">
-              <h3 class="card-title">{{ $t('savings.exchangeRate') }}</h3>
+              <h3 class="card-title">{{ $t('savings.externalShares') }}</h3>
               <el-icon class="card-icon">
                 <TrendCharts />
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.currentNAV, 6) }}
+              {{ formatNumber(savingsStore.contractExternalShares) }} sWRMB
             </div>
             <div class="card-subtitle">
-              {{ $t('savings.exchangeRateDescription') }}
+              {{ $t('savings.externalSharesDescription') }}
             </div>
           </div>
 
@@ -72,7 +72,7 @@
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.apy) }}%
+              {{ formatNumber(savingsStore.currentAPY) }}%
             </div>
             <div class="card-subtitle">
               {{ $t('savings.annualYield') }}
