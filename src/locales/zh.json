@@ -441,6 +441,7 @@
     "toast": {
       "addressCopied": "地址已复制到剪贴板",
       "transactionSubmitted": "转账交易已提交，等待确认...",
+      "transferSubmitted": "转账已提交，等待确认...",
       "transferSuccess": "转账成功！",
       "transferFailed": "转账失败",
       "queryFailed": "查询失败，请检查地址是否正确"

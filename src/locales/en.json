@@ -441,6 +441,7 @@
     "toast": {
       "addressCopied": "Address copied to clipboard",
       "transactionSubmitted": "Transfer transaction submitted, waiting for confirmation...",
+      "transferSubmitted": "Transfer submitted, waiting for confirmation...",
       "transferSuccess": "Transfer successful!",
       "transferFailed": "Transfer failed",
       "queryFailed": "Query failed, please check if the address is correct"

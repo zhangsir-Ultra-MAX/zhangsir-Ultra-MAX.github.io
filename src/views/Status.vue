@@ -85,7 +85,8 @@
                 >
                   {{ t('status.queryBalance') }}
                 </button>
-                <button 
+                <button
+                  v-if="token.symbol !== 'sRMB'"
                   @click="openTransferModal(key)"
                   :disabled="!walletStore.isConnected"
                   class="flex-1 px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -248,7 +249,7 @@ import { useI18n } from 'vue-i18n'
 import { NETWORKS, TOKENS, CONTRACTS } from '@/constants'
 import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
-import { formatEther, parseEther, Contract } from 'ethers'
+import { formatEther, parseEther, Contract, formatUnits } from 'ethers'
 
 const { t } = useI18n()
 
@@ -358,10 +359,10 @@ const loadTokenData = async () => {
         contract.totalSupply(),
         walletStore.address ? contract.balanceOf(walletStore.address) : Promise.resolve(0)
       ])
-      
+
       tokenData.value[key] = {
-        totalSupply: formatEther(totalSupply),
-        userBalance: formatEther(userBalance),
+        totalSupply: formatUnits(totalSupply, token.decimals),
+        userBalance: formatUnits(userBalance, token.decimals),
         loading: false
       }
     } catch (error) {
