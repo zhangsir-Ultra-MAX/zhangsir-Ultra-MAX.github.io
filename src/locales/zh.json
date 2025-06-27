@@ -402,5 +402,48 @@
     "helpfulLinks": "有用链接",
     "searchSuggestion": "尝试搜索您需要的内容：",
     "searchPlaceholder": "搜索..."
+  },
+  "status": {
+    "title": "合约状态",
+    "selectNetwork": "选择网络",
+    "tokenContracts": "代币合约",
+    "smartContracts": "智能合约",
+    "precision": "精度",
+    "totalSupply": "总发行量",
+    "myBalance": "我的余额",
+    "address": "地址",
+    "notDeployed": "未部署",
+    "viewOnExplorer": "在区块链浏览器中查看",
+    "copyAddress": "复制地址",
+    "queryBalance": "查询余额",
+    "quickTransfer": "快捷转账",
+    "contract": "合约",
+    "queryBalanceModal": {
+      "title": "查询地址余额",
+      "walletAddress": "钱包地址",
+      "placeholder": "输入要查询的钱包地址",
+      "query": "查询",
+      "querying": "查询中...",
+      "cancel": "取消",
+      "results": "查询结果:"
+    },
+    "transferModal": {
+      "title": "快捷转账",
+      "receiverAddress": "接收地址",
+      "receiverPlaceholder": "输入接收方钱包地址",
+      "transferAmount": "转账数量",
+      "amountPlaceholder": "输入转账数量",
+      "availableBalance": "可用余额",
+      "confirmTransfer": "确认转账",
+      "transferring": "转账中...",
+      "cancel": "取消"
+    },
+    "toast": {
+      "addressCopied": "地址已复制到剪贴板",
+      "transactionSubmitted": "转账交易已提交，等待确认...",
+      "transferSuccess": "转账成功！",
+      "transferFailed": "转账失败",
+      "queryFailed": "查询失败，请检查地址是否正确"
+    }
   }
 }

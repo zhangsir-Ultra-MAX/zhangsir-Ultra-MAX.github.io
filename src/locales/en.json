@@ -402,5 +402,48 @@
     "helpfulLinks": "Helpful Links",
     "searchSuggestion": "Try searching for what you need:",
     "searchPlaceholder": "Search..."
+  },
+  "status": {
+    "title": "Contract Status",
+    "selectNetwork": "Select Network",
+    "tokenContracts": "Token Contracts",
+    "smartContracts": "Smart Contracts",
+    "precision": "Precision",
+    "totalSupply": "Total Supply",
+    "myBalance": "My Balance",
+    "address": "Address",
+    "notDeployed": "Not Deployed",
+    "viewOnExplorer": "View on Blockchain Explorer",
+    "copyAddress": "Copy Address",
+    "queryBalance": "Query Balance",
+    "quickTransfer": "Quick Transfer",
+    "contract": "Contract",
+    "queryBalanceModal": {
+      "title": "Query Address Balance",
+      "walletAddress": "Wallet Address",
+      "placeholder": "Enter wallet address to query",
+      "query": "Query",
+      "querying": "Querying...",
+      "cancel": "Cancel",
+      "results": "Query Results:"
+    },
+    "transferModal": {
+      "title": "Quick Transfer",
+      "receiverAddress": "Receiver Address",
+      "receiverPlaceholder": "Enter receiver wallet address",
+      "transferAmount": "Transfer Amount",
+      "amountPlaceholder": "Enter transfer amount",
+      "availableBalance": "Available Balance",
+      "confirmTransfer": "Confirm Transfer",
+      "transferring": "Transferring...",
+      "cancel": "Cancel"
+    },
+    "toast": {
+      "addressCopied": "Address copied to clipboard",
+      "transactionSubmitted": "Transfer transaction submitted, waiting for confirmation...",
+      "transferSuccess": "Transfer successful!",
+      "transferFailed": "Transfer failed",
+      "queryFailed": "Query failed, please check if the address is correct"
+    }
   }
 }
