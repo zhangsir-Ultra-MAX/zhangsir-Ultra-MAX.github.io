@@ -124,7 +124,7 @@
     "totalAssets": "总资产",
     "currentNAV": "当前净值",
     "currentPrice": "当前价格",
-    "priceDescription": "WRMB 当前市场价格",
+    "priceDescription": "sWRMB 当前市场价格",
     "exchangeRate": "sWRMB/WRMB 汇率",
     "exchangeRateDescription": "1 sWRMB 可兑换的 WRMB 数量",
     "apy": "年化收益率",

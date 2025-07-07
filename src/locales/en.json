@@ -124,7 +124,7 @@
     "totalAssets": "Total Assets",
     "currentNAV": "Current NAV",
     "currentPrice": "Current Price",
-    "priceDescription": "Current market price of WRMB",
+    "priceDescription": "Current market price of sWRMB",
     "exchangeRate": "sWRMB/WRMB Rate",
     "exchangeRateDescription": "Amount of WRMB per 1 sWRMB",
     "apy": "APY",

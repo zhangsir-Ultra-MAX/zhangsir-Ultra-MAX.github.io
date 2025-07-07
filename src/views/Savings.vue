@@ -50,16 +50,16 @@
           <!-- External Shares -->
           <div class="overview-card">
             <div class="card-header">
-              <h3 class="card-title">{{ $t('savings.externalShares') }}</h3>
+              <h3 class="card-title">{{ $t('savings.currentPrice') }}</h3>
               <el-icon class="card-icon">
                 <TrendCharts />
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.contractExternalShares) }} sWRMB
+              {{ formatNumber(savingsStore.currentNAV) }}
             </div>
             <div class="card-subtitle">
-              {{ $t('savings.externalSharesDescription') }}
+              {{ $t('savings.priceDescription') }}
             </div>
           </div>
 
@@ -72,7 +72,7 @@
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.currentAPY) }}%
+              {{ formatNumber(savingsStore.apy) }}%
             </div>
             <div class="card-subtitle">
               {{ $t('savings.annualYield') }}
@@ -424,7 +424,7 @@ const handleDeposit = async () => {
     
     // Step 2: Execute deposit
     transactionStatus.value = 'loading'
-    const depositTx = await savingsContract.customDeposit(amountWei, walletStore.address)
+    const depositTx = await savingsContract.deposit(amountWei, walletStore.address)
     const receipt = await depositTx.wait()
     
     transactionHash.value = receipt.hash
@@ -461,7 +461,7 @@ const handleWithdraw = async () => {
       throw new Error('Contract not available')
     }
     
-    const withdrawTx = await savingsContract.customWithdraw(
+    const withdrawTx = await savingsContract.withdraw(
       amountWei,
       walletStore.address,
       walletStore.address
