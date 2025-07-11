@@ -22,3 +22,5 @@ test/
 http/
 .vscode/
 build/
+# Keep .env file for Docker build
+!.env
