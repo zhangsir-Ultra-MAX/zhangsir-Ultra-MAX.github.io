@@ -406,6 +406,8 @@
   "status": {
     "title": "Contract Status",
     "selectNetwork": "Select Network",
+    "refresh": "Refresh Data",
+    "refreshData": "Refresh all contract data",
     "tokenContracts": "Token Contracts",
     "smartContracts": "Smart Contracts",
     "precision": "Precision",

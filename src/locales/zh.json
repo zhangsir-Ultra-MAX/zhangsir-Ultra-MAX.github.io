@@ -406,6 +406,8 @@
   "status": {
     "title": "合约状态",
     "selectNetwork": "选择网络",
+    "refresh": "刷新数据",
+    "refreshData": "刷新所有合约数据",
     "tokenContracts": "代币合约",
     "smartContracts": "智能合约",
     "precision": "精度",
