@@ -60,10 +60,16 @@
     "ethBalance": "ETH 余额",
     "connect": "连接",
     "disconnect": "断开连接",
+    "confirmDisconnect": "确认断开钱包连接？",
+    "disconnected": "钱包已断开连接",
     "copyAddress": "复制地址",
+    "addressCopied": "地址已复制到剪贴板",
+    "copyFailed": "复制失败",
     "viewOnExplorer": "在浏览器中查看",
     "wrongNetwork": "您连接的网络不正确",
     "switchToMainnet": "切换到主网",
+    "networkSwitched": "网络切换成功",
+    "networkSwitchFailed": "网络切换失败",
     "connectionError": "连接错误"
   },
   "dashboard": {

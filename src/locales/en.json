@@ -60,10 +60,16 @@
     "ethBalance": "ETH Balance",
     "connect": "Connect",
     "disconnect": "Disconnect",
+    "confirmDisconnect": "Confirm wallet disconnection?",
+    "disconnected": "Wallet disconnected",
     "copyAddress": "Copy Address",
+    "addressCopied": "Address copied to clipboard",
+    "copyFailed": "Copy failed",
     "viewOnExplorer": "View on Explorer",
     "wrongNetwork": "You are connected to the wrong network",
     "switchToMainnet": "Switch to Mainnet",
+    "networkSwitched": "Network switched successfully",
+    "networkSwitchFailed": "Network switch failed",
     "connectionError": "Connection Error"
   },
   "dashboard": {

@@ -187,7 +187,7 @@ const handleAccountAction = async (command: string) => {
             type: 'warning'
           }
         )
-        await walletStore.disconnect()
+        await walletStore.disconnectWallet()
         ElMessage.success(t('wallet.disconnected'))
       } catch (error) {
         // User cancelled
@@ -200,7 +200,7 @@ const handleAccountAction = async (command: string) => {
 const switchToSupportedNetwork = async () => {
   switchingNetwork.value = true
   try {
-    await walletStore.switchNetwork()
+    await walletStore.switchNetwork(walletStore.chainId)
     showNetworkDialog.value = false
     ElMessage.success(t('wallet.networkSwitched'))
   } catch (error: any) {
