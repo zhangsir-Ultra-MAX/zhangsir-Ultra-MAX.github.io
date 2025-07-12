@@ -81,14 +81,14 @@ const router = createRouter({
 
 // Navigation guards
 router.beforeEach((to, from, next) => {
-  const walletStore = useWalletStore()
+  // const walletStore = useWalletStore()
   
   // Check if route requires authentication
-  if (to.meta.requiresAuth && !walletStore.isConnected) {
-    // Redirect to dashboard with a message to connect wallet
-    next({ name: 'Dashboard', query: { connectWallet: 'true' } })
-    return
-  }
+  // if (to.meta.requiresAuth && !walletStore.isConnected) {
+  //   // Redirect to dashboard with a message to connect wallet
+  //   next({ name: 'Dashboard', query: { connectWallet: 'true' } })
+  //   return
+  // }
   
   // Update document title
   if (to.meta.title) {

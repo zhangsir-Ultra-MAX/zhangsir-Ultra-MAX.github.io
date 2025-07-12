@@ -102,7 +102,7 @@ class ContractService {
       return null
     }
     
-    const key = `${address}_${walletStore.chainId}_${withSigner ? 'signer' : 'provider'}`
+    const key = `${address}_${walletStore.chainId}_${withSigner ? 'signer' : 'provider'}_${abi.length}`
     
     if (this.contracts.has(key)) {
       return this.contracts.get(key)!
