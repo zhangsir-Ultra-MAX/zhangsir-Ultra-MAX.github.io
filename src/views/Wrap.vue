@@ -60,7 +60,22 @@
               {{ $t('wrap.totalBalance') }}
             </div>
           </div>
-          
+
+          <div class="balance-card">
+            <div class="card-header">
+              <h3 class="card-title">{{ $t('wrap.totalReserveTransferred') }}</h3>
+              <el-icon class="card-icon">
+                <Coin />
+              </el-icon>
+            </div>
+            <div class="card-value">
+              {{ formatNumber(totalReserveTransferred) }} WRMB
+            </div>
+            <div class="card-subtitle">
+              {{ $t('wrap.reserveTransferredDescription') }}
+            </div>
+          </div>
+
           <div class="balance-card">
             <div class="card-header">
               <h3 class="card-title">{{ $t('wrap.unwrappableAmount') }}</h3>
@@ -187,7 +202,7 @@
                 </div>
                 <div class="detail-row">
                   <span>{{ $t('wrap.priceImpact') }}</span>
-                  <span :class="getPriceImpactClass(wrapPreview.priceImpact)">
+                  <span :class="getPriceImpactClass(parseFloat(wrapPreview.priceImpact))">
                     {{ formatNumber(wrapPreview.priceImpact) }}%
                   </span>
                 </div>
@@ -400,25 +415,58 @@ import { contractService } from '@/services/contracts'
 import { formatNumber } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
 
+// Type definitions
+interface WrapPreview {
+  outputAmount: string
+  fee: string
+  feePercentage: string
+  exchangeRate: string
+  minimumReceived: string
+  priceImpact: string
+}
+
+interface UnwrapPreview {
+  sWRMBBurned: string
+  sRMBReceived: string
+  fee: string
+  feePercentage: string
+}
+
+interface WrapConfig {
+  minWrapAmount: string
+  maxWrapAmount: string
+  wrapFee: string
+  minUnwrapAmount: string
+  maxUnwrapAmount: string
+  unwrapFee: string
+}
+
+interface UserWrapStats {
+  totalWrapped: string
+  totalUnwrapped: string
+  availableToUnwrap: string
+}
+
 const { t } = useI18n()
 const walletStore = useWalletStore()
 
 const loading = ref(false)
-const mode = ref('wrap')
+const mode = ref<'wrap' | 'unwrap'>('wrap')
 const wrapAmount = ref('')
 const unwrapAmount = ref('')
-const wrapPreview = ref(null)
-const unwrapPreview = ref(null)
+const wrapPreview = ref<WrapPreview | null>(null)
+const unwrapPreview = ref<UnwrapPreview | null>(null)
 const wrapInProgress = ref(false)
 const unwrapInProgress = ref(false)
 
 // Real balances from contracts
 const sRMBBalance = ref('0')
 const sWRMBBalance = ref('0')
-const wrapConfig = ref(null)
+const wrapConfig = ref<WrapConfig | null>(null)
 const userUnwrappableAmount = ref('0')
 const userMaxUnwrappableAmount = ref('0')
-const userWrapStats = ref(null)
+const userWrapStats = ref<UserWrapStats | null>(null)
+const totalReserveTransferred = ref('0')
 
 // Transaction Modal
 const showTransactionModal = ref(false)
@@ -452,7 +500,7 @@ const transactionDetails = computed(() => {
   } else if (mode.value === 'unwrap' && unwrapAmount.value) {
     details.push(
       { label: t('wrap.inputAmount'), value: `${unwrapAmount.value} sWRMB`, highlight: true },
-      { label: t('wrap.outputAmount'), value: `${unwrapPreview.value?.outputAmount || '0'} sRMB` },
+      { label: t('wrap.outputAmount'), value: `${unwrapPreview.value?.sRMBReceived || '0'} sRMB` },
       { label: t('wrap.fee'), value: `${unwrapPreview.value?.fee || '0'} sWRMB` }
     )
   }
@@ -496,7 +544,7 @@ const isUnwrapValid = computed(() => {
 })
 
 // Real contract preview functions
-const generateWrapPreview = async (amount: string) => {
+const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> => {
   try {
     const inputAmount = parseFloat(amount)
     if (!inputAmount || inputAmount <= 0) return null
@@ -527,7 +575,7 @@ const generateWrapPreview = async (amount: string) => {
   }
 }
 
-const generateUnwrapPreview = async (amount: string) => {
+const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | null> => {
   try {
     const inputAmount = parseFloat(amount)
     if (!inputAmount || inputAmount <= 0) return null
@@ -573,7 +621,7 @@ const handleUnwrapAmountChange = (value: string) => {
   debouncedUnwrapPreview(value)
 }
 
-const handleModeChange = (newMode: string) => {
+const handleModeChange = (newMode: 'wrap' | 'unwrap') => {
   mode.value = newMode
   // Clear amounts and previews when switching modes
   wrapAmount.value = ''
@@ -727,7 +775,7 @@ const handleUnwrap = async () => {
     // Reset form and refresh balances
     unwrapAmount.value = ''
     unwrapPreview.value = null
-    await Promise.all([loadBalances(), loadUserWrapStats()])
+    await Promise.all([loadBalances(), loadUserWrapStats(), loadTotalReserveTransferred()])
     
     ElMessage.success(t('wrap.unwrapSuccess'))
   } catch (error: any) {
@@ -832,13 +880,28 @@ const loadWrapConfig = async () => {
   }
 }
 
+// Load total reserve transferred
+const loadTotalReserveTransferred = async () => {
+  try {
+    const wrapManager = contractService.getWrapManagerContract()
+    if (!wrapManager) return
+    
+    const totalReserve = await wrapManager.totalReserveTransferred()
+    totalReserveTransferred.value = formatUnits(totalReserve, 18)
+  } catch (error) {
+    console.error('Failed to load total reserve transferred:', error)
+    totalReserveTransferred.value = '0'
+  }
+}
+
 const refreshData = async () => {
   loading.value = true
   try {
     await Promise.all([
       loadBalances(),
       loadWrapConfig(),
-      loadUserWrapStats()
+      loadUserWrapStats(),
+      loadTotalReserveTransferred()
     ])
   } catch (error) {
     console.error('Failed to refresh data:', error)
@@ -857,6 +920,9 @@ watch(() => walletStore.isConnected, (connected) => {
     wrapConfig.value = null
     userMaxUnwrappableAmount.value = '0'
     userWrapStats.value = null
+    totalReserveTransferred.value = '0'
+    wrapPreview.value = null
+    unwrapPreview.value = null
   }
 })
 
@@ -892,7 +958,7 @@ onMounted(() => {
 }
 
 .wrap-content {
-  @apply max-w-4xl mx-auto px-6 py-8 space-y-8;
+  @apply mx-auto px-6 py-8 space-y-8;
 }
 
 .section-title {
@@ -900,7 +966,7 @@ onMounted(() => {
 }
 
 .balance-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
 }
 
 .balance-card {

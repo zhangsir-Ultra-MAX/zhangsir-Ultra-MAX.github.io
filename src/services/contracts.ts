@@ -50,6 +50,7 @@ const WRAP_MANAGER_ABI = [
   'function wrapFee() view returns (uint256)',
   'function unwrapFee() view returns (uint256)',
   'function getSRMBLiquidity() view returns (uint256)',
+  'function totalReserveTransferred() view returns (uint256)',
   'function getUserUnwrappableAmount(address) view returns (uint256)',
   'function getUserWrapStats(address) view returns (uint256, uint256, uint256, uint256)',
   'function userWrappedAmount(address) view returns (uint256)',

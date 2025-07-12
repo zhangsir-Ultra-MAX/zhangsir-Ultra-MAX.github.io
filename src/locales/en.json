@@ -224,7 +224,9 @@
     "estimatedBurn": "Estimated Burn Amount",
     "actualReceived": "Actual Received",
     "sWRMBRequired": "sWRMB Required",
-    "enterDesiredAmount": "Enter desired sRMB amount"
+    "enterDesiredAmount": "Enter desired sRMB amount",
+    "totalReserveTransferred": "Total Reserve Transferred",
+    "reserveTransferredDescription": "Total WRMB transferred to bond pool as reserves"
   },
   "bonds": {
     "title": "Bond Trading",

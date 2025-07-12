@@ -224,7 +224,9 @@
     "estimatedBurn": "预估燃烧数量",
     "actualReceived": "实际接收",
     "sWRMBRequired": "需要 sWRMB",
-    "enterDesiredAmount": "输入期望的 sRMB 数量"
+    "enterDesiredAmount": "输入期望的 sRMB 数量",
+    "totalReserveTransferred": "总储备转移量",
+    "reserveTransferredDescription": "转移到债券池作为储备的WRMB总量"
   },
   "bonds": {
     "title": "债券交易",
