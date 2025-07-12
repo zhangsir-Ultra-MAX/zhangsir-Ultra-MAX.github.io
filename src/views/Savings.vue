@@ -56,7 +56,7 @@
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.currentNAV) }}
+              {{ formatNumber(savingsStore.currentNAV, 8) }}
             </div>
             <div class="card-subtitle">
               {{ $t('savings.priceDescription') }}
