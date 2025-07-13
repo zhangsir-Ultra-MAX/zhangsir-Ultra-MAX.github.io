@@ -52,7 +52,7 @@ const WRAP_MANAGER_ABI = [
   'function getSRMBLiquidity() view returns (uint256)',
   'function totalReserveTransferred() view returns (uint256)',
   'function getUserUnwrappableAmount(address) view returns (uint256)',
-  'function getUserWrapStats(address) view returns (uint256, uint256, uint256, uint256)',
+  'function getUserWrapStats(address) view returns (uint256, uint256, uint256)',
   'function userWrappedAmount(address) view returns (uint256)',
   'function userUnwrappedAmount(address) view returns (uint256)',
   'event Wrapped(address indexed user, uint256 sRMBAmount, uint256 sWRMBReceived, uint256 wrmBMinted, uint256 fee)',

@@ -443,7 +443,6 @@ interface WrapConfig {
 
 interface UserWrapStats {
   totalWrapped: string
-  totalUnwrapped: string
   availableToUnwrap: string
 }
 
@@ -813,13 +812,12 @@ const loadUserWrapStats = async () => {
     const wrapManager = contractService.getWrapManagerContract()
     if (!wrapManager) return
     
-    const [wrappedAmount, unwrappedAmount, availableToUnwrap, userMaxUnwrappedAmount] = await wrapManager.getUserWrapStats(walletStore.address)
+    const [wrappedAmount, availableToUnwrap, userMaxUnwrappedAmount] = await wrapManager.getUserWrapStats(walletStore.address)
     
     userUnwrappableAmount.value = formatUnits(availableToUnwrap, 18)
     userMaxUnwrappableAmount.value = formatUnits(userMaxUnwrappedAmount, 18)
     userWrapStats.value = {
       totalWrapped: formatUnits(wrappedAmount, 18),
-      totalUnwrapped: formatUnits(unwrappedAmount, 18),
       availableToUnwrap: formatUnits(availableToUnwrap, 18)
     }
   } catch (error) {
