@@ -269,7 +269,7 @@ import { useI18n } from 'vue-i18n'
 import { NETWORKS, TOKENS, CONTRACTS } from '@/constants'
 import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
-import { formatEther, parseEther, Contract, formatUnits } from 'ethers'
+import { formatEther, formatUnits, parseUnits } from 'ethers'
 
 const { t } = useI18n()
 
@@ -466,8 +466,8 @@ const executeTransfer = async () => {
     const contract = contractService.getERC20Contract(tokenAddress, true)
     if (!contract) throw new Error('Failed to get contract')
     
-    const amount = String(transferData.value.amount)
-    const tx = await contract.transfer(transferData.value.toAddress, parseEther(amount))
+    const amount = String(transferData.value.amount);
+    const tx = await contract.transfer(transferData.value.toAddress, parseUnits(amount, token.decimals))
     
     toastMessage.value = t('status.toast.transferSubmitted')
     showToast.value = true
