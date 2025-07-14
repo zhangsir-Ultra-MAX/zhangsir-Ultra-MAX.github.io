@@ -866,12 +866,12 @@ const loadWrapConfig = async () => {
     const config = await wrapManager.getConfiguration()
 
     wrapConfig.value = {
-      minWrapAmount: formatUnits(config[4], 18),
-      maxWrapAmount: formatUnits(config[5], 18),
-      wrapFee: formatUnits(config[6], 18),
-      minUnwrapAmount: formatUnits(config[7], 18),
-      maxUnwrapAmount: formatUnits(config[8], 18),
-      unwrapFee: formatUnits(config[9], 18)
+      minWrapAmount: formatUnits(config[3], 18),
+      maxWrapAmount: formatUnits(config[4], 18),
+      wrapFee: formatUnits(config[5], 18),
+      minUnwrapAmount: formatUnits(config[6], 18),
+      maxUnwrapAmount: formatUnits(config[7], 18),
+      unwrapFee: formatUnits(config[8], 18)
     }
   } catch (error) {
     console.error('Failed to load wrap config:', error)

@@ -100,7 +100,7 @@
               <!-- Action Buttons -->
               <div class="flex space-x-2 mt-3" v-if="getTokenAddress(token, selectedNetwork)">
                 <button 
-                  @click="showQueryModal = true"
+                  @click="openQueryModal(key)"
                   class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   {{ t('status.queryBalance') }}
@@ -437,6 +437,14 @@ const queryAddressBalance = async () => {
   } finally {
     isQuerying.value = false
   }
+}
+
+const openQueryModal = (key: string) => {
+  const token = TOKENS[key as keyof typeof TOKENS]
+  queryAddress.value = getTokenAddress(token, selectedNetwork.value) || ''
+  queryResults.value = {}
+  showQueryModal.value = true
+  queryAddressBalance();
 }
 
 // Open transfer modal

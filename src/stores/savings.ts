@@ -14,7 +14,9 @@ export const useSavingsStore = defineStore('savings', () => {
   const currentNAV = ref('1.0') // Current NAV
   const currentPrice = ref('0.14') // Current WRMB price in USD
   const totalSupply = ref('0') // Total sWRMB supply
+  const totalMMFSupply = ref('0') // Total MMF supply
   const apy = ref('0') // Annual percentage yield
+  const dynamicAPY = ref('0') // Dynamic APY
   const userAssetValue = ref('0') // User's asset value in maxWithdraw 
   const isLoading = ref(false)
   const lastUpdateTime = ref(0)
@@ -61,9 +63,10 @@ export const useSavingsStore = defineStore('savings', () => {
       if (!contract) throw new Error('Contract not available')
 
       // Fetch vault data
-      const [vaultTotalAssets, vaultTotalSupply, nav, maxWithdraw, currentAPY] = await Promise.all([
+      const [vaultTotalAssets, vaultTotalSupply, mmfTotalSupply, nav, maxWithdraw, currentAPY] = await Promise.all([
         contract.totalAssets(),
         contract.totalSupply(),
+        contract.totalMMFSupply(),
         contract.getNAV_sWRMB(),
         contract.maxWithdraw(walletStore.address),
         contract.getCurrentYearNAVSummary()
@@ -71,10 +74,14 @@ export const useSavingsStore = defineStore('savings', () => {
 
       totalAssets.value = formatUnits(vaultTotalAssets.toString(), 18)
       totalSupply.value = formatUnits(vaultTotalSupply.toString(), 18)
+      totalMMFSupply.value = formatUnits(mmfTotalSupply.toString(), 18)
       userAssetValue.value = formatUnits(maxWithdraw.toString(), 18)
 
       currentNAV.value = formatUnits(nav, 18)
-      apy.value = formatUnits(currentAPY[0], 16)
+      apy.value = new BigNumber(formatUnits(currentAPY.lastIncrease, 16)).multipliedBy(365).toString()
+      const sWRMB_external_shares = new BigNumber(totalSupply.value).gt(0) ? totalSupply.value : '1'
+      const B_Total_APY = new BigNumber(apy.value).multipliedBy(totalMMFSupply.value).dividedBy(sWRMB_external_shares);
+      dynamicAPY.value = B_Total_APY.gt(0) ? B_Total_APY.minus(apy.value).toString() : '0';
 
       // Fetch WRMB price (placeholder - in real implementation, this would come from an oracle or API)
       await fetchWRMBPrice()
@@ -204,6 +211,7 @@ export const useSavingsStore = defineStore('savings', () => {
     currentPrice,
     totalSupply,
     apy,
+    dynamicAPY,
     isLoading,
     depositAmount,
     withdrawAmount,

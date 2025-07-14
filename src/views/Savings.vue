@@ -72,7 +72,8 @@
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.apy) }}%
+              <span>≈ {{ formatNumber(savingsStore.apy) }}%</span>
+              <span class="text-green-500 font-semibold text-lg"> + {{ formatNumber(savingsStore.dynamicAPY) }}%</span>
             </div>
             <div class="card-subtitle">
               {{ $t('savings.annualYield') }}
