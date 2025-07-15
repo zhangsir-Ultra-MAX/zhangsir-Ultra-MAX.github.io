@@ -58,14 +58,14 @@
               <div class="text-sm text-gray-600 dark:text-gray-400">
                 <span class="font-medium">{{ t('status.totalSupply') }}:</span>
                 <span v-if="tokenData[key]?.loading" class="text-gray-400 dark:text-gray-500">{{ t('common.loading') }}</span>
-                <span v-else class="font-mono">{{ parseFloat(tokenData[key]?.totalSupply || '0').toLocaleString() }} {{ token.symbol }}</span>
+                <span v-else class="font-mono">{{ tokenData[key]?.totalSupply }} {{ token.symbol }}</span>
               </div>
               
               <!-- User Balance -->
               <div class="text-sm text-gray-600 dark:text-gray-400" v-if="walletStore.isConnected">
                 <span class="font-medium">{{ t('status.myBalance') }}:</span>
                 <span v-if="tokenData[key]?.loading" class="text-gray-400 dark:text-gray-500">{{ t('common.loading') }}</span>
-                <span v-else class="font-mono text-blue-600 dark:text-blue-400">{{ parseFloat(tokenData[key]?.userBalance || '0').toLocaleString() }} {{ token.symbol }}</span>
+                <span v-else class="font-mono text-blue-600 dark:text-blue-400">{{ tokenData[key]?.userBalance }} {{ token.symbol }}</span>
               </div>
               
               <div class="text-sm text-gray-600 dark:text-gray-400">
@@ -162,6 +162,15 @@
                 </div>
               </div>
             </div>
+            <!-- Action Buttons -->
+            <div class="flex space-x-2 mt-3">
+              <button 
+                @click="openQueryModal(key, false)"
+                class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                {{ t('status.queryBalance') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -202,7 +211,7 @@
             <h4 class="font-medium text-gray-900 dark:text-white">{{ t('status.queryBalanceModal.results') }}</h4>
             <div v-for="(balance, tokenKey) in queryResults" :key="tokenKey" class="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded">
               <span class="font-medium text-gray-900 dark:text-white">{{ TOKENS[tokenKey as keyof typeof TOKENS].symbol }}</span>
-              <span class="font-mono text-sm text-gray-700 dark:text-gray-300">{{ parseFloat(balance).toLocaleString() }}</span>
+              <span class="font-mono text-sm text-gray-700 dark:text-gray-300">{{ balance }}</span>
             </div>
           </div>
         </div>
@@ -233,7 +242,7 @@
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
             <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {{ t('status.transferModal.availableBalance') }}: {{ parseFloat(tokenData[transferData.tokenKey]?.userBalance || '0').toLocaleString() }} {{ TOKENS[transferData.tokenKey as keyof typeof TOKENS]?.symbol }}
+              {{ t('status.transferModal.availableBalance') }}: {{ tokenData[transferData.tokenKey]?.userBalance }} {{ TOKENS[transferData.tokenKey as keyof typeof TOKENS]?.symbol }}
             </div>
           </div>
           <div class="flex space-x-3">
@@ -324,7 +333,10 @@ const getTokenAddress = (token: any, chainId: number): string | null => {
   return token.addresses[chainId] || null
 }
 
-const getContractAddress = (contract: any, chainId: number): string | null => {
+const getContractAddress = (contract: any, chainId: number, isToken = false): string | null => {
+  if (isToken) {
+    return contract.addresses[chainId] || null
+  }
   return contract[chainId] || null
 }
 
@@ -439,9 +451,9 @@ const queryAddressBalance = async () => {
   }
 }
 
-const openQueryModal = (key: string) => {
-  const token = TOKENS[key as keyof typeof TOKENS]
-  queryAddress.value = getTokenAddress(token, selectedNetwork.value) || ''
+const openQueryModal = (key: string, isToken = true) => {
+  const token = isToken ? TOKENS[key as keyof typeof TOKENS] : CONTRACTS[key as keyof typeof CONTRACTS]
+  queryAddress.value = getContractAddress(token, selectedNetwork.value, isToken) || ''
   queryResults.value = {}
   showQueryModal.value = true
   queryAddressBalance();

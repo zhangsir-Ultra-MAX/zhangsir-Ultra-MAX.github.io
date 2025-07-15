@@ -81,7 +81,7 @@ export const useSavingsStore = defineStore('savings', () => {
       apy.value = new BigNumber(formatUnits(currentAPY.lastIncrease, 16)).multipliedBy(365).toString()
       const sWRMB_external_shares = new BigNumber(totalSupply.value).gt(0) ? totalSupply.value : '1'
       const B_Total_APY = new BigNumber(apy.value).multipliedBy(totalMMFSupply.value).dividedBy(sWRMB_external_shares);
-      dynamicAPY.value = B_Total_APY.gt(0) ? B_Total_APY.minus(apy.value).toString() : '0';
+      dynamicAPY.value = B_Total_APY.gt(0) ? B_Total_APY.toString() : '0';
 
       // Fetch WRMB price (placeholder - in real implementation, this would come from an oracle or API)
       await fetchWRMBPrice()

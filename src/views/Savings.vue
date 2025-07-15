@@ -40,7 +40,7 @@
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.totalAssets) }} WRMB
+              {{ formatNumber(savingsStore.totalAssets, 6) }} WRMB
             </div>
             <div class="card-subtitle">
               ≈ ${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}
@@ -72,8 +72,7 @@
               </el-icon>
             </div>
             <div class="card-value">
-              <span>≈ {{ formatNumber(savingsStore.apy) }}%</span>
-              <span class="text-green-500 font-semibold text-lg"> + {{ formatNumber(savingsStore.dynamicAPY) }}%</span>
+              <span>{{ formatNumber(savingsStore.dynamicAPY) }}%</span>
             </div>
             <div class="card-subtitle">
               {{ $t('savings.annualYield') }}
@@ -89,10 +88,10 @@
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.userBalance) }} sWRMB
+              {{ formatNumber(savingsStore.userBalance, 6) }} sWRMB
             </div>
             <div class="card-subtitle">
-              ≈ {{ formatNumber(savingsStore.userAssetValue) }} WRMB
+              ≈ {{ formatNumber(savingsStore.userAssetValue, 6) }} WRMB
             </div>
           </div>
         </div>
@@ -141,7 +140,7 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('savings.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(depositPreview.shares) }} sWRMB</span>
+                      <span class="preview-value">{{ formatNumber(depositPreview.shares, 6) }} sWRMB</span>
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
@@ -197,12 +196,8 @@
                   <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
-                      <span>{{ $t('savings.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawAmount) }} WRMB</span>
-                    </div>
-                    <div class="preview-row">
                       <span>{{ $t('savings.sharesRequired') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.shares) }} sWRMB</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.shares, 6) }} sWRMB</span>
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
@@ -461,15 +456,25 @@ const handleWithdraw = async () => {
     if (!savingsContract) {
       throw new Error('Contract not available')
     }
+
+    if (withdrawAmount.value === savingsStore.userAssetValue) {
+      const withdrawTx = await savingsContract.redeem(
+        parseUnits(savingsStore.userAssetValue, 18),
+        walletStore.address,
+        walletStore.address
+      )
+      const receipt = await withdrawTx.wait()
+      transactionHash.value = receipt.hash
+    }else{
+      const withdrawTx = await savingsContract.withdraw(
+        amountWei,
+        walletStore.address,
+        walletStore.address
+      )
+      const receipt = await withdrawTx.wait()
+      transactionHash.value = receipt.hash
+    }
     
-    const withdrawTx = await savingsContract.withdraw(
-      amountWei,
-      walletStore.address,
-      walletStore.address
-    )
-    const receipt = await withdrawTx.wait()
-    
-    transactionHash.value = receipt.hash
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
     

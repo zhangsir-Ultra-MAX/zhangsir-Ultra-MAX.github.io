@@ -18,10 +18,14 @@ export const formatNumber = (
   
   if (isNaN(num)) return '0'
   
+  // 使用截取而非四舍五入
+  const factor = Math.pow(10, decimals)
+  const truncatedNum = Math.floor(num * factor) / factor
+  
   return new Intl.NumberFormat(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
-  }).format(num)
+  }).format(truncatedNum)
 }
 
 /**
