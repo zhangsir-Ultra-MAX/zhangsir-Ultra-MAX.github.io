@@ -136,14 +136,14 @@
           <span>{{ $t('transaction.success') }}</span>
         </div>
         
-        <div v-else-if="status === 'error'" class="status-message error">
+        <!-- <div v-else-if="status === 'error'" class="status-message error">
           <el-icon class="text-red-500 flex-shrink-0">
             <CircleCloseFilled />
           </el-icon>
           <div class="error-message-container">
             <span>{{ errorMessage || $t('transaction.failed') }}</span>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Transaction Hash -->

@@ -149,7 +149,7 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('savings.fee') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.fee, 6) }} WRMB</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.fee, 2) }} WRMB</span>
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.sharesRequired') }}</span>
