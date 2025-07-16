@@ -181,7 +181,7 @@
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.totalSupply') }}</div>
-            <div class="stat-value">{{ formatNumber(savingsStore.totalSupply) }} sWRMB</div>
+            <div class="stat-value">{{ formatNumber(savingsStore.totalSupply) }}</div>
           </div>
 
           <div class="stat-item">

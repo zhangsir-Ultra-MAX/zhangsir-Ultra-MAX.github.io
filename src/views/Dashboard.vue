@@ -49,7 +49,7 @@
         
         <div class="stats-grid">
           <!-- Total Value -->
-          <div class="stat-card primary">
+          <!-- <div class="stat-card primary">
             <div class="stat-header">
               <h3 class="stat-title">{{ $t('dashboard.totalValue') }}</h3>
               <el-icon class="stat-icon">
@@ -68,12 +68,12 @@
                 {{ Math.abs(portfolioChange).toFixed(2) }}%
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- Savings Balance -->
-          <div class="stat-card">
+          <div class="stat-card primary">
             <div class="stat-header">
-              <h3 class="stat-title">{{ $t('dashboard.savingsBalance') }}</h3>
+              <h3 class="stat-title">{{ $t('dashboard.savingsLiquidity') }}</h3>
               <el-icon class="stat-icon">
                 <Wallet />
               </el-icon>
@@ -376,7 +376,7 @@ watch(
 }
 
 .stats-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
 }
 
 .stat-card {

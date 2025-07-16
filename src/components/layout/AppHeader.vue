@@ -5,10 +5,10 @@
         <!-- Logo and Brand -->
         <div class="flex items-center space-x-4">
           <router-link to="/" class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-              <span class="text-white font-bold text-sm">C</span>
+            <div class="w-10 h-10 from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+              <img v-if="appStore.isDark" src="../../assets/logo-dark.png" alt="Logo" class="w-10 h-10">
+              <img v-else src="../../assets/logo.png" alt="Logo" class="w-10 h-10">
             </div>
-            <span class="text-xl font-bold text-gray-900 dark:text-white">CINA Protocol</span>
           </router-link>
         </div>
 
