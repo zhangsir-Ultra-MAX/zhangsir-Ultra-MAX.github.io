@@ -160,7 +160,8 @@
     "sharesRequired": "所需份额",
     "currentExchangeRate": "当前汇率",
     "externalShares": "外部份额",
-    "externalSharesDescription": "已被提取的外部份额"
+    "externalSharesDescription": "已被提取的外部份额",
+    "fee": "手续费"
   },
   "wrap": {
     "title": "包装与解包",

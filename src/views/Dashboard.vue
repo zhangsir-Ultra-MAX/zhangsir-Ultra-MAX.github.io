@@ -80,10 +80,10 @@
             </div>
             <div class="stat-content">
               <div class="stat-value">
-                {{ formatNumber(savingsStore.userAssetValue) }} WRMB
+                {{ formatNumber(savingsStore.totalAssets, 6) }} WRMB
               </div>
               <div class="stat-subtitle">
-                ≈ ${{ formatNumber(parseFloat(savingsStore.userAssetValue) * 0.14) }}
+                ≈ ${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}
               </div>
             </div>
           </div>

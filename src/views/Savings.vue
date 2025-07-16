@@ -43,7 +43,7 @@
               {{ formatNumber(savingsStore.userAssetValue, 6) }} WRMB
             </div>
             <div class="card-subtitle">
-              PAY: ≈{{ formatNumber(savingsStore.dynamicAPY) }}%
+              {{ formatNumber(savingsStore.dynamicAPY) }}% APY
             </div>
           </div>
         </div>
@@ -148,7 +148,7 @@
                   <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
-                      <span>{{ $t('savings.youWillReceive') }}</span>
+                      <span>{{ $t('savings.fee') }}</span>
                       <span class="preview-value">{{ formatNumber(withdrawPreview.fee, 6) }} WRMB</span>
                     </div>
                     <div class="preview-row">

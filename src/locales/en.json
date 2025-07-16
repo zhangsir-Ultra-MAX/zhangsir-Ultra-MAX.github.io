@@ -160,7 +160,8 @@
     "sharesRequired": "Shares Required",
     "currentExchangeRate": "Exchange Rate",
     "externalShares": "External Shares",
-    "externalSharesDescription": "External share withdrawn"
+    "externalSharesDescription": "External share withdrawn",
+    "fee": "Fee"
   },
   "wrap": {
     "title": "Wrap & Unwrap",
