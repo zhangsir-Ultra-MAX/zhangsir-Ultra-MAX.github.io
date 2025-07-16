@@ -498,7 +498,7 @@ const transactionDetails = computed(() => {
     )
   } else if (mode.value === 'unwrap' && unwrapAmount.value) {
     details.push(
-      { label: t('wrap.inputAmount'), value: `${unwrapAmount.value} sWRMB`, highlight: true },
+      { label: t('wrap.inputAmount'), value: `${unwrapPreview.value?.sWRMBBurned || '0'} sWRMB`, highlight: true },
       { label: t('wrap.outputAmount'), value: `${unwrapPreview.value?.sRMBReceived || '0'} sRMB` },
       { label: t('wrap.fee'), value: `${unwrapPreview.value?.fee || '0'} sWRMB` }
     )

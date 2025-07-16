@@ -27,6 +27,7 @@ const SAVINGS_VAULT_ABI = [
   'function previewRedeem(uint256) view returns (uint256)',
   'function previewMint(uint256) view returns (uint256)',
   'function previewWithdraw(uint256) view returns (uint256)',
+  'function previewWithdrawOfFee(uint256) view returns (uint256, uint256)',
   'function maxWithdraw(address) view returns (uint256)',
   'function getCurrentYearNAVSummary() view returns (uint256 totalIncrease, uint256 averageIncrease, uint256 maxIncrease, uint256 minIncrease, uint256 recordCount, uint256 firstIncrease, uint256 lastIncrease)',
   'function deposit(uint256, address) returns (uint256)',

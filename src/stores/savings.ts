@@ -154,11 +154,11 @@ export const useSavingsStore = defineStore('savings', () => {
       if (!contract) throw new Error('Contract not available')
 
       const assetsWei = parseUnits(amount, 18)
-      const shares = await contract.previewWithdraw(assetsWei)
+      const shares = await contract.previewWithdrawOfFee(assetsWei)
 
       return {
-        shares: formatUnits(shares, 18),
-        fee: '0' // No fee for withdrawals in this implementation
+        shares: formatUnits(shares[0], 18),
+        fee: formatUnits(shares[1], 18)
       }
     } catch (error) {
       console.error('Failed to preview withdraw:', error)

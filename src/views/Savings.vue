@@ -32,7 +32,7 @@
 
         <div class="overview-grid">
           <!-- Total Assets -->
-          <div class="overview-card">
+          <div class="overview-card highlight">
             <div class="card-header">
               <h3 class="card-title">{{ $t('savings.totalAssets') }}</h3>
               <el-icon class="card-icon">
@@ -40,58 +40,10 @@
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.totalAssets, 6) }} WRMB
+              {{ formatNumber(savingsStore.userAssetValue, 6) }} WRMB
             </div>
             <div class="card-subtitle">
-              ≈ ${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}
-            </div>
-          </div>
-
-          <!-- External Shares -->
-          <div class="overview-card">
-            <div class="card-header">
-              <h3 class="card-title">{{ $t('savings.currentPrice') }}</h3>
-              <el-icon class="card-icon">
-                <TrendCharts />
-              </el-icon>
-            </div>
-            <div class="card-value">
-              {{ formatNumber(savingsStore.currentNAV, 8) }}
-            </div>
-            <div class="card-subtitle">
-              {{ $t('savings.priceDescription') }}
-            </div>
-          </div>
-
-          <!-- APY -->
-          <div class="overview-card highlight">
-            <div class="card-header">
-              <h3 class="card-title">{{ $t('savings.apy') }}</h3>
-              <el-icon class="card-icon">
-                <DataAnalysis />
-              </el-icon>
-            </div>
-            <div class="card-value">
-              <span>{{ formatNumber(savingsStore.dynamicAPY) }}%</span>
-            </div>
-            <div class="card-subtitle">
-              {{ $t('savings.annualYield') }}
-            </div>
-          </div>
-
-          <!-- Your Balance -->
-          <div class="overview-card">
-            <div class="card-header">
-              <h3 class="card-title">{{ $t('savings.yourBalance') }}</h3>
-              <el-icon class="card-icon">
-                <User />
-              </el-icon>
-            </div>
-            <div class="card-value">
-              {{ formatNumber(savingsStore.userBalance, 6) }} sWRMB
-            </div>
-            <div class="card-subtitle">
-              ≈ {{ formatNumber(savingsStore.userAssetValue, 6) }} WRMB
+              PAY: ≈{{ formatNumber(savingsStore.dynamicAPY) }}%
             </div>
           </div>
         </div>
@@ -195,6 +147,10 @@
                 <div v-if="withdrawPreview" class="preview-section">
                   <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
                   <div class="preview-details">
+                    <div class="preview-row">
+                      <span>{{ $t('savings.youWillReceive') }}</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.fee, 6) }} WRMB</span>
+                    </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.sharesRequired') }}</span>
                       <span class="preview-value">{{ formatNumber(withdrawPreview.shares, 6) }} sWRMB</span>
@@ -459,7 +415,7 @@ const handleWithdraw = async () => {
 
     if (withdrawAmount.value === savingsStore.userAssetValue) {
       const withdrawTx = await savingsContract.redeem(
-        parseUnits(savingsStore.userAssetValue, 18),
+        parseUnits(savingsStore.userBalance, 18),
         walletStore.address,
         walletStore.address
       )
@@ -563,7 +519,7 @@ watch(
 }
 
 .overview-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6;
 }
 
 .overview-card {
