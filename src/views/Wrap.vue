@@ -548,9 +548,9 @@ const transactionDetails = computed(() => {
   
   if (mode.value === 'wrap' && wrapAmount.value) {
     details.push(
-      { label: t('wrap.inputAmount'), value: `${wrapAmount.value} sRMB`, highlight: true },
-      { label: t('wrap.outputAmount'), value: `${wrapPreview.value?.outputAmount || '0'} sWRMB` },
-      { label: t('wrap.fee'), value: `${wrapPreview.value?.fee || '0'} sRMB` }
+      { label: t('wrap.inputAmount'), value: `${formatNumber(wrapAmount.value, 6)} sRMB`, highlight: true },
+      { label: t('wrap.outputAmount'), value: `${formatNumber(wrapPreview.value?.outputAmount || '0', 6)} sWRMB` },
+      { label: t('wrap.fee'), value: `${formatNumber(wrapPreview.value?.fee || '0', 6)} sRMB` }
     )
   } else if (mode.value === 'unwrap' && unwrapAmount.value) {
     details.push(
@@ -647,7 +647,7 @@ const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> 
     if (!wrapManager) return null
     
     const amountWei = parseUnits(amount, 18)
-    const [sWRMBReceived, wrmBMinted, fee, waitTime, currentNAV] = await wrapManager.previewWrap(amountWei)
+    const [sWRMBReceived, wrmBMinted, fee, waitTime, currentNAV] = await wrapManager.previewWrap(walletStore.address, amountWei)
     
     const outputAmount = formatUnits(sWRMBReceived, 18)
     const feeAmount = formatUnits(fee, 18)
@@ -689,8 +689,8 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
     
     // Now passing sRMB amount as input parameter
     const amountWei = parseUnits(amount, 18)
-    const [sRMBReceived, sWRMBBurned, fee, waitTime, currentNAV] = await wrapManager.previewUnwrap(amountWei)
-    
+    const [sRMBReceived, sWRMBBurned, fee, waitTime, currentNAV] = await wrapManager.previewUnwrap(walletStore.address, amountWei)
+    console.log(waitTime);
     const sWRMBBurnedAmount = formatUnits(sWRMBBurned, 18)
     const sRMBReceivedAmount = formatUnits(sRMBReceived, 18)
     const feeAmount = formatUnits(fee, 18)
