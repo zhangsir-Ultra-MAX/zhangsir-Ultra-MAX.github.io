@@ -20,7 +20,7 @@
               <img src="../assets/wrmb.png" alt="" class="wrmb-icon"> 
               <AnimatedNumber 
                 :value="savingsStore.userAssetValue" 
-                :decimals="8"
+                :decimals="dynamicDecimals"
                 :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
                 :increment-amount="parseFloat(savingsStore.userIncrementAmount)"
                 :increment-interval="1000"
@@ -275,6 +275,24 @@ const withdrawPreviewFee = computed(() => {
   const amount = parseFloat(withdrawAmount.value)
   const fee = parseFloat(withdrawPreview.value.fee)
   return (amount * fee).toString()
+})
+
+// 动态小数位数计算
+const dynamicDecimals = computed(() => {
+  const value = parseFloat(savingsStore.userAssetValue)
+  if (value >= 10000) {
+    return 8
+  } else if (value >= 1000) {
+    return 9
+  } else if (value >= 100) {
+    return 10
+  } else if (value >= 10) {
+    return 11
+  } else if (value < 1) {
+    return 12
+  } else {
+    return 10 // 默认值，适用于1-999.99范围
+  }
 })
 
 // Debounced preview functions
