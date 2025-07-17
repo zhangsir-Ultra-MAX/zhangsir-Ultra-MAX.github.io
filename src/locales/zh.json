@@ -227,7 +227,13 @@
     "sWRMBRequired": "需要 sWRMB",
     "enterDesiredAmount": "输入期望的 sRMB 数量",
     "totalReserveTransferred": "总储备转移量",
-    "reserveTransferredDescription": "转移到债券池作为储备的WRMB总量"
+    "reserveTransferredDescription": "转移到债券池作为储备的WRMB总量",
+    "invalidAmount": "请输入有效金额",
+    "insufficientBalance": "余额不足",
+    "belowMinAmount": "金额低于最小值：{min}",
+    "aboveMaxAmount": "金额超过最大值：{max}",
+    "belowMinUnwrapAmount": "金额低于最小解包值：{min}",
+    "aboveMaxUnwrapAmount": "金额超过最大解包值：{max}"
   },
   "bonds": {
     "title": "债券交易",

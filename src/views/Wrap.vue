@@ -127,10 +127,17 @@
                   />
                   <div class="token-selector">
                     <div class="token-info">
-                      <div class="token-icon srmb">sRMB</div>
                       <span class="token-name">sRMB</span>
                     </div>
                   </div>
+                </div>
+
+                <!-- Validation Error Message -->
+                <div v-if="wrapValidationError" class="validation-error">
+                  <el-icon class="error-icon">
+                    <WarningFilled />
+                  </el-icon>
+                  <span class="error-text">{{ wrapValidationError }}</span>
                 </div>
                 
                 <div class="quick-amounts">
@@ -176,7 +183,6 @@
                   />
                   <div class="token-selector">
                     <div class="token-info">
-                      <div class="token-icon swrmb">sWRMB</div>
                       <span class="token-name">sWRMB</span>
                     </div>
                   </div>
@@ -242,10 +248,17 @@
                   />
                   <div class="token-selector">
                     <div class="token-info">
-                      <div class="token-icon srmb">sRMB</div>
                       <span class="token-name">sRMB</span>
                     </div>
                   </div>
+                </div>
+                
+                <!-- Validation Error Message -->
+                <div v-if="unwrapValidationError" class="validation-error">
+                  <el-icon class="error-icon">
+                    <WarningFilled />
+                  </el-icon>
+                  <span class="error-text">{{ unwrapValidationError }}</span>
                 </div>
                 
                 <div class="quick-amounts">
@@ -291,7 +304,6 @@
                   />
                   <div class="token-selector">
                     <div class="token-info">
-                      <div class="token-icon swrmb">sWRMB</div>
                       <span class="token-name">sWRMB</span>
                     </div>
                   </div>
@@ -498,9 +510,9 @@ const transactionDetails = computed(() => {
     )
   } else if (mode.value === 'unwrap' && unwrapAmount.value) {
     details.push(
-      { label: t('wrap.inputAmount'), value: `${unwrapPreview.value?.sWRMBBurned || '0'} sWRMB`, highlight: true },
-      { label: t('wrap.outputAmount'), value: `${unwrapPreview.value?.sRMBReceived || '0'} sRMB` },
-      { label: t('wrap.fee'), value: `${unwrapPreview.value?.fee || '0'} sWRMB` }
+      { label: t('wrap.inputAmount'), value: `${formatNumber(unwrapPreview.value?.sWRMBBurned || '0', 6)} sWRMB`, highlight: true },
+      { label: t('wrap.outputAmount'), value: `${formatNumber(unwrapPreview.value?.sRMBReceived || '0', 6)} sRMB` },
+      { label: t('wrap.fee'), value: `${formatNumber(unwrapPreview.value?.fee || '0', 6)} sWRMB` }
     )
   }
   
@@ -523,6 +535,24 @@ const isWrapValid = computed(() => {
   return true
 })
 
+const wrapValidationError = computed(() => {
+  if (!wrapAmount.value) return ''
+  
+  const amount = parseFloat(wrapAmount.value)
+  if (!amount || amount <= 0) return t('wrap.invalidAmount')
+  if (amount > parseFloat(sRMBBalance.value)) return t('wrap.insufficientBalance')
+  
+  // Check min/max amounts if config is loaded
+  if (wrapConfig.value) {
+    const minAmount = parseFloat(wrapConfig.value.minWrapAmount)
+    const maxAmount = parseFloat(wrapConfig.value.maxWrapAmount)
+    if (minAmount > 0 && amount < minAmount) return t('wrap.belowMinAmount', { min: formatNumber(minAmount) })
+    if (maxAmount > 0 && amount > maxAmount) return t('wrap.aboveMaxAmount', { max: formatNumber(maxAmount) })
+  }
+  
+  return ''
+})
+
 const isUnwrapValid = computed(() => {
   const amount = parseFloat(unwrapAmount.value)
   if (!amount || amount <= 0) return false
@@ -540,6 +570,27 @@ const isUnwrapValid = computed(() => {
   }
   
   return true
+})
+
+const unwrapValidationError = computed(() => {
+  if (!unwrapAmount.value) return ''
+  
+  const amount = parseFloat(unwrapAmount.value)
+  if (!amount || amount <= 0) return t('wrap.invalidAmount')
+  
+  // Check if user has enough wrapped amount to unwrap
+  const unwrappableAmount = parseFloat(userMaxUnwrappableAmount.value)
+  if (amount > unwrappableAmount) return t('wrap.insufficientUnwrappableAmount')
+
+  // Check min/max amounts if config is loaded
+  if (wrapConfig.value) {
+    const minAmount = parseFloat(wrapConfig.value.minUnwrapAmount)
+    const maxAmount = parseFloat(wrapConfig.value.maxUnwrapAmount)
+    if (minAmount > 0 && amount < minAmount) return t('wrap.belowMinUnwrapAmount', { min: formatNumber(minAmount) })
+    if (maxAmount > 0 && amount > maxAmount) return t('wrap.aboveMaxUnwrapAmount', { max: formatNumber(maxAmount) })
+  }
+  
+  return ''
 })
 
 // Real contract preview functions
@@ -561,8 +612,8 @@ const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> 
     const priceImpact = Math.abs((1 - exchangeRate) * 100)
     
     return {
-      outputAmount: parseFloat(outputAmount).toFixed(6),
-      fee: parseFloat(feeAmount).toFixed(6),
+      outputAmount: outputAmount,
+      fee: feeAmount,
       feePercentage: feePercentage.toFixed(2),
       exchangeRate: exchangeRate.toFixed(6),
       minimumReceived: (parseFloat(outputAmount) * 0.995).toFixed(6), // 0.5% slippage
@@ -592,9 +643,9 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
     const feePercentage = (parseFloat(feeAmount) / inputAmount * 100)
     
     return {
-      sWRMBBurned: parseFloat(sWRMBBurnedAmount).toFixed(6),
-      sRMBReceived: parseFloat(sRMBReceivedAmount).toFixed(6),
-      fee: parseFloat(feeAmount).toFixed(6),
+      sWRMBBurned: sWRMBBurnedAmount,
+      sRMBReceived: sRMBReceivedAmount,
+      fee: feeAmount,
       feePercentage: feePercentage.toFixed(2)
     }
   } catch (error) {
@@ -1118,6 +1169,18 @@ onMounted(() => {
 
 .info-content {
   @apply text-gray-600 dark:text-gray-400 text-sm leading-relaxed;
+}
+
+.validation-error {
+  @apply flex items-center space-x-2 mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg;
+}
+
+.error-icon {
+  @apply text-red-500 dark:text-red-400 text-sm;
+}
+
+.error-text {
+  @apply text-red-600 dark:text-red-400 text-sm font-medium;
 }
 
 :deep(.el-segmented) {

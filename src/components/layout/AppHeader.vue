@@ -58,7 +58,7 @@
           <!-- Language Toggle -->
           <el-dropdown @command="handleLanguageChange">
             <el-button circle class="!border-gray-300 dark:!border-gray-600">
-              <el-icon><Position /></el-icon>
+              {{ currentLanguage === 'en' ? 'En' : 'Zh' }}
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -122,7 +122,6 @@ import {
   Menu,
   Moon,
   Sunny,
-  Position,
   DataBoard,
   Wallet,
   Switch,

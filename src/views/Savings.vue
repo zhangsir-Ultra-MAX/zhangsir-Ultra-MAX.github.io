@@ -34,13 +34,19 @@
           <!-- Total Assets -->
           <div class="overview-card highlight">
             <div class="card-header">
-              <h3 class="card-title">{{ $t('savings.totalAssets') }}</h3>
+              <h3 class="card-title">{{ $t('savings.assetValue') }}</h3>
               <el-icon class="card-icon">
                 <Wallet />
               </el-icon>
             </div>
             <div class="card-value">
-              {{ formatNumber(savingsStore.userAssetValue, 6) }} WRMB
+              <AnimatedNumber 
+                :value="savingsStore.userAssetValue" 
+                :decimals="8"
+                :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
+                :increment-amount="parseFloat(savingsStore.userIncrementAmount)"
+                :increment-interval="1000"
+              /> WRMB
             </div>
             <div class="card-subtitle">
               {{ formatNumber(savingsStore.dynamicAPY) }}% APY
@@ -96,7 +102,7 @@
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
-                      <span class="preview-value">1 WRMB = {{ formatNumber((1 / parseFloat(savingsStore.currentNAV || '1')), 6) }} sWRMB</span>
+                      <span class="preview-value">1 WRMB ≈ {{ formatNumber((1 / parseFloat(savingsStore.currentNAV || '1')), 6) }} sWRMB</span>
                     </div>
                   </div>
                 </div>
@@ -148,8 +154,12 @@
                   <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
+                      <span>{{ $t('savings.youWillReceive') }}</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.assets, 6) }} WRMB</span>
+                    </div>
+                    <div class="preview-row">
                       <span>{{ $t('savings.fee') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.fee, 2) }} WRMB</span>
+                      <span class="preview-value">{{ (parseFloat(withdrawPreview.fee)*100).toFixed(2) }} %</span>
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.sharesRequired') }}</span>
@@ -157,7 +167,7 @@
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
-                      <span class="preview-value">1 sWRMB = {{ formatNumber(savingsStore.currentNAV, 6) }} WRMB</span>
+                      <span class="preview-value">1 sWRMB ≈ {{ formatNumber(savingsStore.currentNAV, 6) }} WRMB</span>
                     </div>
                   </div>
                 </div>
@@ -191,12 +201,24 @@
 
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.totalValue') }}</div>
-            <div class="stat-value">${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}</div>
+            <div class="stat-value">$<AnimatedNumber 
+              :value="parseFloat(savingsStore.totalAssets) * 0.14" 
+              :decimals="2"
+              :auto-increment="parseFloat(savingsStore.totalAssets) > 0"
+              :increment-amount="0"
+              :increment-interval="3000"
+            /></div>
           </div>
 
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.yourValue') }}</div>
-            <div class="stat-value">${{ formatNumber(parseFloat(savingsStore.userAssetValue) * 0.14) }}</div>
+            <div class="stat-value">$<AnimatedNumber 
+              :value="parseFloat(savingsStore.userAssetValue) * 0.14" 
+              :decimals="2"
+              :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
+              :increment-amount="0"
+              :increment-interval="2500"
+            /></div>
           </div>
         </div>
       </div>
@@ -224,6 +246,7 @@ import {
 import { parseUnits } from 'ethers'
 
 import TransactionModal from '@/components/common/TransactionModal.vue'
+import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { useSavingsStore } from '@/stores/savings'
 import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
@@ -243,6 +266,7 @@ const depositPreview = ref({
 })
 const withdrawPreview = ref({
   shares: '',
+  assets: '',
   fee: '0'
 })
 
@@ -265,13 +289,13 @@ const transactionDetails = computed(() => {
 
   if (activeTab.value === 'deposit' && depositAmount.value) {
     details.push(
-      { label: t('savings.depositAmount'), value: `${depositAmount.value} WRMB`, highlight: true },
-      { label: t('savings.estimatedShares'), value: `${depositPreview.value?.shares || '0'} sWRMB` }
+      { label: t('savings.depositAmount'), value: `${formatNumber(depositAmount.value, 6)} WRMB`, highlight: true },
+      { label: t('savings.estimatedShares'), value: `${formatNumber(depositPreview.value?.shares || '0', 6)} sWRMB` }
     )
   } else if (activeTab.value === 'withdraw' && withdrawAmount.value) {
     details.push(
-      { label: t('savings.withdrawAmount'), value: `${withdrawAmount.value} WRMB`, highlight: true },
-      { label: t('savings.sharesRequired'), value: `${withdrawPreview.value?.shares || '0'} sWRMB` }
+      { label: t('savings.withdrawAmount'), value: `${formatNumber(withdrawAmount.value, 6)} WRMB`, highlight: true },
+      { label: t('savings.sharesRequired'), value: `${formatNumber(withdrawPreview.value?.shares || '0', 6)} sWRMB` }
     )
   }
 
@@ -310,7 +334,7 @@ const debouncedWithdrawPreview = debounce(async (amount: string) => {
       console.error('Failed to preview withdraw:', error)
     }
   } else {
-    withdrawPreview.value = { shares: '', fee: '0' }
+    withdrawPreview.value = { shares: '', assets: '', fee: '0' }
   }
 }, 500)
 
@@ -436,7 +460,7 @@ const handleWithdraw = async () => {
     
     // Reset form and refresh data
     withdrawAmount.value = ''
-    withdrawPreview.value = { shares: '', fee: '0' }
+    withdrawPreview.value = { shares: '', assets: '', fee: '0' }
     await savingsStore.fetchVaultData()
     
     ElMessage.success(t('savings.withdrawSuccess'))

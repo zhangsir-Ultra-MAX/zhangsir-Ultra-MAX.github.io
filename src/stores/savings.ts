@@ -18,6 +18,7 @@ export const useSavingsStore = defineStore('savings', () => {
   const apy = ref('0') // Annual percentage yield
   const dynamicAPY = ref('0') // Dynamic APY
   const userAssetValue = ref('0') // User's asset value in maxWithdraw 
+  const userIncrementAmount = ref('0') // User's increment amount
   const isLoading = ref(false)
   const lastUpdateTime = ref(0)
   const historicalNAV = ref<Array<{ timestamp: number, nav: number }>>([]) // Historical NAV data for APY calculation
@@ -63,19 +64,21 @@ export const useSavingsStore = defineStore('savings', () => {
       if (!contract) throw new Error('Contract not available')
 
       // Fetch vault data
-      const [vaultTotalAssets, vaultTotalSupply, mmfTotalSupply, nav, maxWithdraw, currentAPY] = await Promise.all([
+      const [vaultTotalAssets, vaultTotalSupply, mmfTotalSupply, nav, maxWithdraw, currentAPY, incrementAmount] = await Promise.all([
         contract.totalAssets(),
         contract.totalSupply(),
         contract.totalMMFSupply(),
         contract.getNAV_sWRMB(),
         contract.maxWithdraw(walletStore.address),
-        contract.getCurrentYearNAVSummary()
+        contract.getCurrentYearNAVSummary(),
+        contract.getUserIncrementAmount(walletStore.address),
       ])
 
       totalAssets.value = formatUnits(vaultTotalAssets.toString(), 18)
       totalSupply.value = formatUnits(vaultTotalSupply.toString(), 18)
       totalMMFSupply.value = formatUnits(mmfTotalSupply.toString(), 18)
       userAssetValue.value = formatUnits(maxWithdraw.toString(), 18)
+      userIncrementAmount.value = formatUnits(incrementAmount.toString(), 18)
 
       currentNAV.value = formatUnits(nav, 18)
       apy.value = new BigNumber(formatUnits(currentAPY.lastIncrease, 16)).multipliedBy(365).toString()
@@ -147,7 +150,7 @@ export const useSavingsStore = defineStore('savings', () => {
   }
 
   const previewWithdraw = async (amount: string) => {
-    if (!amount || amount === '0') return { shares: '0', fee: '0' }
+    if (!amount || amount === '0') return { shares: '0', assets: '0', fee: '0' }
 
     try {
       const contract = await contractService.getSavingsVaultContract()
@@ -158,11 +161,12 @@ export const useSavingsStore = defineStore('savings', () => {
 
       return {
         shares: formatUnits(shares[0], 18),
-        fee: formatUnits(shares[1], 18)
+        assets: formatUnits(shares[1], 18),
+        fee: formatUnits(shares[2], 18)
       }
     } catch (error) {
       console.error('Failed to preview withdraw:', error)
-      return { shares: '0', fee: '0' }
+      return { shares: '0', assets: '0', fee: '0' }
     }
   }
 
@@ -189,10 +193,10 @@ export const useSavingsStore = defineStore('savings', () => {
     }
 
     refreshInterval = setInterval(() => {
-      if (Date.now() - lastUpdateTime.value > 30000) { // 30 seconds
+      if (Date.now() - lastUpdateTime.value > 12000) { // 12 seconds
         fetchVaultData()
       }
-    }, 30000)
+    }, 12000)
   }
 
   const stopAutoRefresh = () => {
@@ -212,6 +216,7 @@ export const useSavingsStore = defineStore('savings', () => {
     totalSupply,
     apy,
     dynamicAPY,
+    userIncrementAmount,
     isLoading,
     depositAmount,
     withdrawAmount,
