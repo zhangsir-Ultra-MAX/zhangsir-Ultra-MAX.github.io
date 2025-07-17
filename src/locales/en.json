@@ -233,7 +233,9 @@
     "belowMinAmount": "Amount below minimum: {min}",
     "aboveMaxAmount": "Amount above maximum: {max}",
     "belowMinUnwrapAmount": "Amount below minimum unwrap: {min}",
-    "aboveMaxUnwrapAmount": "Amount above maximum unwrap: {max}"
+    "aboveMaxUnwrapAmount": "Amount above maximum unwrap: {max}",
+    "waitTimeRemaining": "Wait time remaining",
+    "waitingForCooldown": "Waiting for cooldown"
   },
   "bonds": {
     "title": "Bond Trading",

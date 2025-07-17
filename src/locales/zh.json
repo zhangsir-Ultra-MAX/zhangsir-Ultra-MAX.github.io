@@ -233,7 +233,9 @@
     "belowMinAmount": "金额低于最小值：{min}",
     "aboveMaxAmount": "金额超过最大值：{max}",
     "belowMinUnwrapAmount": "金额低于最小解包值：{min}",
-    "aboveMaxUnwrapAmount": "金额超过最大解包值：{max}"
+    "aboveMaxUnwrapAmount": "金额超过最大解包值：{max}",
+    "waitTimeRemaining": "剩余等待时间",
+    "waitingForCooldown": "等待冷却中"
   },
   "bonds": {
     "title": "债券交易",

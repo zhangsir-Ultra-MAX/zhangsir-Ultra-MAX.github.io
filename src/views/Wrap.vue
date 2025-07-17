@@ -215,15 +215,33 @@
               </div>
             </div>
 
+            <!-- 倒计时提示 -->
+            <div v-if="wrapCountdown > 0" class="countdown-notice">
+              <el-icon class="countdown-icon">
+                <Clock />
+              </el-icon>
+              <span class="countdown-text">
+                {{ $t('wrap.waitTimeRemaining') }}: {{ formatCountdown(wrapCountdown) }}
+              </span>
+            </div>
+
             <el-button
               type="primary"
               size="large"
               :loading="wrapInProgress"
-              :disabled="!isWrapValid || !walletStore.isConnected"
+              :disabled="!isWrapValid || !walletStore.isConnected || !canWrap"
               @click="handleWrap"
               class="action-button"
             >
-              {{ walletStore.isConnected ? $t('wrap.wrapTokens') : $t('wallet.connectWallet') }}
+              <template v-if="!walletStore.isConnected">
+                {{ $t('wallet.connectWallet') }}
+              </template>
+              <template v-else-if="!canWrap">
+                {{ $t('wrap.waitingForCooldown') }}
+              </template>
+              <template v-else>
+                {{ $t('wrap.wrapTokens') }}
+              </template>
             </el-button>
           </div>
 
@@ -334,15 +352,33 @@
               </div>
             </div>
 
+            <!-- 倒计时提示 -->
+            <div v-if="unwrapCountdown > 0" class="countdown-notice">
+              <el-icon class="countdown-icon">
+                <Clock />
+              </el-icon>
+              <span class="countdown-text">
+                {{ $t('wrap.waitTimeRemaining') }}: {{ formatCountdown(unwrapCountdown) }}
+              </span>
+            </div>
+
             <el-button
               type="primary"
               size="large"
               :loading="unwrapInProgress"
-              :disabled="!isUnwrapValid || !walletStore.isConnected"
+              :disabled="!isUnwrapValid || !walletStore.isConnected || !canUnwrap"
               @click="handleUnwrap"
               class="action-button"
             >
-              {{ walletStore.isConnected ? $t('wrap.unwrapTokens') : $t('wallet.connectWallet') }}
+              <template v-if="!walletStore.isConnected">
+                {{ $t('wallet.connectWallet') }}
+              </template>
+              <template v-else-if="!canUnwrap">
+                {{ $t('wrap.waitingForCooldown') }}
+              </template>
+              <template v-else>
+                {{ $t('wrap.unwrapTokens') }}
+              </template>
             </el-button>
           </div>
         </div>
@@ -407,7 +443,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
@@ -417,7 +453,8 @@ import {
   Switch,
   InfoFilled,
   QuestionFilled,
-  WarningFilled
+  WarningFilled,
+  Clock
 } from '@element-plus/icons-vue'
 import { formatUnits, parseUnits } from 'ethers'
 
@@ -435,6 +472,7 @@ interface WrapPreview {
   exchangeRate: string
   minimumReceived: string
   priceImpact: string
+  waitTime: number
 }
 
 interface UnwrapPreview {
@@ -442,6 +480,7 @@ interface UnwrapPreview {
   sRMBReceived: string
   fee: string
   feePercentage: string
+  waitTime: number
 }
 
 interface WrapConfig {
@@ -469,6 +508,11 @@ const wrapPreview = ref<WrapPreview | null>(null)
 const unwrapPreview = ref<UnwrapPreview | null>(null)
 const wrapInProgress = ref(false)
 const unwrapInProgress = ref(false)
+
+// 倒计时相关状态
+const wrapCountdown = ref(0)
+const unwrapCountdown = ref(0)
+const countdownInterval = ref<NodeJS.Timeout | null>(null)
 
 // Real balances from contracts
 const sRMBBalance = ref('0')
@@ -603,7 +647,7 @@ const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> 
     if (!wrapManager) return null
     
     const amountWei = parseUnits(amount, 18)
-    const [sWRMBReceived, wrmBMinted, fee] = await wrapManager.previewWrap(amountWei)
+    const [sWRMBReceived, wrmBMinted, fee, waitTime, currentNAV] = await wrapManager.previewWrap(amountWei)
     
     const outputAmount = formatUnits(sWRMBReceived, 18)
     const feeAmount = formatUnits(fee, 18)
@@ -611,13 +655,23 @@ const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> 
     const exchangeRate = parseFloat(outputAmount) / inputAmount
     const priceImpact = Math.abs((1 - exchangeRate) * 100)
     
+    // 处理等待时间
+    const waitTimeSeconds = Number(waitTime)
+    if (waitTimeSeconds > 0) {
+      wrapCountdown.value = waitTimeSeconds
+      startCountdown('wrap')
+    } else {
+      wrapCountdown.value = 0
+    }
+    
     return {
       outputAmount: outputAmount,
       fee: feeAmount,
       feePercentage: feePercentage.toFixed(2),
       exchangeRate: exchangeRate.toFixed(6),
       minimumReceived: (parseFloat(outputAmount) * 0.995).toFixed(6), // 0.5% slippage
-      priceImpact: priceImpact.toFixed(2)
+      priceImpact: priceImpact.toFixed(2),
+      waitTime: waitTimeSeconds
     }
   } catch (error) {
     console.error('Failed to generate wrap preview:', error)
@@ -635,24 +689,73 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
     
     // Now passing sRMB amount as input parameter
     const amountWei = parseUnits(amount, 18)
-    const [sRMBReceived, sWRMBBurned, fee, currentNAV] = await wrapManager.previewUnwrap(amountWei)
+    const [sRMBReceived, sWRMBBurned, fee, waitTime, currentNAV] = await wrapManager.previewUnwrap(amountWei)
     
     const sWRMBBurnedAmount = formatUnits(sWRMBBurned, 18)
     const sRMBReceivedAmount = formatUnits(sRMBReceived, 18)
     const feeAmount = formatUnits(fee, 18)
     const feePercentage = (parseFloat(feeAmount) / inputAmount * 100)
     
+    // 处理等待时间
+    const waitTimeSeconds = Number(waitTime)
+    if (waitTimeSeconds > 0) {
+      unwrapCountdown.value = waitTimeSeconds
+      startCountdown('unwrap')
+    } else {
+      unwrapCountdown.value = 0
+    }
+    
     return {
       sWRMBBurned: sWRMBBurnedAmount,
       sRMBReceived: sRMBReceivedAmount,
       fee: feeAmount,
-      feePercentage: feePercentage.toFixed(2)
+      feePercentage: feePercentage.toFixed(2),
+      waitTime: waitTimeSeconds
     }
   } catch (error) {
     console.error('Failed to generate unwrap preview:', error)
     return null
   }
 }
+
+// 倒计时相关函数
+const startCountdown = (type: 'wrap' | 'unwrap') => {
+  // 清除现有的倒计时
+  if (countdownInterval.value) {
+    clearInterval(countdownInterval.value)
+  }
+  
+  countdownInterval.value = setInterval(() => {
+    if (type === 'wrap' && wrapCountdown.value > 0) {
+      wrapCountdown.value--
+    } else if (type === 'unwrap' && unwrapCountdown.value > 0) {
+      unwrapCountdown.value--
+    } else {
+      // 倒计时结束，清除定时器
+      if (countdownInterval.value) {
+        clearInterval(countdownInterval.value)
+        countdownInterval.value = null
+      }
+    }
+  }, 1000)
+}
+
+// 格式化倒计时显示
+const formatCountdown = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  } else {
+    return `${minutes}:${secs.toString().padStart(2, '0')}`
+  }
+}
+
+// 检查是否可以执行操作
+const canWrap = computed(() => wrapCountdown.value === 0)
+const canUnwrap = computed(() => unwrapCountdown.value === 0)
 
 // Debounced preview functions
 const debouncedWrapPreview = debounce(async (amount: string) => {
@@ -678,6 +781,14 @@ const handleModeChange = (newMode: 'wrap' | 'unwrap') => {
   unwrapAmount.value = ''
   wrapPreview.value = null
   unwrapPreview.value = null
+  
+  // 清理倒计时状态
+  wrapCountdown.value = 0
+  unwrapCountdown.value = 0
+  if (countdownInterval.value) {
+    clearInterval(countdownInterval.value)
+    countdownInterval.value = null
+  }
 }
 
 const switchMode = () => {
@@ -987,6 +1098,14 @@ onMounted(() => {
     refreshData()
   }
 })
+
+onUnmounted(() => {
+  // 清理定时器
+  if (countdownInterval.value) {
+    clearInterval(countdownInterval.value)
+    countdownInterval.value = null
+  }
+})
 </script>
 
 <style scoped>
@@ -1181,6 +1300,18 @@ onMounted(() => {
 
 .error-text {
   @apply text-red-600 dark:text-red-400 text-sm font-medium;
+}
+
+.countdown-notice {
+  @apply flex items-center justify-center space-x-2 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4;
+}
+
+.countdown-icon {
+  @apply text-blue-500 dark:text-blue-400 text-lg;
+}
+
+.countdown-text {
+  @apply text-blue-700 dark:text-blue-300 font-medium;
 }
 
 :deep(.el-segmented) {
