@@ -12,7 +12,7 @@
         
         <!-- Main Content -->
         <main class="pt-16">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Router view with transition -->
             <router-view v-slot="{ Component, route }">
               <transition

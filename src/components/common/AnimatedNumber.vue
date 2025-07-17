@@ -1,9 +1,13 @@
 <template>
-  <span>{{ displayValue }}</span>
+  <span>
+    <span class="integer-part">{{ formatNumber(integerPart, 0) }}</span>
+    <span class="decimal-part" v-if="decimalPart">{{ decimalPart }}</span>
+  </span>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { formatNumber } from '@/utils/format'
 
 interface Props {
   value: number | string
@@ -30,7 +34,18 @@ const targetValue = ref(0)
 const animationId = ref<number | null>(null)
 const incrementTimer = ref<number | null>(null)
 
-const formatNumber = (num: number): string => {
+// 计算整数和小数部分
+const integerPart = computed(() => {
+  const parts = displayValue.value.split('.')
+  return parts[0]
+})
+
+const decimalPart = computed(() => {
+  const parts = displayValue.value.split('.')
+  return parts.length > 1 ? '.' + parts[1] : ''
+})
+
+const curFormatNumber = (num: number): string => {
   return num.toFixed(props.decimals)
 }
 
@@ -47,13 +62,13 @@ const animateToTarget = () => {
     const easeOutQuart = 1 - Math.pow(1 - progress, 4)
     
     currentValue.value = startValue + (endValue - startValue) * easeOutQuart
-    displayValue.value = formatNumber(currentValue.value)
+    displayValue.value = curFormatNumber(currentValue.value)
     
     if (progress < 1) {
       animationId.value = requestAnimationFrame(animate)
     } else {
       currentValue.value = endValue
-      displayValue.value = formatNumber(endValue)
+      displayValue.value = curFormatNumber(endValue)
     }
   }
   
@@ -105,7 +120,7 @@ onMounted(() => {
   if (!isNaN(initialValue)) {
     currentValue.value = initialValue
     targetValue.value = initialValue
-    displayValue.value = formatNumber(initialValue)
+    displayValue.value = curFormatNumber(initialValue)
   }
   
   if (props.autoIncrement) {
@@ -120,3 +135,9 @@ onUnmounted(() => {
   stopAutoIncrement()
 })
 </script>
+
+<style scoped>
+.decimal-part {
+  font-size: 0.8em;
+}
+</style>

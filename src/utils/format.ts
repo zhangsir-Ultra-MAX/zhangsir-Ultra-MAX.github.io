@@ -22,10 +22,25 @@ export const formatNumber = (
   const factor = Math.pow(10, decimals)
   const truncatedNum = Math.floor(num * factor) / factor
   
-  return new Intl.NumberFormat(locale, {
+  const formatted = new Intl.NumberFormat(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
   }).format(truncatedNum)
+  
+  // 如果格式化后为0但原始值不等于0，添加"<"符号
+  if (formatted === '0.00' || formatted === '0' || parseFloat(formatted) === 0) {
+    if (num > 0) {
+      // 显示最小精度单位
+      const minValue = 1 / Math.pow(10, decimals)
+      const minFormatted = new Intl.NumberFormat(locale, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      }).format(minValue)
+      return `<${minFormatted}`
+    }
+  }
+  
+  return formatted
 }
 
 /**

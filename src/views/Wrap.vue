@@ -1,33 +1,10 @@
 <template>
   <div class="wrap">
-    <!-- Header -->
-    <div class="wrap-header">
-      <div class="header-content">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            {{ $t('wrap.title') }}
-          </h1>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">
-            {{ $t('wrap.subtitle') }}
-          </p>
-        </div>
-        
-        <div class="header-actions">
-          <el-button @click="refreshData" :loading="loading">
-            <el-icon class="mr-2">
-              <Refresh />
-            </el-icon>
-            {{ $t('common.refresh') }}
-          </el-button>
-        </div>
-      </div>
-    </div>
-
     <div class="wrap-content">
       <!-- Balance Overview -->
       <div class="balance-overview">
         <h2 class="section-title">
-          {{ $t('wrap.balanceOverview') }}
+          {{ $t('wrap.title') }}
         </h2>
         
         <div class="balance-grid">
@@ -548,15 +525,15 @@ const transactionDetails = computed(() => {
   
   if (mode.value === 'wrap' && wrapAmount.value) {
     details.push(
-      { label: t('wrap.inputAmount'), value: `${formatNumber(wrapAmount.value, 6)} sRMB`, highlight: true },
+      { label: t('wrap.inputAmount'), value: `${formatNumber(wrapAmount.value, 2)} sRMB`, highlight: true },
       { label: t('wrap.outputAmount'), value: `${formatNumber(wrapPreview.value?.outputAmount || '0', 6)} sWRMB` },
-      { label: t('wrap.fee'), value: `${formatNumber(wrapPreview.value?.fee || '0', 6)} sRMB` }
+      { label: t('wrap.fee'), value: `${formatNumber(wrapPreview.value?.fee || '0', 2)} sRMB` }
     )
   } else if (mode.value === 'unwrap' && unwrapAmount.value) {
     details.push(
       { label: t('wrap.inputAmount'), value: `${formatNumber(unwrapPreview.value?.sWRMBBurned || '0', 6)} sWRMB`, highlight: true },
-      { label: t('wrap.outputAmount'), value: `${formatNumber(unwrapPreview.value?.sRMBReceived || '0', 6)} sRMB` },
-      { label: t('wrap.fee'), value: `${formatNumber(unwrapPreview.value?.fee || '0', 6)} sWRMB` }
+      { label: t('wrap.outputAmount'), value: `${formatNumber(unwrapPreview.value?.sRMBReceived || '0', 2)} sRMB` },
+      { label: t('wrap.fee'), value: `${formatNumber(unwrapPreview.value?.fee || '0', 1)} sRMB` }
     )
   }
   
@@ -742,14 +719,17 @@ const startCountdown = (type: 'wrap' | 'unwrap') => {
 
 // 格式化倒计时显示
 const formatCountdown = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600)
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const secs = seconds % 60
   
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  if (days > 0) {
+    return `After ${days.toString().padStart(2, '0')}d ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`
+  } else if (hours > 0) {
+    return `After ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`
   } else {
-    return `${minutes}:${secs.toString().padStart(2, '0')}`
+    return `After ${minutes.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`
   }
 }
 

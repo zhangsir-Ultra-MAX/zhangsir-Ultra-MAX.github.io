@@ -95,11 +95,11 @@ export const useSavingsStore = defineStore('savings', () => {
       }
     } catch (error: any) {
       console.error('Failed to fetch vault data:', error)
-      appStore.addNotification({
-        type: 'error',
-        title: 'Data Fetch Failed',
-        message: error.message || 'Failed to fetch vault data'
-      })
+      // appStore.addNotification({
+      //   type: 'error',
+      //   title: 'Data Fetch Failed',
+      //   message: error.message || 'Failed to fetch vault data'
+      // })
     } finally {
       isLoading.value = false
     }

@@ -1,28 +1,5 @@
 <template>
   <div class="savings">
-    <!-- Header -->
-    <div class="savings-header">
-      <div class="header-content">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            {{ $t('savings.title') }}
-          </h1>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">
-            {{ $t('savings.subtitle') }}
-          </p>
-        </div>
-
-        <div class="header-actions">
-          <el-button @click="refreshData" :loading="savingsStore.loading">
-            <el-icon class="mr-2">
-              <Refresh />
-            </el-icon>
-            {{ $t('common.refresh') }}
-          </el-button>
-        </div>
-      </div>
-    </div>
-
     <div class="savings-content">
       <!-- Vault Overview -->
       <div class="vault-overview">
@@ -32,7 +9,7 @@
 
         <div class="overview-grid">
           <!-- Total Assets -->
-          <div class="overview-card highlight">
+          <div class="overview-card">
             <div class="card-header">
               <h3 class="card-title">{{ $t('savings.assetValue') }}</h3>
               <el-icon class="card-icon">
@@ -40,13 +17,14 @@
               </el-icon>
             </div>
             <div class="card-value">
+              <img src="../assets/wrmb.png" alt="" class="wrmb-icon"> 
               <AnimatedNumber 
                 :value="savingsStore.userAssetValue" 
                 :decimals="8"
                 :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
                 :increment-amount="parseFloat(savingsStore.userIncrementAmount)"
                 :increment-interval="1000"
-              /> WRMB
+              />
             </div>
             <div class="card-subtitle">
               {{ formatNumber(savingsStore.dynamicAPY) }}% APY
@@ -62,14 +40,6 @@
           <el-tab-pane :label="$t('savings.deposit')" name="deposit">
             <div class="tab-content">
               <div class="action-form">
-                <div class="form-header">
-                  <h3 class="form-title">{{ $t('savings.depositWRMB') }}</h3>
-                  <div class="balance-info">
-                    <span class="balance-label">{{ $t('savings.wrmbBalance') }}:</span>
-                    <span class="balance-value">{{ formatNumber(savingsStore.wrmbBalance) }} WRMB</span>
-                  </div>
-                </div>
-
                 <div class="input-section">
                   <div class="input-group">
                     <el-input v-model="depositAmount" :placeholder="$t('savings.enterAmount')" size="large"
@@ -78,17 +48,17 @@
                         <span class="input-suffix">WRMB</span>
                       </template>
                     </el-input>
-                    <el-button text @click="setMaxDeposit" class="max-button">
-                      {{ $t('common.max') }}
-                    </el-button>
                   </div>
-
+                  
                   <!-- Quick Amount Buttons -->
                   <div class="quick-amounts">
                     <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                      @click="setDepositPercentage(percentage)">
-                      {{ percentage }}%
-                    </el-button>
+                    @click="setDepositPercentage(percentage)">
+                    {{ percentage }}%
+                  </el-button>
+                  <el-button @click="setMaxDeposit" class="max-button" size="small">
+                    {{ $t('common.max') }}
+                  </el-button>
                   </div>
                 </div>
 
@@ -119,14 +89,6 @@
           <el-tab-pane :label="$t('savings.withdraw')" name="withdraw">
             <div class="tab-content">
               <div class="action-form">
-                <div class="form-header">
-                  <h3 class="form-title">{{ $t('savings.withdrawWRMB') }}</h3>
-                  <div class="balance-info">
-                    <span class="balance-label">{{ $t('savings.availableToWithdraw') }}:</span>
-                    <span class="balance-value">{{ formatNumber(savingsStore.userAssetValue) }} WRMB</span>
-                  </div>
-                </div>
-
                 <div class="input-section">
                   <div class="input-group">
                     <el-input v-model="withdrawAmount" :placeholder="$t('savings.enterAmount')" size="large"
@@ -135,9 +97,6 @@
                         <span class="input-suffix">WRMB</span>
                       </template>
                     </el-input>
-                    <el-button text @click="setMaxWithdraw" class="max-button">
-                      {{ $t('common.max') }}
-                    </el-button>
                   </div>
 
                   <!-- Quick Amount Buttons -->
@@ -145,6 +104,9 @@
                     <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
                       @click="setWithdrawPercentage(percentage)">
                       {{ percentage }}%
+                    </el-button>
+                    <el-button @click="setMaxWithdraw" class="max-button" size="small">
+                      {{ $t('common.max') }}
                     </el-button>
                   </div>
                 </div>
@@ -159,7 +121,7 @@
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.fee') }}</span>
-                      <span class="preview-value">{{ (parseFloat(withdrawPreview.fee)*100).toFixed(2) }} %</span>
+                      <span class="preview-value">{{formatNumber(withdrawPreviewFee, 2)}} WRMB ({{ formatNumber((parseFloat(withdrawPreview.fee)*100).toString()) }}%)</span>
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.sharesRequired') }}</span>
@@ -238,10 +200,6 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
   Wallet,
-  TrendCharts,
-  DataAnalysis,
-  User,
-  Refresh
 } from '@element-plus/icons-vue'
 import { parseUnits } from 'ethers'
 
@@ -311,6 +269,12 @@ const isWithdrawValid = computed(() => {
   const amount = parseFloat(withdrawAmount.value)
   const maxWithdrawable = parseFloat(savingsStore.userAssetValue)
   return amount > 0 && amount <= maxWithdrawable
+})
+
+const withdrawPreviewFee = computed(() => {
+  const amount = parseFloat(withdrawAmount.value)
+  const fee = parseFloat(withdrawPreview.value.fee)
+  return (amount * fee).toString()
 })
 
 // Debounced preview functions
@@ -535,7 +499,7 @@ watch(
 }
 
 .savings-content {
-  @apply max-w-7xl mx-auto px-6 py-8 space-y-8;
+  @apply max-w-4xl mx-auto px-6 py-8 space-y-8;
 }
 
 .section-title {
@@ -575,7 +539,11 @@ watch(
 }
 
 .card-value {
-  @apply text-2xl font-bold text-gray-900 dark:text-white;
+  @apply text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2;
+}
+
+.wrmb-icon {
+  @apply w-8 h-8 rounded-full object-cover;
 }
 
 .overview-card.highlight .card-value {
@@ -703,7 +671,7 @@ watch(
 }
 
 .stat-value {
-  @apply text-xl font-bold text-gray-900 dark:text-white;
+  @apply text-sm font-bold text-gray-900 dark:text-white;
 }
 
 :deep(.el-tabs__header) {
