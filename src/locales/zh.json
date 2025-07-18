@@ -70,7 +70,8 @@
     "switchToMainnet": "切换到主网",
     "networkSwitched": "网络切换成功",
     "networkSwitchFailed": "网络切换失败",
-    "connectionError": "连接错误"
+    "connectionError": "连接错误",
+    "selectNetwork": "请选择要切换的网络："
   },
   "dashboard": {
     "title": "仪表板",

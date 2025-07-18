@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
     <!-- Wallet Connection Prompt -->
-    <div v-if="!walletStore.isConnected" class="connection-prompt">
+    <!-- <div v-if="!walletStore.isConnected" class="connection-prompt">
       <div class="prompt-card">
         <el-icon class="text-6xl text-primary-500 mb-4">
           <Wallet />
@@ -14,10 +14,10 @@
         </p>
         <WalletConnect />
       </div>
-    </div>
+    </div> -->
 
     <!-- Dashboard Content -->
-    <div v-else class="dashboard-content">
+    <div class="dashboard-content">
       <!-- Portfolio Overview -->
       <div class="portfolio-section">
         <h2 class="section-title">

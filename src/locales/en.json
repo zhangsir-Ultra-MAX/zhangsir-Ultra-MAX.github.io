@@ -70,7 +70,8 @@
     "switchToMainnet": "Switch to Mainnet",
     "networkSwitched": "Network switched successfully",
     "networkSwitchFailed": "Network switch failed",
-    "connectionError": "Connection Error"
+    "connectionError": "Connection Error",
+    "selectNetwork": "Please select a network to switch to:"
   },
   "dashboard": {
     "title": "Dashboard",

@@ -39,6 +39,10 @@
               <el-icon><Link /></el-icon>
               {{ $t('wallet.viewOnExplorer') }}
             </el-dropdown-item>
+            <el-dropdown-item command="switchNetwork">
+              <el-icon><Connection /></el-icon>
+              {{ $t('wallet.switchNetwork') }}
+            </el-dropdown-item>
             <el-dropdown-item divided command="disconnect">
               <el-icon><SwitchButton /></el-icon>
               {{ $t('wallet.disconnect') }}
@@ -67,20 +71,49 @@
       :model-value="showNetworkDialog"
       @update:model-value="showNetworkDialog = $event"
       :title="$t('wallet.switchNetwork')"
-      width="400px"
+      width="450px"
       :before-close="handleNetworkDialogClose"
     >
-      <div class="text-center">
-        <el-icon class="text-4xl text-warning-500 mb-4">
-          <Warning />
-        </el-icon>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
-          {{ $t('wallet.wrongNetwork') }}
-        </p>
-        <el-button type="primary" @click="switchToSupportedNetwork" :loading="switchingNetwork">
-          {{ $t('wallet.switchToMainnet') }}
-        </el-button>
+      <div class="space-y-4">
+        <div class="text-center mb-4">
+          <el-icon class="text-4xl text-warning-500 mb-2">
+            <Warning />
+          </el-icon>
+          <p class="text-gray-600 dark:text-gray-400">
+            {{ $t('wallet.wrongNetwork') }}
+          </p>
+          <p class="text-gray-600 dark:text-gray-400 mt-2">
+            {{ $t('wallet.selectNetwork') }}
+          </p>
+        </div>
+        <div class="space-y-2">
+          <div 
+            v-for="network in supportedNetworks" 
+            :key="network.chainId"
+            class="network-option"
+            @click="handleNetworkSwitch(network.chainId)"
+          >
+            <div class="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-gray-200 dark:border-gray-600">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-400">
+                  <span class="text-white text-xs font-bold">{{ network.symbol }}</span>
+                </div>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-gray-100">{{ network.name }}</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Chain ID: {{ network.chainId }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+      <template #footer>
+        <div class="flex justify-end space-x-3">
+          <el-button @click="showNetworkDialog = false">
+            {{ $t('common.cancel') }}
+          </el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <!-- Connection Error Dialog -->
@@ -107,6 +140,59 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- Network Switch Dialog -->
+    <el-dialog
+      :model-value="showNetworkSwitchDialog"
+      @update:model-value="showNetworkSwitchDialog = $event"
+      :title="$t('wallet.switchNetwork')"
+      width="450px"
+    >
+      <div class="space-y-4">
+        <p class="text-gray-600 dark:text-gray-400 mb-4">
+          {{ $t('wallet.selectNetwork') }}
+        </p>
+        <div class="space-y-2">
+          <div 
+            v-for="network in supportedNetworks" 
+            :key="network.chainId"
+            class="network-option"
+            :class="{ 'current-network': walletStore.chainId === network.chainId }"
+            @click="handleNetworkSwitch(network.chainId)"
+          >
+            <div class="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                 :class="{
+                   'border-primary-500 bg-primary-50 dark:bg-primary-900/20': walletStore.chainId === network.chainId,
+                   'border-gray-200 dark:border-gray-600': walletStore.chainId !== network.chainId
+                 }">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                     :class="{
+                       'bg-primary-500': walletStore.chainId === network.chainId,
+                       'bg-gray-400': walletStore.chainId !== network.chainId
+                     }">
+                  <span class="text-white text-xs font-bold">{{ network.symbol }}</span>
+                </div>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-gray-100">{{ network.name }}</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Chain ID: {{ network.chainId }}</div>
+                </div>
+              </div>
+              <div v-if="walletStore.chainId === network.chainId" class="text-primary-500">
+                <el-icon><Check /></el-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end space-x-3">
+          <el-button @click="showNetworkSwitchDialog = false">
+            {{ $t('common.cancel') }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -121,7 +207,9 @@ import {
   Link,
   SwitchButton,
   Warning,
-  CircleClose
+  CircleClose,
+  Connection,
+  Check
 } from '@element-plus/icons-vue'
 
 import { useWalletStore } from '@/stores/wallet'
@@ -134,7 +222,22 @@ const connecting = ref(false)
 const switchingNetwork = ref(false)
 const showNetworkDialog = ref(false)
 const showErrorDialog = ref(false)
+const showNetworkSwitchDialog = ref(false)
 const connectionError = ref('')
+
+// 支持的网络列表
+const supportedNetworks = [
+  {
+    chainId: 11155111,
+    name: 'Sepolia Testnet',
+    symbol: 'ETH'
+  },
+  {
+    chainId: 31337,
+    name: 'Local Testnet',
+    symbol: 'ETH'
+  }
+]
 
 // Format balance display
 const formatBalance = (balance: string) => {
@@ -176,6 +279,10 @@ const handleAccountAction = async (command: string) => {
       }
       break
     
+    case 'switchNetwork':
+      showNetworkSwitchDialog.value = true
+      break
+    
     case 'disconnect':
       try {
         await ElMessageBox.confirm(
@@ -196,19 +303,11 @@ const handleAccountAction = async (command: string) => {
   }
 }
 
-// Handle network switching
+// Handle network switching (deprecated - now handled by handleNetworkSwitch)
 const switchToSupportedNetwork = async () => {
-  switchingNetwork.value = true
-  try {
-    await walletStore.switchNetwork(walletStore.chainId)
-    showNetworkDialog.value = false
-    ElMessage.success(t('wallet.networkSwitched'))
-  } catch (error: any) {
-    console.error('Network switch failed:', error)
-    ElMessage.error(error.message || t('wallet.networkSwitchFailed'))
-  } finally {
-    switchingNetwork.value = false
-  }
+  // This function is no longer used as we now show network selection dialog
+  // Keeping for backward compatibility
+  showNetworkDialog.value = false
 }
 
 // Handle network dialog close
@@ -220,6 +319,24 @@ const handleNetworkDialogClose = () => {
 const retryConnection = () => {
   showErrorDialog.value = false
   handleConnect()
+}
+
+// Handle network switching to specific network
+const handleNetworkSwitch = async (targetChainId: number) => {
+  switchingNetwork.value = true
+  try {
+    const success = await walletStore.switchNetwork(targetChainId)
+    if (success) {
+      showNetworkSwitchDialog.value = false
+      showNetworkDialog.value = false
+      ElMessage.success(t('wallet.networkSwitched'))
+    }
+  } catch (error: any) {
+    console.error('Network switch failed:', error)
+    ElMessage.error(error.message || t('wallet.networkSwitchFailed'))
+  } finally {
+    switchingNetwork.value = false
+  }
 }
 
 // Watch for network changes
@@ -291,6 +408,18 @@ onUnmounted(() => {
 
 :deep(.el-dialog__body) {
   @apply pt-0;
+}
+
+.network-option {
+  @apply transition-all duration-200;
+}
+
+.network-option:hover {
+  @apply transform scale-[1.02];
+}
+
+.network-option.current-network {
+  @apply ring-2 ring-primary-500 ring-opacity-50;
 }
 
 @media (max-width: 640px) {
