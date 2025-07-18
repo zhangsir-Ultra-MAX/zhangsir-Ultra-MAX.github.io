@@ -16,9 +16,9 @@
       <el-dropdown @command="handleAccountAction" trigger="click">
         <el-button class="account-button">
           <div class="flex items-center space-x-2">
-            <div class="w-6 h-6 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
+            <div class="w-8 h-6 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
               <span class="text-white text-xs font-bold">
-                {{ walletStore.shortAddress.slice(0, 2) }}
+                ..{{ walletStore.shortAddress.slice(-2) }}
               </span>
             </div>
             <span class="hidden sm:inline text-sm font-medium">

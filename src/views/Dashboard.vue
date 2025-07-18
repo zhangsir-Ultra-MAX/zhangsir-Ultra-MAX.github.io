@@ -1,28 +1,5 @@
 <template>
   <div class="dashboard">
-    <!-- Header Section -->
-    <div class="dashboard-header">
-      <div class="header-content">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            {{ $t('dashboard.title') }}
-          </h1>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">
-            {{ $t('dashboard.subtitle') }}
-          </p>
-        </div>
-        
-        <div v-if="walletStore.isConnected" class="header-actions">
-          <el-button type="primary" @click="refreshData" :loading="refreshing">
-            <el-icon class="mr-2">
-              <Refresh />
-            </el-icon>
-            {{ $t('common.refresh') }}
-          </el-button>
-        </div>
-      </div>
-    </div>
-
     <!-- Wallet Connection Prompt -->
     <div v-if="!walletStore.isConnected" class="connection-prompt">
       <div class="prompt-card">
@@ -49,7 +26,7 @@
         
         <div class="stats-grid">
           <!-- Total Value -->
-          <!-- <div class="stat-card primary">
+          <div class="stat-card primary">
             <div class="stat-header">
               <h3 class="stat-title">{{ $t('dashboard.totalValue') }}</h3>
               <el-icon class="stat-icon">
@@ -58,7 +35,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-value">
-                ${{ formatNumber(totalPortfolioValue) }}
+                {{ formatNumber(totalSRMBValue) }}
               </div>
               <div class="stat-change" :class="portfolioChange >= 0 ? 'positive' : 'negative'">
                 <el-icon>
@@ -68,40 +45,22 @@
                 {{ Math.abs(portfolioChange).toFixed(2) }}%
               </div>
             </div>
-          </div> -->
+          </div>
 
           <!-- Savings Balance -->
-          <div class="stat-card primary">
+          <div class="stat-card">
             <div class="stat-header">
-              <h3 class="stat-title">{{ $t('dashboard.savingsLiquidity') }}</h3>
+              <h3 class="stat-title">WRMB {{ $t('dashboard.savingsLiquidity') }}</h3>
               <el-icon class="stat-icon">
                 <Wallet />
               </el-icon>
             </div>
             <div class="stat-content">
               <div class="stat-value">
-                {{ formatNumber(savingsStore.totalAssets, 6) }} WRMB
+                {{ formatNumber(savingsStore.totalAssets, 8) }}
               </div>
               <div class="stat-subtitle">
                 ≈ ${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Active Bonds -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <h3 class="stat-title">{{ $t('dashboard.activeBonds') }}</h3>
-              <el-icon class="stat-icon">
-                <Document />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">
-                {{ activeBondsCount }}
-              </div>
-              <div class="stat-subtitle">
-                ${{ formatNumber(totalBondsValue) }} {{ $t('dashboard.invested') }}
               </div>
             </div>
           </div>
@@ -116,7 +75,8 @@
             </div>
             <div class="stat-content">
               <div class="stat-value">
-                {{ formatNumber(savingsStore.dynamicAPY) }}%
+                {{ formatNumber(savingsStore.apy) }}%
+                <span class="text-sm text-green-600 dark:text-green-400">+{{ formatNumber(savingsStore.dynamicWRMB, 8) }} WRMB</span>
               </div>
               <div class="stat-subtitle">
                 {{ $t('dashboard.annualReturn') }}
@@ -228,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   Wallet,
@@ -246,6 +206,8 @@ import WalletConnect from '@/components/common/WalletConnect.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useSavingsStore } from '@/stores/savings'
 import { formatNumber, formatTimeAgo } from '@/utils/format'
+import { contractService } from '@/services/contracts'
+import { formatUnits } from 'ethers'
 
 const { t } = useI18n()
 const walletStore = useWalletStore()
@@ -255,8 +217,7 @@ const refreshing = ref(false)
 
 // Mock data for demonstration
 const portfolioChange = ref(2.34)
-const activeBondsCount = ref(3)
-const totalBondsValue = ref(15000)
+const totalSRMBValue = ref('')
 const recentActivities = ref([
   {
     id: 1,
@@ -284,10 +245,6 @@ const recentActivities = ref([
   }
 ])
 
-const totalPortfolioValue = computed(() => {
-  return parseFloat(savingsStore.userAssetValue) + totalBondsValue.value
-})
-
 const getActivityIcon = (type: string) => {
   switch (type) {
     case 'deposit':
@@ -310,6 +267,11 @@ const refreshData = async () => {
       savingsStore.fetchVaultData(),
       savingsStore.fetchUserBalances()
     ])
+
+    const wrapManager = contractService.getWrapManagerContract()
+    if (!wrapManager) return null
+    const sRMBTVL = await wrapManager.getSRMBLiquidity();
+    totalSRMBValue.value = formatUnits(sRMBTVL.toString(), 18).toString()
   } catch (error) {
     console.error('Failed to refresh data:', error)
   } finally {

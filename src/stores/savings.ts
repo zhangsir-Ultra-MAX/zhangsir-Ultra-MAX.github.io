@@ -17,6 +17,7 @@ export const useSavingsStore = defineStore('savings', () => {
   const totalMMFSupply = ref('0') // Total MMF supply
   const apy = ref('0') // Annual percentage yield
   const dynamicAPY = ref('0') // Dynamic APY
+  const dynamicWRMB = ref('0') // Dynamic WRMB
   const userAssetValue = ref('0') // User's asset value in maxWithdraw 
   const userIncrementAmount = ref('0') // User's increment amount
   const isLoading = ref(false)
@@ -85,6 +86,8 @@ export const useSavingsStore = defineStore('savings', () => {
       const sWRMB_external_shares = new BigNumber(totalSupply.value).gt(0) ? totalSupply.value : '1'
       const B_Total_APY = new BigNumber(apy.value).multipliedBy(totalMMFSupply.value).dividedBy(sWRMB_external_shares);
       dynamicAPY.value = B_Total_APY.gt(0) ? B_Total_APY.toString() : '0';
+      const baseWRMB = new BigNumber(apy.value).multipliedBy(totalMMFSupply.value);
+      dynamicWRMB.value = baseWRMB.multipliedBy(sWRMB_external_shares).dividedBy(totalMMFSupply.value).dividedBy(100).toString();
 
       // Fetch WRMB price (placeholder - in real implementation, this would come from an oracle or API)
       await fetchWRMBPrice()
@@ -216,6 +219,7 @@ export const useSavingsStore = defineStore('savings', () => {
     totalSupply,
     apy,
     dynamicAPY,
+    dynamicWRMB,
     userIncrementAmount,
     isLoading,
     depositAmount,

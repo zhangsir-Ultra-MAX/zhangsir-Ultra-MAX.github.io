@@ -1,28 +1,5 @@
 <template>
   <div class="bonds">
-    <!-- Header -->
-    <div class="bonds-header">
-      <div class="header-content">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            {{ $t('bonds.title') }}
-          </h1>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">
-            {{ $t('bonds.subtitle') }}
-          </p>
-        </div>
-        
-        <div class="header-actions">
-          <el-button @click="refreshData" :loading="loading">
-            <el-icon class="mr-2">
-              <Refresh />
-            </el-icon>
-            {{ $t('common.refresh') }}
-          </el-button>
-        </div>
-      </div>
-    </div>
-
     <div class="bonds-content">
       <!-- Pool Overview -->
       <div class="pool-overview">

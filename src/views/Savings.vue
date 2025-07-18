@@ -153,7 +153,7 @@
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.totalSupply') }}</div>
-            <div class="stat-value">{{ formatNumber(savingsStore.totalSupply) }}</div>
+            <div class="stat-value">{{ formatNumber(savingsStore.totalAssets) }}</div>
           </div>
 
           <div class="stat-item">
@@ -163,24 +163,12 @@
 
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.totalValue') }}</div>
-            <div class="stat-value">$<AnimatedNumber 
-              :value="parseFloat(savingsStore.totalAssets) * 0.14" 
-              :decimals="2"
-              :auto-increment="parseFloat(savingsStore.totalAssets) > 0"
-              :increment-amount="0"
-              :increment-interval="3000"
-            /></div>
+            <div class="stat-value">${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14, 2) }}</div>
           </div>
 
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.yourValue') }}</div>
-            <div class="stat-value">$<AnimatedNumber 
-              :value="parseFloat(savingsStore.userAssetValue) * 0.14" 
-              :decimals="2"
-              :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
-              :increment-amount="0"
-              :increment-interval="2500"
-            /></div>
+            <div class="stat-value">${{ formatNumber(parseFloat(savingsStore.userAssetValue) * 0.14, 2) }}</div>
           </div>
         </div>
       </div>

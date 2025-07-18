@@ -6,68 +6,6 @@
         <h2 class="section-title">
           {{ $t('wrap.title') }}
         </h2>
-        
-        <div class="balance-grid">
-          <div class="balance-card">
-            <div class="card-header">
-              <h3 class="card-title">sRMB {{ $t('wrap.balance') }}</h3>
-              <el-icon class="card-icon">
-                <Coin />
-              </el-icon>
-            </div>
-            <div class="card-value">
-              {{ formatNumber(sRMBBalance) }} sRMB
-            </div>
-            <div class="card-subtitle">
-              {{ $t('wrap.availableToWrap') }}
-            </div>
-          </div>
-
-          <div class="balance-card">
-            <div class="card-header">
-              <h3 class="card-title">sWRMB {{ $t('wrap.balance') }}</h3>
-              <el-icon class="card-icon">
-                <Wallet />
-              </el-icon>
-            </div>
-            <div class="card-value">
-              {{ formatNumber(sWRMBBalance) }} sWRMB
-            </div>
-            <div class="card-subtitle">
-              {{ $t('wrap.totalBalance') }}
-            </div>
-          </div>
-
-          <div class="balance-card">
-            <div class="card-header">
-              <h3 class="card-title">{{ $t('wrap.totalReserveTransferred') }}</h3>
-              <el-icon class="card-icon">
-                <Coin />
-              </el-icon>
-            </div>
-            <div class="card-value">
-              {{ formatNumber(totalReserveTransferred) }} WRMB
-            </div>
-            <div class="card-subtitle">
-              {{ $t('wrap.reserveTransferredDescription') }}
-            </div>
-          </div>
-
-          <div class="balance-card">
-            <div class="card-header">
-              <h3 class="card-title">{{ $t('wrap.unwrappableAmount') }}</h3>
-              <el-icon class="card-icon">
-                <Switch />
-              </el-icon>
-            </div>
-            <div class="card-value">
-              {{ formatNumber(userUnwrappableAmount) }} sRMB
-            </div>
-            <div class="card-subtitle">
-              {{ $t('wrap.availableToUnwrap') }}
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Wrap Interface -->
@@ -119,12 +57,19 @@
                 
                 <div class="quick-amounts">
                   <el-button
-                    v-for="percentage in [25, 50, 75, 100]"
+                    v-for="percentage in [25, 50, 75]"
                     :key="percentage"
                     size="small"
                     @click="setWrapPercentage(percentage)"
                   >
                     {{ percentage }}%
+                  </el-button>
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click="setWrapPercentage(100)"
+                  >
+                    Max
                   </el-button>
                 </div>
               </div>
@@ -145,9 +90,6 @@
               <div class="token-input">
                 <div class="input-header">
                   <span class="input-label">{{ $t('wrap.to') }}</span>
-                  <span class="balance-info">
-                    {{ $t('wrap.balance') }}: {{ formatNumber(sWRMBBalance) }} sWRMB
-                  </span>
                 </div>
                 
                 <div class="input-container">
@@ -192,13 +134,13 @@
               </div>
             </div>
 
-            <!-- 倒计时提示 -->
-            <div v-if="wrapCountdown > 0" class="countdown-notice">
+            <!-- 等待时间提示 -->
+            <div v-if="wrapWaitTime > 0" class="countdown-notice">
               <el-icon class="countdown-icon">
                 <Clock />
               </el-icon>
               <span class="countdown-text">
-                {{ $t('wrap.waitTimeRemaining') }}: {{ formatCountdown(wrapCountdown) }}
+                {{ $t('wrap.availableAt') }}: {{ getExecutableTime(wrapWaitTime) }}
               </span>
             </div>
 
@@ -258,12 +200,19 @@
                 
                 <div class="quick-amounts">
                   <el-button
-                    v-for="percentage in [25, 50, 75, 100]"
+                    v-for="percentage in [25, 50, 75]"
                     :key="percentage"
                     size="small"
                     @click="setUnwrapPercentage(percentage)"
                   >
                     {{ percentage }}%
+                  </el-button>
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click="setUnwrapPercentage(100)"
+                  >
+                    Max
                   </el-button>
                 </div>
               </div>
@@ -284,9 +233,6 @@
               <div class="token-input">
                 <div class="input-header">
                   <span class="input-label">{{ $t('wrap.requiredBurn') }}</span>
-                  <span class="balance-info">
-                    {{ $t('wrap.balance') }}: {{ formatNumber(sWRMBBalance) }} sWRMB
-                  </span>
                 </div>
                 
                 <div class="input-container">
@@ -329,13 +275,13 @@
               </div>
             </div>
 
-            <!-- 倒计时提示 -->
-            <div v-if="unwrapCountdown > 0" class="countdown-notice">
+            <!-- 等待时间提示 -->
+            <div v-if="unwrapWaitTime > 0" class="countdown-notice">
               <el-icon class="countdown-icon">
                 <Clock />
               </el-icon>
               <span class="countdown-text">
-                {{ $t('wrap.waitTimeRemaining') }}: {{ formatCountdown(unwrapCountdown) }}
+                {{ $t('wrap.availableAt') }}: {{ getExecutableTime(unwrapWaitTime) }}
               </span>
             </div>
 
@@ -486,10 +432,9 @@ const unwrapPreview = ref<UnwrapPreview | null>(null)
 const wrapInProgress = ref(false)
 const unwrapInProgress = ref(false)
 
-// 倒计时相关状态
-const wrapCountdown = ref(0)
-const unwrapCountdown = ref(0)
-const countdownInterval = ref<NodeJS.Timeout | null>(null)
+// 等待时间相关状态
+const wrapWaitTime = ref(0)
+const unwrapWaitTime = ref(0)
 
 // Real balances from contracts
 const sRMBBalance = ref('0')
@@ -634,12 +579,7 @@ const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> 
     
     // 处理等待时间
     const waitTimeSeconds = Number(waitTime)
-    if (waitTimeSeconds > 0) {
-      wrapCountdown.value = waitTimeSeconds
-      startCountdown('wrap')
-    } else {
-      wrapCountdown.value = 0
-    }
+    wrapWaitTime.value = waitTimeSeconds
     
     return {
       outputAmount: outputAmount,
@@ -675,12 +615,7 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
     
     // 处理等待时间
     const waitTimeSeconds = Number(waitTime)
-    if (waitTimeSeconds > 0) {
-      unwrapCountdown.value = waitTimeSeconds
-      startCountdown('unwrap')
-    } else {
-      unwrapCountdown.value = 0
-    }
+    unwrapWaitTime.value = waitTimeSeconds
     
     return {
       sWRMBBurned: sWRMBBurnedAmount,
@@ -695,47 +630,27 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
   }
 }
 
-// 倒计时相关函数
-const startCountdown = (type: 'wrap' | 'unwrap') => {
-  // 清除现有的倒计时
-  if (countdownInterval.value) {
-    clearInterval(countdownInterval.value)
-  }
+// 计算最终可执行时间
+const getExecutableTime = (waitTimeSeconds: number): string => {
+  if (waitTimeSeconds <= 0) return ''
   
-  countdownInterval.value = setInterval(() => {
-    if (type === 'wrap' && wrapCountdown.value > 0) {
-      wrapCountdown.value--
-    } else if (type === 'unwrap' && unwrapCountdown.value > 0) {
-      unwrapCountdown.value--
-    } else {
-      // 倒计时结束，清除定时器
-      if (countdownInterval.value) {
-        clearInterval(countdownInterval.value)
-        countdownInterval.value = null
-      }
-    }
-  }, 1000)
-}
-
-// 格式化倒计时显示
-const formatCountdown = (seconds: number): string => {
-  const days = Math.floor(seconds / 86400)
-  const hours = Math.floor((seconds % 86400) / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
+  const now = new Date()
+  const executableTime = new Date(now.getTime() + waitTimeSeconds * 1000)
   
-  if (days > 0) {
-    return `After ${days.toString().padStart(2, '0')}d ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`
-  } else if (hours > 0) {
-    return `After ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`
-  } else {
-    return `After ${minutes.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`
-  }
+  return executableTime.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
 }
 
 // 检查是否可以执行操作
-const canWrap = computed(() => wrapCountdown.value === 0)
-const canUnwrap = computed(() => unwrapCountdown.value === 0)
+const canWrap = computed(() => wrapWaitTime.value === 0)
+const canUnwrap = computed(() => unwrapWaitTime.value === 0)
 
 // Debounced preview functions
 const debouncedWrapPreview = debounce(async (amount: string) => {
@@ -762,13 +677,9 @@ const handleModeChange = (newMode: 'wrap' | 'unwrap') => {
   wrapPreview.value = null
   unwrapPreview.value = null
   
-  // 清理倒计时状态
-  wrapCountdown.value = 0
-  unwrapCountdown.value = 0
-  if (countdownInterval.value) {
-    clearInterval(countdownInterval.value)
-    countdownInterval.value = null
-  }
+  // 清理等待时间状态
+  wrapWaitTime.value = 0
+  unwrapWaitTime.value = 0
 }
 
 const switchMode = () => {
@@ -1079,13 +990,7 @@ onMounted(() => {
   }
 })
 
-onUnmounted(() => {
-  // 清理定时器
-  if (countdownInterval.value) {
-    clearInterval(countdownInterval.value)
-    countdownInterval.value = null
-  }
-})
+// onUnmounted钩子已移除，因为不再需要清理定时器
 </script>
 
 <style scoped>
@@ -1170,7 +1075,7 @@ onUnmounted(() => {
 }
 
 .input-container {
-  @apply flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600;
+  @apply flex items-center space-x-3 p-1 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600;
 }
 
 .amount-input {

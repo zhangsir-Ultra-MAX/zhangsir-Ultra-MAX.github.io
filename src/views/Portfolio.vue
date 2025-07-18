@@ -1,35 +1,5 @@
 <template>
   <div class="portfolio">
-    <!-- Header -->
-    <div class="portfolio-header">
-      <div class="header-content">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            {{ $t('portfolio.title') }}
-          </h1>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">
-            {{ $t('portfolio.subtitle') }}
-          </p>
-        </div>
-        
-        <div class="header-actions">
-          <el-button @click="refreshData" :loading="loading">
-            <el-icon class="mr-2">
-              <Refresh />
-            </el-icon>
-            {{ $t('common.refresh') }}
-          </el-button>
-          
-          <el-button @click="exportData">
-            <el-icon class="mr-2">
-              <Download />
-            </el-icon>
-            {{ $t('portfolio.export') }}
-          </el-button>
-        </div>
-      </div>
-    </div>
-
     <div class="portfolio-content">
       <!-- Portfolio Overview -->
       <div class="overview-section">

@@ -235,6 +235,7 @@
     "belowMinUnwrapAmount": "金额低于最小解包值：{min}",
     "aboveMaxUnwrapAmount": "金额超过最大解包值：{max}",
     "waitTimeRemaining": "剩余等待时间",
+    "availableAt": "可执行时间",
     "waitingForCooldown": "等待冷却中"
   },
   "bonds": {
