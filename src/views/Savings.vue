@@ -120,8 +120,8 @@
                       <span class="preview-value">{{ formatNumber(withdrawPreview.assets, 6) }} WRMB</span>
                     </div>
                     <div class="preview-row">
-                      <span>{{ $t('savings.fee') }}</span>
-                      <span class="preview-value">{{formatNumber(withdrawPreviewFee, 2)}} WRMB ({{ formatNumber((parseFloat(withdrawPreview.fee)*100).toString()) }}%)</span>
+                      <span>{{ $t('savings.fee') }} ({{ formatNumber((parseFloat(withdrawPreview.fee)*100).toString()) }}%)</span>
+                      <span class="preview-value">{{formatNumber(withdrawPreviewFee, 2)}} WRMB</span>
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.sharesRequired') }}</span>
