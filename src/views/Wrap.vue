@@ -28,7 +28,7 @@
                 <div class="input-header">
                   <span class="input-label">{{ $t('wrap.from') }}</span>
                   <span class="balance-info">
-                    {{ $t('wrap.balance') }}: {{ formatNumber(sRMBBalance) }} sRMB
+                    {{ $t('wrap.maxUnwrappableAmount') }}: {{ formatNumber(sRMBBalance) }} sRMB
                   </span>
                 </div>
                 

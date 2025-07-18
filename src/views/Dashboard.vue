@@ -75,11 +75,11 @@
             </div>
             <div class="stat-content">
               <div class="stat-value">
-                {{ formatNumber(savingsStore.apy) }}%
-                <span class="text-sm text-green-600 dark:text-green-400">+{{ formatNumber(savingsStore.dynamicWRMB, 8) }} WRMB</span>
+                {{ formatNumber(savingsStore.dynamicAPY) }}%
               </div>
               <div class="stat-subtitle">
                 {{ $t('dashboard.annualReturn') }}
+                <span class="text-sm text-green-600 dark:text-green-400">+{{ formatNumber(savingsStore.dynamicWRMB, 8) }} WRMB</span>
               </div>
             </div>
           </div>
