@@ -118,8 +118,8 @@
                   <span>1 sRMB = {{ formatNumber(wrapPreview.exchangeRate, 6) }} sWRMB</span>
                 </div>
                 <div class="detail-row">
-                  <span>{{ $t('wrap.fee') }}</span>
-                  <span class="fee-value">{{ formatNumber(wrapPreview.fee) }} sRMB ({{ formatNumber(wrapPreview.feePercentage) }}%)</span>
+                  <span>{{ $t('wrap.fee') }} ({{ formatNumber(wrapPreview.feePercentage) }}%)</span>
+                  <span class="fee-value">{{ formatNumber(wrapPreview.fee) }} sRMB</span>
                 </div>
                 <div class="detail-row">
                   <span>{{ $t('wrap.minimumReceived') }}</span>
@@ -261,12 +261,12 @@
                   <span>{{ formatNumber(unwrapAmount) }} sRMB</span>
                 </div>
                 <div class="detail-row">
-                  <span>{{ $t('wrap.fee') }}</span>
-                  <span class="fee-value">{{ formatNumber(unwrapPreview.fee) }} sRMB ({{ formatNumber(unwrapPreview.feePercentage) }}%)</span>
+                  <span>{{ $t('wrap.fee') }} ({{ formatNumber(unwrapPreview.feePercentage) }}%)</span>
+                  <span class="fee-value">{{ formatNumber(unwrapPreview.fee) }} sRMB</span>
                 </div>
                 <div class="detail-row">
                   <span>{{ $t('wrap.actualReceived') }}</span>
-                  <span>{{ formatNumber(unwrapPreview.sRMBReceived) }} sRMB</span>
+                  <span>{{ formatNumber(unwrapPreview.sRMBReceived) }} CNY</span>
                 </div>
                 <div class="detail-row">
                   <span>{{ $t('wrap.sWRMBRequired') }}</span>

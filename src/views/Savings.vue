@@ -68,7 +68,7 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('savings.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(depositPreview.shares, 6) }} sWRMB</span>
+                      <span class="preview-value">{{ formatNumber(depositPreview.shares, 2) }} sWRMB</span>
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
@@ -117,7 +117,7 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('savings.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.assets, 6) }} WRMB</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.assets, 2) }} WRMB</span>
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.fee') }} ({{ formatNumber((parseFloat(withdrawPreview.fee)*100).toString()) }}%)</span>
@@ -125,7 +125,7 @@
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.sharesRequired') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.shares, 6) }} sWRMB</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.shares, 2) }} sWRMB</span>
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
