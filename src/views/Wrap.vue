@@ -125,12 +125,6 @@
                   <span>{{ $t('wrap.minimumReceived') }}</span>
                   <span>{{ formatNumber(wrapPreview.minimumReceived) }} sWRMB</span>
                 </div>
-                <div class="detail-row">
-                  <span>{{ $t('wrap.priceImpact') }}</span>
-                  <span :class="getPriceImpactClass(parseFloat(wrapPreview.priceImpact))">
-                    {{ formatNumber(wrapPreview.priceImpact) }}%
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -394,7 +388,6 @@ interface WrapPreview {
   feePercentage: string
   exchangeRate: string
   minimumReceived: string
-  priceImpact: string
   waitTime: number
 }
 
@@ -575,7 +568,6 @@ const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> 
     const feeAmount = formatUnits(fee, 18)
     const feePercentage = (parseFloat(feeAmount) / inputAmount * 100)
     const exchangeRate = parseFloat(outputAmount) / inputAmount
-    const priceImpact = Math.abs((1 - exchangeRate) * 100)
     
     // 处理等待时间
     const waitTimeSeconds = Number(waitTime)
@@ -587,7 +579,6 @@ const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> 
       feePercentage: feePercentage.toFixed(2),
       exchangeRate: exchangeRate.toFixed(6),
       minimumReceived: (parseFloat(outputAmount) * 0.995).toFixed(6), // 0.5% slippage
-      priceImpact: priceImpact.toFixed(2),
       waitTime: waitTimeSeconds
     }
   } catch (error) {
@@ -979,6 +970,13 @@ watch(() => walletStore.isConnected, (connected) => {
 
 watch(() => walletStore.address, () => {
   if (walletStore.isConnected) {
+    refreshData()
+  }
+})
+
+// Watch for chainId changes
+watch(()=>walletStore.chainId, (chainId) => {
+  if (chainId) {
     refreshData()
   }
 })

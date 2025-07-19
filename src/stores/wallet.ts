@@ -194,6 +194,24 @@ export const useWalletStore = defineStore('wallet', () => {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: `0x${targetChainId.toString(16)}` }]
       })
+      
+      // Update chain ID
+      chainId.value = targetChainId
+      
+      // Recreate provider and signer to match the new network
+        if (isConnected.value) {
+          try {
+            const browserProvider = new BrowserProvider((window as any).ethereum)
+            provider.value = markRaw(browserProvider)
+            signer.value = markRaw(await browserProvider.getSigner())
+            
+            // Update balance with the new provider
+            await updateBalance()
+          } catch (providerError) {
+            console.warn('Failed to update provider after network switch:', providerError)
+          }
+        }
+      
       return true
     } catch (error: any) {
       console.error('Failed to switch network:', error)
@@ -207,16 +225,19 @@ export const useWalletStore = defineStore('wallet', () => {
   }
   
   const updateBalance = async () => {
-    if (!provider.value || !address.value) return
+    if (!address.value) return
     
     try {
-      // Create a fresh provider instance to avoid stale reference issues
-      const currentProvider = provider.value
-      const currentAddress = address.value
-      
-      if (currentProvider && currentAddress) {
-        const userBalance = await currentProvider.getBalance(currentAddress)
+      // Always create a fresh provider instance to avoid network mismatch issues
+      if ((window as any).ethereum) {
+        const freshProvider = new BrowserProvider((window as any).ethereum)
+        const userBalance = await freshProvider.getBalance(address.value)
         balance.value = formatEther(userBalance)
+        
+        // Update the stored provider reference if it's stale
+        if (provider.value !== freshProvider) {
+          provider.value = markRaw(freshProvider)
+        }
       }
     } catch (error) {
       console.error('Failed to update balance:', error)
@@ -248,8 +269,20 @@ export const useWalletStore = defineStore('wallet', () => {
       })
       
       // Chain changed
-      ethereum.on('chainChanged', (newChainId: string) => {
+      ethereum.on('chainChanged', async (newChainId: string) => {
         chainId.value = parseInt(newChainId, 16)
+        
+        // Recreate provider and signer for the new network
+        if (isConnected.value) {
+          try {
+            const browserProvider = new BrowserProvider((window as any).ethereum)
+            provider.value = markRaw(browserProvider)
+            signer.value = markRaw(await browserProvider.getSigner())
+          } catch (error) {
+            console.warn('Failed to update provider after chain change:', error)
+          }
+        }
+        
         updateBalance()
       })
       

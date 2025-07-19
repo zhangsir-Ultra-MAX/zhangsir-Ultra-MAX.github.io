@@ -294,6 +294,16 @@ watch(
     }
   }
 )
+
+// Watch for chainId changes
+watch(
+  () => walletStore.chainId,
+  async (chainId) => {
+    if (chainId) {
+      await refreshData()
+    }
+  }
+)
 </script>
 
 <style scoped>
