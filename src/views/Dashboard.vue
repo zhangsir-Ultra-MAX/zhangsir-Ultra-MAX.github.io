@@ -57,7 +57,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-value">
-                {{ formatNumber(savingsStore.totalAssets, 8) }}
+                {{ formatNumber(savingsStore.totalAssets) }}
               </div>
               <div class="stat-subtitle">
                 ≈ ${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}
@@ -79,7 +79,7 @@
               </div>
               <div class="stat-subtitle">
                 {{ $t('dashboard.annualReturn') }}
-                <span class="text-sm text-green-600 dark:text-green-400">+{{ formatNumber(savingsStore.dynamicWRMB, 8) }} WRMB</span>
+                <span class="text-sm text-green-600 dark:text-green-400">+{{ formatNumber(savingsStore.dynamicWRMB) }} WRMB</span>
               </div>
             </div>
           </div>

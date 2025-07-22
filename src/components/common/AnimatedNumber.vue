@@ -17,6 +17,8 @@ interface Props {
   autoIncrement?: boolean
   incrementInterval?: number
   incrementAmount?: number
+  cacheKey?: string // 添加缓存键名属性
+  useCache?: boolean // 是否使用缓存
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -25,7 +27,9 @@ const props = withDefaults(defineProps<Props>(), {
   increment: 0.00000001,
   autoIncrement: false,
   incrementInterval: 100,
-  incrementAmount: 0.00000001
+  incrementAmount: 0.00000001,
+  cacheKey: '', // 默认空字符串表示不使用缓存
+  useCache: false // 默认不使用缓存
 })
 
 const displayValue = ref('0')
@@ -49,6 +53,33 @@ const curFormatNumber = (num: number): string => {
   return num.toFixed(props.decimals)
 }
 
+// 保存数据到缓存
+const saveToCache = (value: number) => {
+  if (props.useCache && props.cacheKey) {
+    try {
+      value += props.incrementAmount;
+      localStorage.setItem(`animated-number-${props.cacheKey}`, value.toString())
+    } catch (error) {
+      console.error('Failed to save to cache:', error)
+    }
+  }
+}
+
+// 从缓存加载数据
+const loadFromCache = (): number | null => {
+  if (props.useCache && props.cacheKey) {
+    try {
+      const cachedValue = localStorage.getItem(`animated-number-${props.cacheKey}`)
+      if (cachedValue) {
+        return parseFloat(cachedValue)
+      }
+    } catch (error) {
+      console.error('Failed to load from cache:', error)
+    }
+  }
+  return null
+}
+
 const animateToTarget = () => {
   const startValue = currentValue.value
   const endValue = targetValue.value
@@ -69,6 +100,8 @@ const animateToTarget = () => {
     } else {
       currentValue.value = endValue
       displayValue.value = curFormatNumber(endValue)
+      // 动画完成后保存到缓存
+      saveToCache(endValue)
     }
   }
   
@@ -96,7 +129,18 @@ watch(
   (newValue) => {
     const numValue = typeof newValue === 'string' ? parseFloat(newValue) : newValue
     if (!isNaN(numValue) && numValue !== targetValue.value) {
-      targetValue.value = numValue
+      // 从缓存加载数据进行比较
+      const cachedValue = loadFromCache()
+      
+      // 如果有缓存值，且当前值小于缓存值，则使用缓存值
+      if (cachedValue !== null && numValue < cachedValue) {
+        // 保持使用缓存中的较大值
+        targetValue.value = cachedValue
+      } else {
+        // 否则使用新值
+        targetValue.value = numValue
+      }
+      
       animateToTarget()
     }
   },
@@ -116,7 +160,16 @@ watch(
 )
 
 onMounted(() => {
-  const initialValue = typeof props.value === 'string' ? parseFloat(props.value) : props.value
+  // 尝试从缓存加载初始值
+  const cachedValue = loadFromCache()
+  const propValue = typeof props.value === 'string' ? parseFloat(props.value) : props.value
+  
+  // 如果有缓存值，且当前值小于缓存值，则使用缓存值
+  let initialValue = propValue
+  if (cachedValue !== null) {
+    initialValue = propValue < cachedValue ? cachedValue : propValue
+  }
+  
   if (!isNaN(initialValue)) {
     currentValue.value = initialValue
     targetValue.value = initialValue
@@ -133,6 +186,11 @@ onUnmounted(() => {
     cancelAnimationFrame(animationId.value)
   }
   stopAutoIncrement()
+  
+  // 组件卸载时保存当前值到缓存
+  if (props.useCache && props.cacheKey) {
+    saveToCache(currentValue.value)
+  }
 })
 </script>
 

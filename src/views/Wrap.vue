@@ -32,45 +32,46 @@
                   </span>
                 </div>
                 
-                <div class="input-container">
-                  <el-input
-                    v-model="wrapAmount"
-                    :placeholder="$t('wrap.enterAmount')"
-                    size="large"
-                    class="amount-input"
-                    @input="handleWrapAmountChange"
-                  />
-                  <div class="token-selector">
-                    <div class="token-info">
-                      <span class="token-name">sRMB</span>
-                    </div>
+                <div class="input-section">
+                  <div class="input-group">
+                    <el-input
+                      v-model="wrapAmount"
+                      :placeholder="$t('wrap.enterAmount')"
+                      size="large"
+                      class="amount-input"
+                      @input="handleWrapAmountChange"
+                    >
+                      <template #suffix>
+                        <span class="input-suffix">sRMB</span>
+                      </template>
+                    </el-input>
                   </div>
-                </div>
 
-                <!-- Validation Error Message -->
-                <div v-if="wrapValidationError" class="validation-error">
-                  <el-icon class="error-icon">
-                    <WarningFilled />
-                  </el-icon>
-                  <span class="error-text">{{ wrapValidationError }}</span>
-                </div>
-                
-                <div class="quick-amounts">
-                  <el-button
-                    v-for="percentage in [25, 50, 75]"
-                    :key="percentage"
-                    size="small"
-                    @click="setWrapPercentage(percentage)"
-                  >
-                    {{ percentage }}%
-                  </el-button>
-                  <el-button
-                    type="primary"
-                    size="small"
-                    @click="setWrapPercentage(100)"
-                  >
-                    Max
-                  </el-button>
+                  <!-- Validation Error Message -->
+                  <div v-if="wrapValidationError" class="validation-error">
+                    <el-icon class="error-icon">
+                      <WarningFilled />
+                    </el-icon>
+                    <span class="error-text">{{ wrapValidationError }}</span>
+                  </div>
+                  
+                  <div class="quick-amounts">
+                    <el-button
+                      v-for="percentage in [25, 50, 75]"
+                      :key="percentage"
+                      size="small"
+                      @click="setWrapPercentage(percentage)"
+                    >
+                      {{ percentage }}%
+                    </el-button>
+                    <el-button
+                      class="max-button"
+                      size="small"
+                      @click="setWrapPercentage(100)"
+                    >
+                      Max
+                    </el-button>
+                  </div>
                 </div>
               </div>
 
@@ -92,19 +93,18 @@
                   <span class="input-label">{{ $t('wrap.to') }}</span>
                 </div>
                 
-                <div class="input-container">
+                <div class="input-group">
                   <el-input
                     :value="wrapPreview?.outputAmount || '0'"
                     :placeholder="$t('wrap.estimatedAmount')"
                     size="large"
                     class="amount-input"
                     readonly
-                  />
-                  <div class="token-selector">
-                    <div class="token-info">
-                      <span class="token-name">sWRMB</span>
-                    </div>
-                  </div>
+                  >
+                    <template #suffix>
+                      <span class="input-suffix">sWRMB</span>
+                    </template>
+                  </el-input>
                 </div>
               </div>
             </div>
@@ -169,45 +169,46 @@
                   </span>
                 </div>
                 
-                <div class="input-container">
-                  <el-input
-                    v-model="unwrapAmount"
-                    :placeholder="$t('wrap.enterDesiredAmount')"
-                    size="large"
-                    class="amount-input"
-                    @input="handleUnwrapAmountChange"
-                  />
-                  <div class="token-selector">
-                    <div class="token-info">
-                      <span class="token-name">sRMB</span>
-                    </div>
+                <div class="input-section">
+                  <div class="input-group">
+                    <el-input
+                      v-model="unwrapAmount"
+                      :placeholder="$t('wrap.enterDesiredAmount')"
+                      size="large"
+                      class="amount-input"
+                      @input="handleUnwrapAmountChange"
+                    >
+                      <template #suffix>
+                        <span class="input-suffix">sRMB</span>
+                      </template>
+                    </el-input>
                   </div>
-                </div>
-                
-                <!-- Validation Error Message -->
-                <div v-if="unwrapValidationError" class="validation-error">
-                  <el-icon class="error-icon">
-                    <WarningFilled />
-                  </el-icon>
-                  <span class="error-text">{{ unwrapValidationError }}</span>
-                </div>
-                
-                <div class="quick-amounts">
-                  <el-button
-                    v-for="percentage in [25, 50, 75]"
-                    :key="percentage"
-                    size="small"
-                    @click="setUnwrapPercentage(percentage)"
-                  >
-                    {{ percentage }}%
-                  </el-button>
-                  <el-button
-                    type="primary"
-                    size="small"
-                    @click="setUnwrapPercentage(100)"
-                  >
-                    Max
-                  </el-button>
+                  
+                  <!-- Validation Error Message -->
+                  <div v-if="unwrapValidationError" class="validation-error">
+                    <el-icon class="error-icon">
+                      <WarningFilled />
+                    </el-icon>
+                    <span class="error-text">{{ unwrapValidationError }}</span>
+                  </div>
+                  
+                  <div class="quick-amounts">
+                    <el-button
+                      v-for="percentage in [25, 50, 75]"
+                      :key="percentage"
+                      size="small"
+                      @click="setUnwrapPercentage(percentage)"
+                    >
+                      {{ percentage }}%
+                    </el-button>
+                    <el-button
+                      class="max-button"
+                      size="small"
+                      @click="setUnwrapPercentage(100)"
+                    >
+                      Max
+                    </el-button>
+                  </div>
                 </div>
               </div>
 
@@ -229,19 +230,18 @@
                   <span class="input-label">{{ $t('wrap.requiredBurn') }}</span>
                 </div>
                 
-                <div class="input-container">
+                <div class="input-group">
                   <el-input
                     :value="unwrapPreview?.sWRMBBurned || '0'"
                     :placeholder="$t('wrap.estimatedBurn')"
                     size="large"
                     class="amount-input"
                     readonly
-                  />
-                  <div class="token-selector">
-                    <div class="token-info">
-                      <span class="token-name">sWRMB</span>
-                    </div>
-                  </div>
+                  >
+                    <template #suffix>
+                      <span class="input-suffix">sWRMB</span>
+                    </template>
+                  </el-input>
                 </div>
               </div>
             </div>
@@ -1072,41 +1072,28 @@ onMounted(() => {
   @apply text-sm text-gray-500 dark:text-gray-400;
 }
 
-.input-container {
-  @apply flex items-center space-x-3 p-1 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600;
+.input-section {
+  @apply space-y-4 mb-6;
+}
+
+.input-group {
+  @apply flex items-center space-x-3;
 }
 
 .amount-input {
-  @apply flex-1 bg-transparent border-none;
+  @apply flex-1;
 }
 
-.token-selector {
-  @apply flex items-center space-x-2;
-}
-
-.token-info {
-  @apply flex items-center space-x-2;
-}
-
-.token-icon {
-  @apply w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold;
-  overflow: hidden;
-}
-
-.token-icon.srmb {
-  @apply bg-gradient-to-br from-blue-500 to-blue-600;
-}
-
-.token-icon.swrmb {
-  @apply bg-gradient-to-br from-purple-500 to-purple-600;
-}
-
-.token-name {
-  @apply font-medium text-gray-900 dark:text-white;
+.input-suffix {
+  @apply text-gray-500 dark:text-gray-400 font-medium;
 }
 
 .quick-amounts {
   @apply flex space-x-2;
+}
+
+.max-button {
+  @apply text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300;
 }
 
 .swap-arrow {
@@ -1207,14 +1194,6 @@ onMounted(() => {
 
 :deep(.el-segmented__item.is-selected) {
   @apply bg-primary-500 text-white;
-}
-
-:deep(.amount-input .el-input__wrapper) {
-  @apply bg-transparent shadow-none;
-}
-
-:deep(.amount-input .el-input__inner) {
-  @apply text-lg font-medium;
 }
 
 @media (max-width: 768px) {

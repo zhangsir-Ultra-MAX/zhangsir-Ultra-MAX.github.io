@@ -24,6 +24,8 @@
                 :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
                 :increment-amount="parseFloat(savingsStore.userIncrementAmount)"
                 :increment-interval="1000"
+                :cache-key="`userAssetValue_${walletStore.address}`"
+                :use-cache="true"
               />
             </div>
             <div class="card-subtitle">
