@@ -46,7 +46,7 @@ const WRAP_MANAGER_ABI = [
   'function unwrap(uint256 sRMBAmount) returns (uint256 sWRMBBurned, uint256 sRMBReceived)',
   'function previewWrap(address, uint256) view returns (uint256, uint256, uint256, uint256, uint256)',
   'function previewUnwrap(address, uint256) view returns (uint256, uint256, uint256, uint256, uint256)',
-  'function getConfiguration() view returns (address, address, address, uint256, uint256, uint256, uint256, uint256, uint256)',
+  'function getConfiguration() view returns (address, address, address, uint256, uint256, uint256, uint256, uint256, uint256, uint256)',
   'function minWrapAmount() view returns (uint256)',
   'function maxWrapAmount() view returns (uint256)',
   'function minUnwrapAmount() view returns (uint256)',
