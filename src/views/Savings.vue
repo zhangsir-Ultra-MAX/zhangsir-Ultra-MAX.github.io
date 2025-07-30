@@ -25,7 +25,7 @@
                 :increment-amount="parseFloat(savingsStore.userIncrementAmount)"
                 :increment-interval="1000"
                 :cache-key="`userAssetValue_${walletStore.address}`"
-                :use-cache="true"
+                :use-cache="false"
               />
             </div>
             <div class="card-subtitle">

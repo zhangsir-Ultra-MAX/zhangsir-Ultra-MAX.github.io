@@ -27,7 +27,7 @@
               <el-icon v-if="currentStep > index" class="text-white">
                 <Check />
               </el-icon>
-              <el-icon v-else-if="currentStep === index && status === 'loading'" class="text-white animate-spin">
+              <el-icon v-else-if="currentStep === index && (status === 'loading' || status === 'pending')" class="text-white animate-spin">
                 <Loading />
               </el-icon>
               <span v-else class="text-sm font-medium">{{ index + 1 }}</span>

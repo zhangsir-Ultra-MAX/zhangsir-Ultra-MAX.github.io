@@ -31,6 +31,15 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/swap',
+    name: 'Swap',
+    component: () => import('@/views/Swap.vue'),
+    meta: {
+      title: 'Uniswap V4',
+      requiresAuth: true
+    }
+  },
+  {
     path: '/bonds',
     name: 'Bonds',
     component: () => import('@/views/Bonds.vue'),

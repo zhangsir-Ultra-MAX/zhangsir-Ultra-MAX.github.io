@@ -114,6 +114,17 @@ export const TOKENS = {
       [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_USDT_ADDRESS || '',
       [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_USDT_ADDRESS || ''
     }
+  },
+  USDC: {
+    symbol: 'USDC',
+    name: 'USD Coin',
+    decimals: 6,
+    addresses: {
+      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_USDC_ADDRESS || '0xA0b86a33E6441b8C0b7b2e0b8b8b8b8b8b8b8b8b',
+      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_USDC_ADDRESS || '',
+      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_USDC_ADDRESS || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_USDC_ADDRESS || ''
+    }
   }
 } as const
 
