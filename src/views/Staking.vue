@@ -107,7 +107,7 @@
                 <el-button 
                   type="primary" 
                   size="large" 
-                  :loading="stakingStore.stakeInProgress"
+                  :loading="transactionStatus === 'loading' && activeTab === 'stake'"
                   :disabled="!isStakeValid" 
                   @click="handleStake" 
                   class="action-button"
@@ -187,7 +187,7 @@
                 <el-button 
                   type="primary" 
                   size="large" 
-                  :loading="stakingStore.unstakeInProgress"
+                  :loading="transactionStatus === 'loading' && activeTab === 'unstake'"
                   :disabled="!isUnstakeValid" 
                   @click="handleUnstake" 
                   class="action-button"
@@ -198,12 +198,25 @@
             </div>
           </el-tab-pane>
 
-
         </el-tabs>
       </div>
 
 
     </div>
+
+    <!-- Transaction Modal -->
+    <TransactionModal
+      v-model:visible="showTransactionModal"
+      :title="transactionModalTitle"
+      :steps="transactionSteps"
+      :current-step="currentTransactionStep"
+      :status="transactionStatus"
+      :transaction-details="transactionDetails"
+      :transaction-hash="transactionHash"
+      :error-message="transactionError"
+      @close="handleTransactionModalClose"
+      @retry="handleTransactionRetry"
+    />
   </div>
 </template>
 
@@ -219,10 +232,13 @@ import {
   Minus,
   Warning
 } from '@element-plus/icons-vue'
+import { parseUnits } from 'ethers'
 
+import TransactionModal from '@/components/common/TransactionModal.vue'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useStakingStore } from '@/stores/staking'
+import { contractService } from '@/services/contracts'
 import { formatNumber, formatTimeAgo, formatDuration } from '@/utils/format'
 
 const { t } = useI18n()
@@ -232,6 +248,43 @@ const stakingStore = useStakingStore()
 const activeTab = ref('stake')
 const stakeAmount = ref('')
 const unstakeAmount = ref('')
+
+// Transaction Modal
+const showTransactionModal = ref(false)
+const transactionModalTitle = ref('')
+const currentTransactionStep = ref(0)
+const transactionStatus = ref<'pending' | 'loading' | 'success' | 'error'>('pending')
+const transactionHash = ref('')
+const transactionError = ref('')
+
+const transactionSteps = ref([
+  { label: t('transaction.approve'), description: t('transaction.approveDescription') },
+  { label: t('transaction.confirm'), description: t('transaction.confirmDescription') },
+  { label: t('transaction.complete'), description: t('transaction.completeDescription') }
+])
+
+const transactionDetails = computed(() => {
+  const details = []
+
+  if (activeTab.value === 'stake' && stakeAmount.value) {
+    details.push(
+      { label: t('staking.stakeAmount'), value: `${formatNumber(stakeAmount.value, 6)} CINA`, highlight: true },
+      { label: t('staking.estimatedShares'), value: `${formatNumber(stakePreview.value?.shares || '0', 6)} stCINA` }
+    )
+  } else if (activeTab.value === 'unstake' && unstakeAmount.value) {
+    details.push(
+      { label: t('staking.unstakeAmount'), value: `${formatNumber(unstakeAmount.value, 6)} CINA`, highlight: true },
+      { label: t('staking.actualAmount'), value: `${formatNumber(unstakePreview.value?.actualAmount || '0', 6)} CINA` }
+    )
+    if (unstakePreview.value?.penalty && parseFloat(unstakePreview.value.penalty) > 0) {
+      details.push(
+        { label: t('staking.penalty'), value: `${formatNumber(unstakePreview.value.penalty, 6)} CINA` }
+      )
+    }
+  }
+
+  return details
+})
 
 // Computed properties
 const isStakeValid = computed(() => {
@@ -319,26 +372,91 @@ const setMaxUnstake = () => {
 }
 
 const handleStake = async () => {
+  if (!isStakeValid.value || !walletStore.isConnected) return
+
+  transactionModalTitle.value = t('staking.stakeTransaction')
+  showTransactionModal.value = true
+  currentTransactionStep.value = 0
+  transactionStatus.value = 'pending'
+
   try {
     const amount = parseFloat(stakeAmount.value)
-    await stakingStore.stakeCINA(amount)
-    ElMessage.success(t('staking.stakeSuccess'))
+    const amountWei = parseUnits(amount.toString(), 18)
+    
+    // Step 1: Check and approve CINA if needed
+    const stakingContract = contractService.getStakingVaultContract(true)
+    const cinaContract = contractService.getCINAContract(true)
+    
+    if (!stakingContract || !cinaContract) {
+      throw new Error('Contract not available')
+    }
+    
+    const stakingAddress = await stakingContract.getAddress()
+    const allowance = await cinaContract.allowance(walletStore.address, stakingAddress)
+    
+    if (allowance < amountWei) {
+      transactionStatus.value = 'loading'
+      const approveTx = await cinaContract.approve(stakingAddress, amountWei)
+      await approveTx.wait()
+    }
+    
+    currentTransactionStep.value = 1
+    
+    // Step 2: Execute staking
+    transactionStatus.value = 'loading'
+    const depositTx = await stakingContract.deposit(amountWei, walletStore.address)
+    const receipt = await depositTx.wait()
+    
+    transactionHash.value = receipt.hash
+    currentTransactionStep.value = 2
+    transactionStatus.value = 'success'
+    
+    // Reset form and refresh data
     stakeAmount.value = ''
-  } catch (error) {
+    await stakingStore.fetchStakingData()
+    
+    ElMessage.success(t('staking.stakeSuccess'))
+  } catch (error: any) {
+    transactionStatus.value = 'error'
+    transactionError.value = error.message || t('staking.stakeFailed')
     console.error('Stake failed:', error)
-    ElMessage.error(t('staking.stakeFailed'))
   }
 }
 
 const handleUnstake = async () => {
+  if (!isUnstakeValid.value || !walletStore.isConnected) return
+
+  transactionModalTitle.value = t('staking.unstakeTransaction')
+  showTransactionModal.value = true
+  currentTransactionStep.value = 1
+  transactionStatus.value = 'loading'
+
   try {
     const amount = parseFloat(unstakeAmount.value)
-    await stakingStore.unstakeCINA(amount)
-    ElMessage.success(t('staking.unstakeSuccess'))
+    const amountWei = parseUnits(amount.toString(), 18)
+    
+    // Execute unstaking
+    const stakingContract = contractService.getStakingVaultContract(true)
+    if (!stakingContract) {
+      throw new Error('Contract not available')
+    }
+
+    const withdrawTx = await stakingContract.withdraw(amountWei, walletStore.address, walletStore.address)
+    const receipt = await withdrawTx.wait()
+    
+    transactionHash.value = receipt.hash
+    currentTransactionStep.value = 2
+    transactionStatus.value = 'success'
+    
+    // Reset form and refresh data
     unstakeAmount.value = ''
-  } catch (error) {
+    await stakingStore.fetchStakingData()
+    
+    ElMessage.success(t('staking.unstakeSuccess'))
+  } catch (error: any) {
+    transactionStatus.value = 'error'
+    transactionError.value = error.message || t('staking.unstakeFailed')
     console.error('Unstake failed:', error)
-    ElMessage.error(t('staking.unstakeFailed'))
   }
 }
 
@@ -362,6 +480,20 @@ watch(
     }
   }
 )
+
+const handleTransactionModalClose = () => {
+  showTransactionModal.value = false
+  transactionHash.value = ''
+  transactionError.value = ''
+}
+
+const handleTransactionRetry = () => {
+  if (activeTab.value === 'stake') {
+    handleStake()
+  } else {
+    handleUnstake()
+  }
+}
 </script>
 
 <style scoped>

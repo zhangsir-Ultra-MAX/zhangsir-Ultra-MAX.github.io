@@ -9,7 +9,6 @@ const getContractAddresses = (chainId: number) => {
     WRAP_MANAGER: CONTRACTS.WRAP_MANAGER[chainId as keyof typeof CONTRACTS.WRAP_MANAGER] || '',
     BOND_POOL: CONTRACTS.BOND_POOL[chainId as keyof typeof CONTRACTS.BOND_POOL] || '',
     STAKING_VAULT: CONTRACTS.STAKING_VAULT[chainId as keyof typeof CONTRACTS.STAKING_VAULT] || '',
-    MINING_VAULT: CONTRACTS.MINING_VAULT[chainId as keyof typeof CONTRACTS.MINING_VAULT] || '',
     WRMB: TOKENS.WRMB.addresses[chainId as keyof typeof TOKENS.WRMB.addresses] || '',
     SRMB: TOKENS.sRMB.addresses[chainId as keyof typeof TOKENS.sRMB.addresses] || '',
     CINA: TOKENS.CINA.addresses[chainId as keyof typeof TOKENS.CINA.addresses] || '',
@@ -49,7 +48,7 @@ const WRAP_MANAGER_ABI = [
   'function unwrap(uint256 sRMBAmount) returns (uint256 sWRMBBurned, uint256 sRMBReceived)',
   'function previewWrap(address, uint256) view returns (uint256, uint256, uint256, uint256, uint256)',
   'function previewUnwrap(address, uint256) view returns (uint256, uint256, uint256, uint256, uint256)',
-  'function getConfiguration() view returns (address, address, address, uint256, uint256, uint256, uint256, uint256, uint256, uint256)',
+  'function getConfiguration() view returns (address, address, address, uint256, uint256, uint256, uint256, uint256, uint256)',
   'function minWrapAmount() view returns (uint256)',
   'function maxWrapAmount() view returns (uint256)',
   'function minUnwrapAmount() view returns (uint256)',
@@ -242,13 +241,6 @@ class ContractService {
     const walletStore = useWalletStore()
     const addresses = getContractAddresses(walletStore.chainId)
     return this.getContract(addresses.STAKING_VAULT, STAKING_VAULT_ABI, withSigner)
-  }
-  
-  // Mining Vault Contract
-  getMiningVaultContract(withSigner = false): Contract | null {
-    const walletStore = useWalletStore()
-    const addresses = getContractAddresses(walletStore.chainId)
-    return this.getContract(addresses.MINING_VAULT, MINING_VAULT_ABI, withSigner)
   }
   
   // Generic ERC20 contract

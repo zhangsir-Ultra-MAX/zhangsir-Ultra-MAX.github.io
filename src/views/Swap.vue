@@ -481,16 +481,8 @@ function getSwapButtonText() {
         return t('swap.enterAmount')
     }
     
-    if (fromToken.value?.symbol === toToken.value?.symbol) {
-            return t('swap.selectDifferentTokens')
-        }
-    
     if (parseFloat(fromAmount.value) > fromTokenBalance.value) {
         return t('swap.insufficientBalance')
-    }
-    
-    if (!poolExists.value && isV4Supported.value) {
-        return t('swap.poolNotExistsCreateFirst')
     }
     
     return t('swap.swap')

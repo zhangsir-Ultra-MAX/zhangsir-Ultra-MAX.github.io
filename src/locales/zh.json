@@ -593,6 +593,12 @@
     "stakingTime": "质押时间",
     "rewardRate": "奖励率",
     "availableRewards": "可用奖励",
-    "unstakeSuccess": "解除质押成功"
+    "unstakeSuccess": "解除质押成功",
+    "estimatedShares": "预估份额",
+    "stakeTransaction": "质押交易",
+    "unstakeTransaction": "解除质押交易",
+    "stakeAmount": "质押数量",
+    "unstakeAmount": "解除质押数量",
+    "actualAmount": "实际数量"
   }
 }

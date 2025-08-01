@@ -385,7 +385,7 @@
     "to": "To",
     "balance": "Balance",
     "enterAmount": "Enter amount",
-    "rate": "Exchange Rate",
+    "rate": "Rate",
     "fee": "Fee",
     "slippage": "Slippage Tolerance",
     "swap": "Swap",
@@ -410,7 +410,7 @@
     "poolNotExists": "Insufficient",
     "poolNotExistsTooltip": "This trading pair may not have a liquidity pool, or the pool has not been created yet",
     "fetchingRate": "Fetching...",
-    "enterAmountForRate": "Enter amount to get exchange rate",
+    "enterAmountForRate": "-",
     "swapping": "Swapping...",
     "fetchingQuote": "Fetching quote...",
     "unsupportedNetwork": "Unsupported network - Please switch to {networks}",
@@ -593,6 +593,12 @@
     "stakingTime": "Staking Time",
     "rewardRate": "Reward Rate",
     "availableRewards": "Available Rewards",
-    "unstakeSuccess": "Unstake successful"
+    "unstakeSuccess": "Unstake successful",
+    "estimatedShares": "Estimated Shares",
+    "stakeTransaction": "Stake Transaction",
+    "unstakeTransaction": "Unstake Transaction",
+    "stakeAmount": "Stake Amount",
+    "unstakeAmount": "Unstake Amount",
+    "actualAmount": "Actual Amount"
   }
 }
