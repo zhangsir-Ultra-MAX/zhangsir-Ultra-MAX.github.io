@@ -166,7 +166,10 @@ class UniswapV4Service {
 
   private generatePoolId(token0: string, token1: string, fee: number, tickSpacing: number = 10): string {
     const [currency0, currency1] = token0.toLowerCase() < token1.toLowerCase() ? [token0, token1] : [token1, token0]
-    const hooks = '0x0000000000000000000000000000000000000000'
+    let hooks = '0x0000000000000000000000000000000000000000'
+    if (currency0 == '0x45Dd667b7C97F7c7B9135dA7f8674dF7d6662737' || currency1 == '0x45Dd667b7C97F7c7B9135dA7f8674dF7d6662737') {
+      hooks = '0x7d08875f51879bedD9a01d71a804f012e1304fC0';
+    }
 
     const poolKey = ethers.keccak256(
       ethers.AbiCoder.defaultAbiCoder().encode(
@@ -174,10 +177,11 @@ class UniswapV4Service {
         [currency0, currency1, fee, tickSpacing, hooks]
       )
     )
+    console.log(poolKey);
     return poolKey
   }
 
-  async getPoolInfo(token0: string, token1: string, fee: number = 500): Promise<PoolInfo | null> {
+  async getPoolInfo(token0: string, token1: string, fee: number = 500, tickSpacing: number = 10): Promise<PoolInfo | null> {
     if (!this.stateViewContract) {
       await this.initializeContracts()
     }
@@ -187,7 +191,7 @@ class UniswapV4Service {
     }
 
     try {
-      const poolId = this.generatePoolId(token0, token1, fee)
+      const poolId = this.generatePoolId(token0, token1, fee, tickSpacing)
       const liquidity = await this.stateViewContract.getLiquidity(poolId)
 
       if (liquidity.toString() === '0') {
@@ -295,7 +299,11 @@ class UniswapV4Service {
         exactAmount: amountIn,
         hookData: '0x'
       }
-      
+
+      if (token0 == '0x45Dd667b7C97F7c7B9135dA7f8674dF7d6662737' || token1 == '0x45Dd667b7C97F7c7B9135dA7f8674dF7d6662737') {
+        quoteParams.poolKey.hooks = '0x7d08875f51879bedD9a01d71a804f012e1304fC0'
+      }
+
       const result = await this.quoterContract.quoteExactInputSingle.staticCall(quoteParams)
       const amountOut = formatUnits(result.amountOut, tokenOutDecimals)
 

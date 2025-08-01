@@ -1,6 +1,6 @@
 import { Contract, Interface } from 'ethers'
-import { useWalletStore } from '@/stores/wallet'
-import { CONTRACTS, TOKENS } from '@/constants'
+import { useWalletStore } from '../stores/wallet'
+import { CONTRACTS, TOKENS } from '../constants'
 
 // Get contract addresses based on current chain ID
 const getContractAddresses = (chainId: number) => {
@@ -8,8 +8,11 @@ const getContractAddresses = (chainId: number) => {
     SAVINGS_VAULT: CONTRACTS.SAVINGS_VAULT[chainId as keyof typeof CONTRACTS.SAVINGS_VAULT] || '',
     WRAP_MANAGER: CONTRACTS.WRAP_MANAGER[chainId as keyof typeof CONTRACTS.WRAP_MANAGER] || '',
     BOND_POOL: CONTRACTS.BOND_POOL[chainId as keyof typeof CONTRACTS.BOND_POOL] || '',
+    STAKING_VAULT: CONTRACTS.STAKING_VAULT[chainId as keyof typeof CONTRACTS.STAKING_VAULT] || '',
+    MINING_VAULT: CONTRACTS.MINING_VAULT[chainId as keyof typeof CONTRACTS.MINING_VAULT] || '',
     WRMB: TOKENS.WRMB.addresses[chainId as keyof typeof TOKENS.WRMB.addresses] || '',
     SRMB: TOKENS.sRMB.addresses[chainId as keyof typeof TOKENS.sRMB.addresses] || '',
+    CINA: TOKENS.CINA.addresses[chainId as keyof typeof TOKENS.CINA.addresses] || '',
     USDT: TOKENS.USDT.addresses[chainId as keyof typeof TOKENS.USDT.addresses] || ''
   }
 }
@@ -76,6 +79,64 @@ const BOND_POOL_ABI = [
   'function userTotalPrincipal(address) view returns (uint256)',
   'event BondSubscribed(address indexed user, uint256 indexed bondId, uint256 usdtAmount, uint256 wrmbAmount, uint256 maturityTime)',
   'event BondMatured(address indexed user, uint256 indexed bondId, uint256 principalAmount, uint256 interestAmount, uint256 totalAmount)'
+]
+
+const STAKING_VAULT_ABI = [
+  // ERC4626 标准方法
+  'function totalAssets() view returns (uint256)',
+  'function totalSupply() view returns (uint256)',
+  'function balanceOf(address) view returns (uint256)',
+  'function deposit(uint256 assets, address receiver) returns (uint256 shares)',
+  'function withdraw(uint256 assets, address receiver, address owner) returns (uint256 shares)',
+  'function mint(uint256 shares, address receiver) returns (uint256 assets)',
+  'function redeem(uint256 shares, address receiver, address owner) returns (uint256 assets)',
+  'function previewDeposit(uint256 assets) view returns (uint256)',
+  'function previewWithdraw(uint256 assets) view returns (uint256)',
+  'function previewMint(uint256 shares) view returns (uint256)',
+  'function previewRedeem(uint256 shares) view returns (uint256)',
+  
+  // 质押相关查询方法
+  'function totalStaked() view returns (uint256)',
+  'function rewardPool() view returns (uint256)',
+  'function minStakeAmount() view returns (uint256)',
+  'function earlyUnstakePenalty() view returns (uint256)',
+  'function rewardRatePerSecond() view returns (uint256)',
+  'function pendingRewards(address user) view returns (uint256)',
+  
+  // 用户信息查询
+  'function stakingInfo(address) view returns (uint256 stakedAmount, uint256 stakingTime, uint256 lastClaimTime, uint256 accumulatedRewards, uint256 baseRewardRate)',
+  'function getUserStakingInfo(address user) view returns (uint256 stakedAmount, uint256 stakingTime, uint256 lastClaimTime, uint256 accumulatedRewards, uint256 pendingReward)',
+  'function getStakingStats() view returns (uint256 totalStakedAmount, uint256 rewardPoolBalance, uint256 currentRewardRate)',
+  
+  // 奖励领取
+  'function claimRewards()',
+  
+  // 紧急提取
+  'function emergencyWithdraw()',
+  
+  // 事件
+  'event Staked(address indexed user, uint256 amount, uint256 shares)',
+  'event Unstaked(address indexed user, uint256 amount, uint256 shares, uint256 penalty)',
+  'event RewardClaimed(address indexed user, uint256 amount)',
+  'event EmergencyWithdraw(address indexed user, uint256 amount)'
+]
+
+const MINING_VAULT_ABI = [
+  'function totalCINAMined() view returns (uint256)',
+  'function totalUSDTDeposited() view returns (uint256)',
+  'function usdtBalance(address) view returns (uint256)',
+  'function depositedAmount(address) view returns (uint256)',
+  'function pendingCINA(address) view returns (uint256)',
+  'function miningAPY() view returns (uint256)',
+  'function miningRate() view returns (uint256)',
+  'function exchangeRate() view returns (uint256)',
+  'function minDepositAmount() view returns (uint256)',
+  'function depositFee() view returns (uint256)',
+  'function withdrawalFee() view returns (uint256)',
+  'function depositUSDT(uint256) returns (bool)',
+  'function claimCINA() returns (uint256)',
+  'event USDTDeposited(address indexed user, uint256 amount)',
+  'event CINAClaimed(address indexed user, uint256 amount)'
 ]
 
 const ERC20_ABI = [
@@ -170,6 +231,26 @@ class ContractService {
     return this.getContract(addresses.USDT, ERC20_ABI, withSigner)
   }
   
+  getCINAContract(withSigner = false): Contract | null {
+    const walletStore = useWalletStore()
+    const addresses = getContractAddresses(walletStore.chainId)
+    return this.getContract(addresses.CINA, ERC20_ABI, withSigner)
+  }
+  
+  // Staking Vault Contract
+  getStakingVaultContract(withSigner = false): Contract | null {
+    const walletStore = useWalletStore()
+    const addresses = getContractAddresses(walletStore.chainId)
+    return this.getContract(addresses.STAKING_VAULT, STAKING_VAULT_ABI, withSigner)
+  }
+  
+  // Mining Vault Contract
+  getMiningVaultContract(withSigner = false): Contract | null {
+    const walletStore = useWalletStore()
+    const addresses = getContractAddresses(walletStore.chainId)
+    return this.getContract(addresses.MINING_VAULT, MINING_VAULT_ABI, withSigner)
+  }
+  
   // Generic ERC20 contract
   getERC20Contract(address: string, withSigner = false): Contract | null {
     return this.getContract(address, ERC20_ABI, withSigner)
@@ -211,6 +292,14 @@ class ContractService {
   
   getERC20Interface(): Interface {
     return new Interface(ERC20_ABI)
+  }
+  
+  getStakingVaultInterface(): Interface {
+    return new Interface(STAKING_VAULT_ABI)
+  }
+  
+  getMiningVaultInterface(): Interface {
+    return new Interface(MINING_VAULT_ABI)
   }
 }
 

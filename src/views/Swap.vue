@@ -122,7 +122,7 @@
                         <div class="detail-item">
                             <span>{{ $t('swap.rate') }}</span>
                             <span v-if="isLoadingQuote" class="loading-text">{{ $t('swap.fetchingRate') }}</span>
-                            <span v-else-if="exchangeRate > 0">1 {{ fromToken.symbol }} = {{ formatNumber(exchangeRate) }} {{ toToken.symbol }}</span>
+                            <span v-else-if="exchangeRate > 0 && fromToken && toToken">1 {{ fromToken.symbol }} = {{ formatNumber(exchangeRate) }} {{ toToken.symbol }}</span>
                             <span v-else class="no-rate-text">{{ $t('swap.enterAmountForRate') }}</span>
                         </div>
                         
@@ -203,7 +203,6 @@ const { t } = useI18n()
 interface Token {
     symbol: string;
     name: string;
-    icon: string;
     address: string;
     decimals: number;
     balance?: number;
@@ -217,14 +216,20 @@ const availableTokens = computed<Token[]>(() => {
         {
             symbol: TOKENS.WRMB.symbol,
             name: TOKENS.WRMB.name,
-            address: TOKENS.WRMB.addresses[chainId] || TOKENS.WRMB.addresses[11155111] || '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
+            address: TOKENS.WRMB.addresses[chainId as keyof typeof TOKENS.WRMB.addresses] || TOKENS.WRMB.addresses[11155111] || '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
             decimals: TOKENS.WRMB.decimals
         },
         {
             symbol: TOKENS.USDC.symbol,
             name: TOKENS.USDC.name,
-            address: TOKENS.USDC.addresses[chainId] || TOKENS.USDC.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+            address: TOKENS.USDC.addresses[chainId as keyof typeof TOKENS.USDC.addresses] || TOKENS.USDC.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
             decimals: TOKENS.USDC.decimals
+        },
+        {
+            symbol: TOKENS.USDT.symbol,
+            name: TOKENS.USDT.name,
+            address: TOKENS.USDT.addresses[chainId as keyof typeof TOKENS.USDT.addresses] || TOKENS.USDT.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+            decimals: TOKENS.USDT.decimals
         }
     ]
 })
@@ -244,6 +249,19 @@ watch(availableTokens, (tokens) => {
         }
     }
 }, { immediate: true })
+
+// Watch for same token selection and auto-swap
+watch(fromToken, (newFromToken, oldFromToken) => {
+    if (newFromToken && toToken.value && newFromToken.symbol === toToken.value.symbol && oldFromToken) {
+        toToken.value = oldFromToken
+    }
+})
+
+watch(toToken, (newToToken, oldToToken) => {
+    if (newToToken && fromToken.value && newToToken.symbol === fromToken.value.symbol && oldToToken) {
+        fromToken.value = oldToToken
+    }
+})
 
 watch(() => walletStore.chainId, (newChainId) => {
     if (newChainId) {
@@ -291,7 +309,12 @@ const currentTransactionStep = ref(0)
 const transactionStatus = ref<'pending' | 'loading' | 'success' | 'error'>('pending')
 const transactionHash = ref('')
 const transactionError = ref('')
-const gasInfo = ref(null)
+const gasInfo = ref<{
+    gasLimit: string
+    gasPrice: string
+    estimatedFee: string
+    maxFee: string
+} | undefined>(undefined)
 
 // Transaction steps
 const transactionSteps = computed(() => [
@@ -317,17 +340,17 @@ const transactionSteps = computed(() => [
 const transactionDetails = computed(() => [
     {
         label: t('swap.from'),
-        value: `${fromAmount.value} ${fromToken.value.symbol}`,
+        value: `${fromAmount.value} ${fromToken.value?.symbol || ''}`,
         highlight: true
     },
     {
         label: t('swap.to'),
-        value: `${toAmount.value} ${toToken.value.symbol}`,
+        value: `${toAmount.value} ${toToken.value?.symbol || ''}`,
         highlight: true
     },
     {
         label: t('swap.rate'),
-        value: exchangeRate.value > 0 ? `1 ${fromToken.value.symbol} = ${formatNumber(exchangeRate.value)} ${toToken.value.symbol}` : '--'
+        value: exchangeRate.value > 0 && fromToken.value && toToken.value ? `1 ${fromToken.value.symbol} = ${formatNumber(exchangeRate.value)} ${toToken.value.symbol}` : '--'
     },
     {
         label: t('swap.slippage'),
@@ -352,7 +375,7 @@ function updateExchangeRate() {
         const fromAmountNum = parseFloat(fromAmount.value)
         const toAmountNum = parseFloat(currentQuote.value.amountOut)
         exchangeRate.value = toAmountNum / fromAmountNum
-    } else if (fromToken.value.symbol === toToken.value.symbol) {
+    } else if (fromToken.value?.symbol === toToken.value?.symbol) {
         exchangeRate.value = 1
     } else {
         exchangeRate.value = 0
@@ -368,7 +391,7 @@ const canSwap = computed(() => {
         parseFloat(fromAmount.value) > 0 &&
         parseFloat(fromAmount.value) <= fromTokenBalance.value &&
         !isSwapping.value &&
-        fromToken.value.symbol !== toToken.value.symbol
+        fromToken.value?.symbol !== toToken.value?.symbol
 })
 
 function handleFromAmountChange() {
@@ -383,13 +406,12 @@ function handleFromAmountChange() {
 
 function handleToAmountChange() {
     if (toAmount.value && parseFloat(toAmount.value) > 0) {
-        if (exchangeRate.value > 0) {
-            fromAmount.value = (parseFloat(toAmount.value) / exchangeRate.value).toString()
-        } else {
-            fromAmount.value = ''
-        }
+        // 反向计算需要重新获取报价
+        getReverseUniswapV4Quote()
     } else {
         fromAmount.value = ''
+        currentQuote.value = null
+        updateExchangeRate()
     }
 }
 
@@ -459,9 +481,9 @@ function getSwapButtonText() {
         return t('swap.enterAmount')
     }
     
-    if (fromToken.value.symbol === toToken.value.symbol) {
-        return t('swap.selectDifferentTokens')
-    }
+    if (fromToken.value?.symbol === toToken.value?.symbol) {
+            return t('swap.selectDifferentTokens')
+        }
     
     if (parseFloat(fromAmount.value) > fromTokenBalance.value) {
         return t('swap.insufficientBalance')
@@ -506,8 +528,8 @@ async function getUniswapV4Quote() {
     
     try {
         const swapParams: SwapParams = {
-            tokenIn: fromToken.value.address,
-            tokenOut: toToken.value.address,
+            tokenIn: fromToken.value!.address,
+            tokenOut: toToken.value!.address,
             amountIn: fromAmount.value,
             slippage: slippage.value
         }
@@ -527,7 +549,7 @@ async function getUniswapV4Quote() {
             poolExists.value = false
             updateExchangeRate()
             
-            ElMessage.warning(t('swap.cannotGetQuote', { fromToken: fromToken.value.symbol, toToken: toToken.value.symbol }))
+            // ElMessage.warning(t('swap.cannotGetQuote', { fromToken: fromToken.value?.symbol, toToken: toToken.value?.symbol }))
         }
     } catch (error) {
         currentQuote.value = null
@@ -541,6 +563,57 @@ async function getUniswapV4Quote() {
     }
 }
 
+async function getReverseUniswapV4Quote() {
+    if (!toAmount.value || !fromToken.value || !toToken.value || fromToken.value.symbol === toToken.value.symbol) {
+        currentQuote.value = null
+        fromAmount.value = ''
+        return
+    }
+
+    if (!isV4Supported.value) {
+        return
+    }
+
+    isLoadingQuote.value = true
+    
+    try {
+        // 反向报价：交换tokenIn和tokenOut，使用toAmount作为amountIn
+        const swapParams: SwapParams = {
+            tokenIn: toToken.value!.address,
+            tokenOut: fromToken.value!.address,
+            amountIn: toAmount.value,
+            slippage: slippage.value
+        }
+
+        const quote = await uniswapV4Service.getQuote(swapParams)
+        
+        if (quote) {
+            // 反向报价的结果需要设置到fromAmount
+            fromAmount.value = quote.amountOut
+            // 保存反向报价结果，但需要注意这是反向的
+            currentQuote.value = quote
+            priceImpact.value = quote.priceImpact
+            swapFee.value = parseFloat(quote.fee)
+            poolExists.value = true
+            updateExchangeRate()
+        } else {
+            currentQuote.value = null
+            fromAmount.value = ''
+            poolExists.value = false
+            updateExchangeRate()
+        }
+    } catch (error) {
+        currentQuote.value = null
+        fromAmount.value = ''
+        poolExists.value = false
+        updateExchangeRate()
+        
+        ElMessage.error(t('swap.getReverseQuoteFailed', { error: (error as Error).message }))
+    } finally {
+        isLoadingQuote.value = false
+    }
+}
+
 
 async function executeUniswapV4Swap() {
     if (!currentQuote.value || isSwapping.value) return
@@ -549,8 +622,8 @@ async function executeUniswapV4Swap() {
     
     try {
         const swapParams: SwapParams = {
-            tokenIn: fromToken.value.address,
-            tokenOut: toToken.value.address,
+            tokenIn: fromToken.value!.address,
+            tokenOut: toToken.value!.address,
             amountIn: fromAmount.value,
             slippage: slippage.value
         }
@@ -662,6 +735,10 @@ async function executeUniswapV4Swap() {
             tickSpacing: 10,
             hooks: ethers.ZeroAddress
         }
+
+        if (poolKey.currency0 == '0x45Dd667b7C97F7c7B9135dA7f8674dF7d6662737' || poolKey.currency1 == '0x45Dd667b7C97F7c7B9135dA7f8674dF7d6662737') {
+            poolKey.hooks = '0x7d08875f51879bedD9a01d71a804f012e1304fC0'
+        }
         
         const zeroForOne = poolKey.currency0 === swapParams.tokenIn
         const deadline = Math.floor(Date.now() / 1000) + 3600
@@ -730,7 +807,7 @@ async function executeUniswapV4Swap() {
         
 
         const swapRouterContract = uniswapV4Service.swapRouterContract
-        const tx = await swapRouterContract.execute(
+        const tx = await swapRouterContract!.execute(
             commands,
             inputs,
             deadline,
@@ -843,9 +920,9 @@ watch(() => walletStore.chainId, async (newChainId) => {
         await checkUniswapV4Support()
         availableTokens.value.forEach(token => {
             if (token.symbol === 'WRMB') {
-                token.address = TOKENS.WRMB.addresses[newChainId] || token.address
+                token.address = TOKENS.WRMB.addresses[newChainId as keyof typeof TOKENS.WRMB.addresses] || token.address
             } else if (token.symbol === 'USDC') {
-                token.address = TOKENS.USDC.addresses[newChainId] || token.address
+                token.address = TOKENS.USDC.addresses[newChainId as keyof typeof TOKENS.USDC.addresses] || token.address
             }
         })
         await checkPoolInfo()
@@ -861,8 +938,8 @@ async function updateTokenBalances() {
 
     try {
         const [fromBalance, toBalance] = await Promise.all([
-            uniswapV4Service.getTokenBalance(fromToken.value.address, walletStore.address),
-            uniswapV4Service.getTokenBalance(toToken.value.address, walletStore.address)
+            uniswapV4Service.getTokenBalance(fromToken.value!.address, walletStore.address),
+            uniswapV4Service.getTokenBalance(toToken.value!.address, walletStore.address)
         ])
         
         fromTokenBalance.value = parseFloat(fromBalance)
@@ -879,7 +956,7 @@ function resetTransactionState() {
     transactionStatus.value = 'pending'
     transactionHash.value = ''
     transactionError.value = ''
-    gasInfo.value = null
+    gasInfo.value = undefined
 }
 
 function handleTransactionModalClose() {

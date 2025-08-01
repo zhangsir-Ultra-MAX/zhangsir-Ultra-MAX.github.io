@@ -125,6 +125,17 @@ export const TOKENS = {
       [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_USDC_ADDRESS || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
       [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_USDC_ADDRESS || ''
     }
+  },
+  CINA: {
+    symbol: 'CINA',
+    name: 'CINA Token',
+    decimals: 18,
+    addresses: {
+      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_CINA_ADDRESS || '',
+      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_CINA_ADDRESS || '',
+      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_CINA_ADDRESS || '',
+      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_CINA_ADDRESS || ''
+    }
   }
 } as const
 
@@ -178,6 +189,18 @@ export const CONTRACTS = {
     [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_WRMB_BOND_POOL_ADDRESS || '',
     [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_WRMB_BOND_POOL_ADDRESS || '',
     [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_WRMB_BOND_POOL_ADDRESS || ''
+  },
+  STAKING_VAULT: {
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_STAKING_VAULT_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_STAKING_VAULT_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_STAKING_VAULT_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_STAKING_VAULT_ADDRESS || ''
+  },
+  MINING_VAULT: {
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_MINING_VAULT_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_MINING_VAULT_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_MINING_VAULT_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_MINING_VAULT_ADDRESS || ''
   }
 } as const
 

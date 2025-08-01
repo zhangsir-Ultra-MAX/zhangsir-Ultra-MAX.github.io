@@ -128,7 +128,9 @@ import {
   TrendCharts,
   Document,
   Link,
-  Box
+  Box,
+  Coin,
+  Lock
 } from '@element-plus/icons-vue'
 
 import WalletConnect from '@/components/common/WalletConnect.vue'
@@ -154,6 +156,16 @@ const navigationItems = [
     name: 'savings',
     path: '/savings',
     icon: Wallet
+  },
+  {
+    name: 'mining',
+    path: '/mining',
+    icon: Coin
+  },
+  {
+    name: 'staking',
+    path: '/staking',
+    icon: Lock
   },
   {
     name: 'wrap',

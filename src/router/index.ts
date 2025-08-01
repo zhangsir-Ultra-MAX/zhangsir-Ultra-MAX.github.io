@@ -49,6 +49,24 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/mining',
+    name: 'Mining',
+    component: () => import('@/views/Mining.vue'),
+    meta: {
+      title: 'Mining',
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/staking',
+    name: 'Staking',
+    component: () => import('@/views/Staking.vue'),
+    meta: {
+      title: 'Staking',
+      requiresAuth: true
+    }
+  },
+  {
     path: '/portfolio',
     name: 'Portfolio',
     component: () => import('@/views/Portfolio.vue'),
