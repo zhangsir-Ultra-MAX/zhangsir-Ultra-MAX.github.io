@@ -1198,6 +1198,10 @@ onMounted(async () => {
     @apply py-1 px-2 rounded bg-gray-50 dark:bg-gray-700 border border-transparent cursor-pointer text-xs;
 }
 
+.detail-item {
+    @apply flex items-center justify-between;
+}
+
 .slippage-selector button.active {
     @apply bg-primary-50 dark:bg-primary-900 border-primary-500 text-primary-600 dark:text-primary-400;
 }
