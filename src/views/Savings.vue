@@ -572,7 +572,7 @@ watch(
 }
 
 .card-subtitle {
-  @apply text-sm text-gray-500 dark:text-gray-400;
+  @apply text-sm font-medium text-gray-500 dark:text-gray-400;
 }
 
 .overview-card.highlight .card-subtitle {

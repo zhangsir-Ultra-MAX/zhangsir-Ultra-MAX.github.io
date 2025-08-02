@@ -13,7 +13,7 @@
             <div class="card-header">
               <h3 class="card-title">{{ $t('farm.yourMined') }}</h3>
               <div class="card-subtitle">
-                {{ $t('farm.apy') }}: {{ formatNumber(farmStore.farmAPY) }}%
+                {{ $t('farm.apy') }} {{ formatNumber(farmStore.farmAPY) }}%
               </div>
             </div>
             <div class="card-value">
@@ -45,7 +45,7 @@
                     <div class="input-with-select">
                       <el-input 
                         v-model="depositAmount" 
-                        :placeholder="$t('farm.enterAmount')" 
+                        :placeholder="formatNumber(farmStore.usdtBalance)+'  '+$t('available')" 
                         size="large"
                         class="amount-input" 
                         @input="handleDepositAmountChange"
@@ -75,12 +75,6 @@
                       {{ $t('common.max') }}
                     </el-button>
                   </div>
-
-                  <!-- Balance Display -->
-                  <div class="balance-info">
-                    <span class="balance-label">{{ $t('common.balance') }}:</span>
-                    <span class="balance-value">{{ formatNumber(farmStore.usdtBalance) }} {{ depositToken?.symbol }}</span>
-                  </div>
                 </div>
 
                 <!-- Farm Preview -->
@@ -88,14 +82,9 @@
                   <h4 class="preview-title">{{ $t('farm.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
-                      <span>{{ $t('farm.estimatedCINA') }}</span>
-                      <span class="preview-value">{{ formatNumber(depositPreview.estimatedCINA, 4) }} CINA</span>
-                    </div>
-                    <div class="preview-row">
                       <span>{{ $t('farm.dailyReward') }}</span>
-                      <span class="preview-value">{{ formatNumber(depositPreview.dailyReward, 4) }} CINA/day</span>
+                      <span class="preview-value">{{ formatNumber(depositPreview.dailyReward, 2) }} CINA</span>
                     </div>
-
                   </div>
                 </div>
 
@@ -122,7 +111,7 @@
                     <div class="input-with-select">
                       <el-input 
                         v-model="withdrawAmount" 
-                        :placeholder="$t('farm.enterAmount')" 
+                        :placeholder="formatNumber(farmStore.depositedAmount)+'  '+$t('available')" 
                         size="large"
                         class="amount-input" 
                         @input="handleWithdrawAmountChange"
@@ -159,18 +148,6 @@
                       {{ $t('farm.withdrawCINA') }}
                     </el-checkbox>
                   </div>
-
-                  <!-- Deposited Balance Display -->
-                  <div class="balance-info">
-                    <span class="balance-label">{{ $t('common.balance') }}:</span>
-                    <span class="balance-value">{{ formatNumber(farmStore.depositedAmount) }} {{ withdrawToken?.symbol }}</span>
-                  </div>
-
-                  <!-- Withdraw Fee Warning -->
-                  <div v-if="withdrawPreview && withdrawPreview.fee > 0" class="warning-info">
-                    <el-icon><Warning /></el-icon>
-                    <span>{{ $t('farm.withdrawFeeWarning', { fee: formatNumber(withdrawPreview.fee * 100, 2) }) }}</span>
-                  </div>
                 </div>
 
                 <!-- Withdraw Preview -->
@@ -178,16 +155,16 @@
                   <h4 class="preview-title">{{ $t('farm.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
-                      <span>{{ $t('farm.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.netAmount, 4) }} {{ withdrawToken?.symbol }}</span>
-                    </div>
-                    <div v-if="withdrawPreview.fee > 0" class="preview-row fee">
-                      <span>{{ $t('farm.withdrawFee') }}</span>
-                      <span class="preview-value fee-amount">-{{ formatNumber(withdrawPreview.feeAmount, 4) }} {{ withdrawToken?.symbol }}</span>
+                      <span>Liquidity</span>
+                      <span class="preview-value liquidity-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} {{ withdrawToken?.symbol }}</span>
                     </div>
                     <div class="preview-row">
-                      <span>{{ $t('farm.remainingDeposited') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.remainingAmount, 4) }} {{ withdrawToken?.symbol }}</span>
+                      <span>{{ $t('farm.youWillReceive') }}</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} {{ withdrawToken?.symbol }}</span>
+                    </div>
+                    <div v-if="withdrawCINA" class="preview-row">
+                      <span>Farm Reward</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} CINA</span>
                     </div>
                   </div>
                 </div>
@@ -501,7 +478,7 @@ watch(
 }
 
 .card-subtitle {
-  @apply text-sm text-gray-500 dark:text-gray-400;
+  @apply text-sm font-medium text-gray-500 dark:text-gray-400;
 }
 
 .action-section {
@@ -536,12 +513,12 @@ watch(
   @apply text-gray-500 dark:text-gray-400 font-medium;
 }
 
-.quick-amounts {
-  @apply flex gap-2;
-}
-
 .max-button {
   @apply text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300;
+}
+
+.quick-amounts {
+  @apply flex space-x-2;
 }
 
 .balance-info {
@@ -584,11 +561,13 @@ watch(
   @apply text-red-600 dark:text-red-400;
 }
 
+.liquidity-value {
+  @apply text-yellow-600 dark:text-yellow-400 font-medium;
+}
+
 .fee-amount {
   @apply text-red-600 dark:text-red-400;
 }
-
-
 
 .action-button {
   @apply w-full h-12 text-base font-medium;
@@ -694,11 +673,5 @@ watch(
   .overview-grid {
     @apply grid-cols-1 gap-4;
   }
-  
-  .quick-amounts {
-    @apply grid grid-cols-4 gap-2;
-  }
-  
-
 }
 </style>

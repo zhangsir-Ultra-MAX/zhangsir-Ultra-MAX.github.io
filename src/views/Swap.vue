@@ -42,7 +42,7 @@
                     <div class="token-selection">
                         <div class="token-input-container">
                             <div class="token-input-header">
-                                <span>{{ $t('swap.sell') }}</span>
+                                <span class="input-label">{{ $t('swap.sell') }}</span>
                             </div>
                             <div class="input-section">
                                 <div class="input-group">
@@ -87,7 +87,7 @@
 
                         <div class="token-input-container">
                             <div class="token-input-header">
-                                <span>{{ $t('swap.buy') }}</span>
+                                <span class="input-label">{{ $t('swap.buy') }}</span>
                             </div>
                             <div class="input-section">
                                 <div class="input-group">
@@ -122,7 +122,7 @@
                                 <span class="status-indicator">
                                     <span v-if="isV4Supported" class="status-supported">✓ {{
                                         $t('swap.uniswapV4Available')
-                                        }}</span>
+                                    }}</span>
                                     <span v-else class="status-unsupported">
                                         ⚠ {{ $t('swap.v4NotSupported') }}
                                         <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
@@ -140,7 +140,7 @@
                                 <span>{{ $t('swap.poolStatus') }}</span>
                                 <span class="status-indicator">
                                     <span v-if="poolExists" class="status-supported">✓ {{ $t('swap.poolAvailable')
-                                        }}</span>
+                                    }}</span>
                                     <span v-else class="status-warning">
                                         ⚠ {{ $t('swap.poolNotExists') }}
                                         <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
@@ -170,22 +170,22 @@
                             <div class="detail-row exchange-rate">
                                 <span>{{ $t('swap.rate') }}</span>
                                 <span v-if="isLoadingQuote" class="detail-value loading-text">{{ $t('swap.fetchingRate')
-                                    }}</span>
+                                }}</span>
                                 <span v-else-if="exchangeRate > 0 && fromToken && toToken"
                                     class="detail-value rate-value">1 {{
-                                    fromToken.symbol }} = {{
+                                        fromToken.symbol }} = {{
                                         formatNumber(exchangeRate) }} {{ toToken.symbol }}</span>
                                 <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Action Button -->
                     <div class="action-container">
-                        <button class="swap-button" :disabled="!canSwap" @click="executeSwap">
+                        <el-button class="action-button" type="primary" size="large" :disabled="!canSwap" @click="executeSwap">
                             {{ getSwapButtonText() }}
-                        </button>
+                        </el-button>
                     </div>
                 </div>
             </div>
@@ -1029,7 +1029,7 @@ onMounted(async () => {
 }
 
 .token-selection {
-    @apply flex flex-col gap-4;
+    @apply flex flex-col;
 }
 
 .token-input-container {
@@ -1038,6 +1038,10 @@ onMounted(async () => {
 
 .token-input-header {
     @apply flex justify-between mb-2 text-sm text-gray-600 dark:text-gray-400;
+}
+
+.input-label {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300;
 }
 
 .input-section {
@@ -1211,15 +1215,15 @@ onMounted(async () => {
 }
 
 .custom-slippage input {
-    @apply w-10 bg-transparent border-none py-1 text-xs outline-none;
+    @apply w-12 bg-transparent border-none py-1 text-xs outline-none;
 }
 
 .action-container {
     @apply mt-6;
 }
 
-.swap-button {
-    @apply w-full py-4 rounded-lg bg-primary-500 text-white font-semibold border-none cursor-pointer transition-colors;
+.action-button {
+  @apply w-full;
 }
 
 .swap-button:hover {
