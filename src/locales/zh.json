@@ -562,7 +562,7 @@
     "yourMined": "您的挖矿",
     "estimatedCINA": "预估CINA",
     "remainingDeposited": "剩余存入",
-    "withdrawCINA": "同时提取CINA",
+    "withdrawCINA": "提取CINA",
     "withdrawFeeWarning": "提取手续费：{fee}%"
   },
   "staking": {

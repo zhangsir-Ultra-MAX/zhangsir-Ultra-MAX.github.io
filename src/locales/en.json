@@ -562,7 +562,7 @@
     "yourMined": "Your Farm",
     "estimatedCINA": "Estimated CINA",
     "remainingDeposited": "Remaining Deposited",
-    "withdrawCINA": "Also claim CINA",
+    "withdrawCINA": "Claim CINA",
     "withdrawFeeWarning": "Withdraw fee: {fee}%"
   },
   "staking": {

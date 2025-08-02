@@ -28,16 +28,6 @@
                 :cache-key="`totalCINAMined_${walletStore.address}`"
                 :use-cache="false"
               />
-              <el-button 
-                type="primary" 
-                size="small" 
-                :loading="farmStore.claimInProgress"
-                :disabled="!isClaimValid" 
-                @click="handleClaim" 
-                class="claim-button"
-              >
-                {{ $t('farm.claim') }}
-              </el-button>
             </div>
           </div>
         </div>
@@ -205,12 +195,12 @@
                 <el-button 
                   type="primary" 
                   size="large" 
-                  :loading="farmStore.withdrawInProgress"
+                  :loading="farmStore.withdrawInProgress || farmStore.claimInProgress"
                   :disabled="!isWithdrawValid" 
                   @click="handleWithdraw" 
                   class="action-button"
                 >
-                  {{ $t('farm.withdraw') }}
+                  {{ withdrawCINA && (!withdrawAmount || parseFloat(withdrawAmount) === 0) ? $t('farm.claim') : $t('farm.withdraw') }}
                 </el-button>
               </div>
             </div>
@@ -311,6 +301,11 @@ const isClaimValid = computed(() => {
 
 const isWithdrawValid = computed(() => {
   const amount = parseFloat(withdrawAmount.value)
+  // 如果勾选了withdrawCINA但没有输入金额，只要有可claim的CINA就有效
+  if (withdrawCINA.value && (!withdrawAmount.value || amount === 0)) {
+    return parseFloat(farmStore.pendingCINA) > 0
+  }
+  // 如果有输入金额，检查金额是否有效
   return amount > 0 && amount <= parseFloat(farmStore.depositedAmount)
 })
 
@@ -404,15 +399,24 @@ const handleWithdraw = async () => {
   try {
     const amount = parseFloat(withdrawAmount.value)
     
-    // 如果选择了同时提取CINA，先执行CINA提取
-    if (withdrawCINA.value && parseFloat(farmStore.pendingCINA) > 0) {
-      await farmStore.claimCINA()
+    // 如果勾选了withdrawCINA但没有输入金额，只执行claim
+    if (withdrawCINA.value && (!withdrawAmount.value || amount === 0)) {
+      if (parseFloat(farmStore.pendingCINA) > 0) {
+        await farmStore.claimCINA()
+        ElMessage.success(t('farm.claimSuccess'))
+      }
+    } else {
+      // 如果有输入金额，先执行CINA提取（如果勾选了），再执行USDT提现
+      if (withdrawCINA.value && parseFloat(farmStore.pendingCINA) > 0) {
+        await farmStore.claimCINA()
+      }
+      
+      // 执行USDT提现
+      await farmStore.withdrawUSDT(amount)
+      
+      ElMessage.success(t('farm.withdrawSuccess'))
     }
     
-    // 执行USDT提现
-    await farmStore.withdrawUSDT(amount)
-    
-    ElMessage.success(t('farm.withdrawSuccess'))
     withdrawAmount.value = ''
     withdrawCINA.value = false // 重置开关状态
   } catch (error) {
