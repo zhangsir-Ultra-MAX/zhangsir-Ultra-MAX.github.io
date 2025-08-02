@@ -12,13 +12,14 @@
           <div class="overview-card">
             <div class="card-header">
               <h3 class="card-title">{{ $t('savings.assetValue') }}</h3>
-              <el-icon class="card-icon">
-                <Wallet />
-              </el-icon>
+              <div class="card-subtitle">
+                {{ $t('savings.apy') }} {{ formatNumber(savingsStore.dynamicAPY) }}%
+              </div>
             </div>
             <div class="card-value">
               <img src="../assets/wrmb.png" alt="" class="wrmb-icon"> 
               <AnimatedNumber 
+                class="animated-number"
                 :value="savingsStore.userAssetValue" 
                 :decimals="dynamicDecimals"
                 :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
@@ -27,9 +28,6 @@
                 :cache-key="`userAssetValue_${walletStore.address}`"
                 :use-cache="false"
               />
-            </div>
-            <div class="card-subtitle">
-              {{ formatNumber(savingsStore.dynamicAPY) }}% APY
             </div>
           </div>
         </div>
@@ -44,7 +42,7 @@
               <div class="action-form">
                 <div class="input-section">
                   <div class="input-group">
-                    <el-input v-model="depositAmount" :placeholder="$t('savings.enterAmount')" size="large"
+                    <el-input v-model="depositAmount" :placeholder="formatNumber(savingsStore.wrmbBalance) + '  ' + $t('available')" size="large"
                       class="amount-input" @input="handleDepositAmountChange">
                       <template #suffix>
                         <span class="input-suffix">WRMB</span>
@@ -65,7 +63,7 @@
                 </div>
 
                 <!-- Preview -->
-                <div v-if="depositPreview" class="preview-section">
+                <div v-if="depositPreview.shares" class="preview-section">
                   <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
@@ -93,7 +91,7 @@
               <div class="action-form">
                 <div class="input-section">
                   <div class="input-group">
-                    <el-input v-model="withdrawAmount" :placeholder="$t('savings.enterAmount')" size="large"
+                    <el-input v-model="withdrawAmount" :placeholder="formatNumber(savingsStore.userAssetValue) + '  ' + $t('available')" size="large"
                       class="amount-input" @input="handleWithdrawAmountChange">
                       <template #suffix>
                         <span class="input-suffix">WRMB</span>
@@ -114,21 +112,22 @@
                 </div>
 
                 <!-- Preview -->
-                <div v-if="withdrawPreview" class="preview-section">
+                <div v-if="withdrawPreview.shares" class="preview-section">
                   <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
                   <div class="preview-details">
+                    <div class="preview-row">
+                      <span>{{ $t('savings.sharesRequired') }}</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.shares, 2) }} sWRMB</span>
+                    </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.youWillReceive') }}</span>
                       <span class="preview-value">{{ formatNumber(withdrawPreview.assets, 2) }} WRMB</span>
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.fee') }} ({{ formatNumber((parseFloat(withdrawPreview.fee)*100).toString()) }}%)</span>
-                      <span class="preview-value">{{formatNumber(withdrawPreviewFee, 2)}} WRMB</span>
+                      <span class="fee-value">{{formatNumber(withdrawPreviewFee, 2)}} WRMB</span>
                     </div>
-                    <div class="preview-row">
-                      <span>{{ $t('savings.sharesRequired') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.shares, 2) }} sWRMB</span>
-                    </div>
+
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('savings.currentExchangeRate') }}</span>
                       <span class="preview-value">1 sWRMB ≈ {{ formatNumber(savingsStore.currentNAV, 6) }} WRMB</span>
@@ -561,7 +560,11 @@ watch(
 }
 
 .wrmb-icon {
-  @apply w-8 h-8 rounded-full object-cover;
+  @apply w-8 h-8 rounded-full object-cover flex-shrink-0;
+}
+
+.animated-number {
+  @apply flex items-center;
 }
 
 .overview-card.highlight .card-value {
@@ -569,7 +572,7 @@ watch(
 }
 
 .card-subtitle {
-  @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
+  @apply text-sm text-gray-500 dark:text-gray-400;
 }
 
 .overview-card.highlight .card-subtitle {
@@ -652,20 +655,24 @@ watch(
   @apply flex items-center justify-between text-sm;
 }
 
+.preview-row span:first-child {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
 .preview-row.exchange-rate {
   @apply border-t border-gray-200 dark:border-gray-600 pt-2 mt-2;
 }
 
-.preview-row.exchange-rate span:first-child {
-  @apply text-primary-600 dark:text-primary-400 font-medium;
-}
-
 .preview-row.exchange-rate .preview-value {
-  @apply text-primary-700 dark:text-primary-300 font-semibold;
+  @apply text-primary-400 dark:text-primary-300 font-semibold;
 }
 
 .preview-value {
   @apply font-medium text-gray-900 dark:text-white;
+}
+
+.fee-value {
+  @apply text-yellow-600 dark:text-yellow-400 font-medium;
 }
 
 .action-button {

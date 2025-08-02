@@ -4,7 +4,7 @@
       <!-- Staking Overview -->
       <div class="staking-overview">
         <h2 class="section-title">
-          {{ $t('staking.overview') }}
+          CINA {{ $t('staking.overview') }}
         </h2>
 
         <div class="overview-grid">
@@ -12,24 +12,22 @@
           <div class="overview-card">
             <div class="card-header">
               <h3 class="card-title">{{ $t('staking.yourStaked') }}</h3>
-              <el-icon class="card-icon">
-                <Lock />
-              </el-icon>
+              <div class="card-subtitle">
+                {{ $t('staking.apy') }}  {{ formatNumber(stakingStore.currentAPY) }}%
+              </div>
             </div>
             <div class="card-value">
+              <img src="../assets/logo.png" alt="" class="token-icon"> 
               <AnimatedNumber 
+                class="animated-number"
                 :value="stakingStore.totalStaked" 
-                :decimals="4"
+                :decimals="8"
                 :auto-increment="walletStore.isConnected && parseFloat(stakingStore.totalStaked) > 0"
                 :increment-amount="parseFloat(stakingStore.stakingRewardRate)"
                 :increment-interval="1000"
                 :cache-key="`totalStaked_${walletStore.address}`"
                 :use-cache="false"
               />
-              <span class="token-symbol">CINA</span>
-            </div>
-            <div class="card-subtitle">
-              {{ $t('staking.apy') }}: {{ formatNumber(stakingStore.currentAPY) }}%
             </div>
           </div>
         </div>
@@ -46,7 +44,7 @@
                   <div class="input-group">
                     <el-input 
                       v-model="stakeAmount" 
-                      :placeholder="$t('staking.enterCINAAmount')" 
+                      :placeholder="formatNumber(stakingStore.cinaBalance, 6) + '  available'" 
                       size="large"
                       class="amount-input" 
                       @input="handleStakeAmountChange"
@@ -72,12 +70,6 @@
                     </el-button>
                   </div>
 
-                  <!-- Balance Display -->
-                  <div class="balance-info">
-                    <span class="balance-label">{{ $t('staking.cinaBalance') }}:</span>
-                    <span class="balance-value">{{ formatNumber(stakingStore.cinaBalance) }} CINA</span>
-                  </div>
-
                   <!-- Minimum Stake Warning -->
                   <div v-if="showMinStakeWarning" class="warning-info">
                     <el-icon><Warning /></el-icon>
@@ -91,15 +83,15 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('staking.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(stakePreview.shares, 4) }} stCINA</span>
+                      <span class="preview-value">{{ formatNumber(stakePreview.shares, 2) }} stCINA</span>
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('staking.dailyReward') }}</span>
-                      <span class="preview-value">{{ formatNumber(stakePreview.dailyReward, 4) }} CINA/day</span>
+                      <span class="preview-value">{{ formatNumber(stakePreview.dailyReward, 2) }} CINA</span>
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('staking.exchangeRate') }}</span>
-                      <span class="preview-value">1 CINA = {{ formatNumber(stakePreview.exchangeRate, 6) }} stCINA</span>
+                      <span class="preview-value">1 CINA ≈ {{ formatNumber(stakePreview.exchangeRate, 6) }} stCINA</span>
                     </div>
                   </div>
                 </div>
@@ -126,7 +118,7 @@
                   <div class="input-group">
                     <el-input 
                       v-model="unstakeAmount" 
-                      :placeholder="$t('staking.enterCINAAmount')" 
+                      :placeholder="formatNumber(stakingStore.stakedAmount, 6) + '  available'" 
                       size="large"
                       class="amount-input" 
                       @input="handleUnstakeAmountChange"
@@ -152,12 +144,6 @@
                     </el-button>
                   </div>
 
-                  <!-- Staked Balance Display -->
-                  <div class="balance-info">
-                    <span class="balance-label">{{ $t('staking.stakedBalance') }}:</span>
-                    <span class="balance-value">{{ formatNumber(stakingStore.stakedAmount) }} CINA</span>
-                  </div>
-
                   <!-- Early Unstake Warning -->
                   <div v-if="showEarlyUnstakeWarning" class="warning-info early-unstake">
                     <el-icon><Warning /></el-icon>
@@ -170,6 +156,10 @@
                   <h4 class="preview-title">{{ $t('staking.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
+                      <span>{{ $t('staking.required') }}</span>
+                      <span class="preview-value">{{ formatNumber(unstakePreview.penalty, 2) }} stCINA</span>
+                    </div>
+                    <div class="preview-row">
                       <span>{{ $t('staking.youWillReceive') }}</span>
                       <span class="preview-value">{{ formatNumber(unstakePreview.actualAmount, 4) }} CINA</span>
                     </div>
@@ -177,9 +167,9 @@
                       <span>{{ $t('staking.penalty') }}</span>
                       <span class="preview-value penalty-amount">-{{ formatNumber(unstakePreview.penalty, 4) }} CINA</span>
                     </div>
-                    <div class="preview-row">
-                      <span>{{ $t('staking.stakingPeriod') }}</span>
-                      <span class="preview-value">{{ formatDuration(unstakePreview.stakingDuration) }}</span>
+                    <div class="preview-row exchange-rate">
+                      <span>{{ $t('staking.exchangeRate') }}</span>
+                      <span class="preview-value">1 stCINA ≈ {{ formatNumber(unstakePreview.penalty, 6) }} CINA</span>
                     </div>
                   </div>
                 </div>
@@ -225,11 +215,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
-  Lock,
-  Trophy,
-  TrendCharts,
-  Plus,
-  Minus,
   Warning
 } from '@element-plus/icons-vue'
 import { parseUnits } from 'ethers'
@@ -239,7 +224,7 @@ import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useStakingStore } from '@/stores/staking'
 import { contractService } from '@/services/contracts'
-import { formatNumber, formatTimeAgo, formatDuration } from '@/utils/format'
+import { formatNumber } from '@/utils/format'
 
 const { t } = useI18n()
 const walletStore = useWalletStore()
@@ -276,7 +261,7 @@ const transactionDetails = computed(() => {
       { label: t('staking.unstakeAmount'), value: `${formatNumber(unstakeAmount.value, 6)} CINA`, highlight: true },
       { label: t('staking.actualAmount'), value: `${formatNumber(unstakePreview.value?.actualAmount || '0', 6)} CINA` }
     )
-    if (unstakePreview.value?.penalty && parseFloat(unstakePreview.value.penalty) > 0) {
+    if (unstakePreview.value?.penalty && unstakePreview.value.penalty > 0) {
       details.push(
         { label: t('staking.penalty'), value: `${formatNumber(unstakePreview.value.penalty, 6)} CINA` }
       )
@@ -460,10 +445,6 @@ const handleUnstake = async () => {
   }
 }
 
-
-
-
-
 // Lifecycle
 onMounted(async () => {
   if (walletStore.isConnected) {
@@ -533,6 +514,14 @@ const handleTransactionRetry = () => {
   @apply text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2;
 }
 
+.token-icon {
+  @apply w-8 h-8 rounded-full object-cover;
+}
+
+.animated-number {
+  @apply flex items-center;
+}
+
 .token-symbol {
   @apply text-lg font-medium text-gray-600 dark:text-gray-400;
 }
@@ -574,7 +563,7 @@ const handleTransactionRetry = () => {
 }
 
 .quick-amounts {
-  @apply flex gap-2;
+  @apply flex space-x-2;
 }
 
 .max-button {
@@ -631,6 +620,10 @@ const handleTransactionRetry = () => {
 
 .exchange-rate {
   @apply pt-2 border-t border-gray-200 dark:border-gray-600;
+}
+
+.preview-row.exchange-rate .preview-value {
+  @apply text-primary-700 dark:text-primary-300 font-semibold;
 }
 
 .action-button {
@@ -707,11 +700,5 @@ const handleTransactionRetry = () => {
   .overview-grid {
     @apply grid-cols-1 gap-4;
   }
-  
-  .quick-amounts {
-    @apply grid grid-cols-4 gap-2;
-  }
-  
-
 }
 </style>

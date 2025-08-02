@@ -1,57 +1,53 @@
 <template>
-  <div class="mining">
-    <div class="mining-content">
-      <!-- Mining Overview -->
-      <div class="mining-overview">
+  <div class="farm">
+    <div class="farm-content">
+      <!-- Farm Overview -->
+      <div class="farm-overview">
         <h2 class="section-title">
-          {{ $t('mining.overview') }}
+          {{ $t('farm.overview') }}
         </h2>
 
         <div class="overview-grid">
           <!-- Your CINA Mined -->
           <div class="overview-card">
             <div class="card-header">
-              <h3 class="card-title">{{ $t('mining.yourMined') }}</h3>
-              <el-icon class="card-icon">
-                <Coin />
-              </el-icon>
+              <h3 class="card-title">{{ $t('farm.yourMined') }}</h3>
+              <div class="card-subtitle">
+                {{ $t('farm.apy') }}: {{ formatNumber(farmStore.farmAPY) }}%
+              </div>
             </div>
             <div class="card-value">
-              <div class="value-content">
-                <AnimatedNumber 
-                  :value="miningStore.totalCINAMined" 
-                  :decimals="4"
-                  :auto-increment="walletStore.isConnected && parseFloat(miningStore.totalCINAMined) > 0"
-                  :increment-amount="parseFloat(miningStore.miningRate)"
-                  :increment-interval="1000"
-                  :cache-key="`totalCINAMined_${walletStore.address}`"
-                  :use-cache="false"
-                />
-                <span class="token-symbol">CINA</span>
-              </div>
+              <img src="../assets/logo.png" alt="" class="token-icon"> 
+              <AnimatedNumber 
+                class="animated-number"
+                :value="farmStore.totalCINAMined" 
+                :decimals="8"
+                :auto-increment="walletStore.isConnected && parseFloat(farmStore.totalCINAMined) > 0"
+                :increment-amount="parseFloat(farmStore.farmRate)"
+                :increment-interval="1000"
+                :cache-key="`totalCINAMined_${walletStore.address}`"
+                :use-cache="false"
+              />
               <el-button 
                 type="primary" 
                 size="small" 
-                :loading="miningStore.claimInProgress"
+                :loading="farmStore.claimInProgress"
                 :disabled="!isClaimValid" 
                 @click="handleClaim" 
-                class="claim-button-corner"
+                class="claim-button"
               >
-                {{ $t('mining.claim') }}
+                {{ $t('farm.claim') }}
               </el-button>
-            </div>
-            <div class="card-subtitle">
-              {{ $t('mining.apy') }}: {{ formatNumber(miningStore.miningAPY) }}%
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Mining Actions -->
+      <!-- Farm Actions -->
       <div class="action-section">
-        <el-tabs v-model="activeTab" class="mining-tabs">
+        <el-tabs v-model="activeTab" class="farm-tabs">
           <!-- Deposit Token Tab -->
-          <el-tab-pane :label="$t('mining.deposit')" name="deposit">
+          <el-tab-pane :label="$t('farm.deposit')" name="deposit">
             <div class="tab-content">
               <div class="action-form">
                 <div class="input-section">
@@ -59,7 +55,7 @@
                     <div class="input-with-select">
                       <el-input 
                         v-model="depositAmount" 
-                        :placeholder="$t('mining.enterAmount')" 
+                        :placeholder="$t('farm.enterAmount')" 
                         size="large"
                         class="amount-input" 
                         @input="handleDepositAmountChange"
@@ -93,45 +89,42 @@
                   <!-- Balance Display -->
                   <div class="balance-info">
                     <span class="balance-label">{{ $t('common.balance') }}:</span>
-                    <span class="balance-value">{{ formatNumber(miningStore.usdtBalance) }} {{ depositToken?.symbol }}</span>
+                    <span class="balance-value">{{ formatNumber(farmStore.usdtBalance) }} {{ depositToken?.symbol }}</span>
                   </div>
                 </div>
 
-                <!-- Mining Preview -->
+                <!-- Farm Preview -->
                 <div v-if="depositPreview" class="preview-section">
-                  <h4 class="preview-title">{{ $t('mining.preview') }}</h4>
+                  <h4 class="preview-title">{{ $t('farm.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
-                      <span>{{ $t('mining.estimatedCINA') }}</span>
+                      <span>{{ $t('farm.estimatedCINA') }}</span>
                       <span class="preview-value">{{ formatNumber(depositPreview.estimatedCINA, 4) }} CINA</span>
                     </div>
                     <div class="preview-row">
-                      <span>{{ $t('mining.dailyReward') }}</span>
+                      <span>{{ $t('farm.dailyReward') }}</span>
                       <span class="preview-value">{{ formatNumber(depositPreview.dailyReward, 4) }} CINA/day</span>
                     </div>
-                    <div class="preview-row exchange-rate">
-                      <span>{{ $t('mining.exchangeRate') }}</span>
-                      <span class="preview-value">1 {{ depositToken?.symbol }} ≈ {{ formatNumber(depositPreview.exchangeRate, 4) }} CINA</span>
-                    </div>
+
                   </div>
                 </div>
 
                 <el-button 
                   type="primary" 
                   size="large" 
-                  :loading="miningStore.depositInProgress"
+                  :loading="farmStore.depositInProgress"
                   :disabled="!isDepositValid" 
                   @click="handleDeposit" 
                   class="action-button"
                 >
-                  {{ $t('mining.deposit') }}
+                  {{ $t('farm.deposit') }}
                 </el-button>
               </div>
             </div>
           </el-tab-pane>
 
           <!-- Withdraw Token Tab -->
-          <el-tab-pane :label="$t('mining.withdraw')" name="withdraw">
+          <el-tab-pane :label="$t('farm.withdraw')" name="withdraw">
             <div class="tab-content">
               <div class="action-form">
                 <div class="input-section">
@@ -139,7 +132,7 @@
                     <div class="input-with-select">
                       <el-input 
                         v-model="withdrawAmount" 
-                        :placeholder="$t('mining.enterAmount')" 
+                        :placeholder="$t('farm.enterAmount')" 
                         size="large"
                         class="amount-input" 
                         @input="handleWithdrawAmountChange"
@@ -173,37 +166,37 @@
                   <!-- Claim CINA -->
                   <div class="input-group">
                     <el-checkbox v-model="withdrawCINA" class="withdraw-cina-checkbox">
-                      {{ $t('mining.withdrawCINA') }}
+                      {{ $t('farm.withdrawCINA') }}
                     </el-checkbox>
                   </div>
 
                   <!-- Deposited Balance Display -->
                   <div class="balance-info">
                     <span class="balance-label">{{ $t('common.balance') }}:</span>
-                    <span class="balance-value">{{ formatNumber(miningStore.depositedAmount) }} {{ withdrawToken?.symbol }}</span>
+                    <span class="balance-value">{{ formatNumber(farmStore.depositedAmount) }} {{ withdrawToken?.symbol }}</span>
                   </div>
 
                   <!-- Withdraw Fee Warning -->
                   <div v-if="withdrawPreview && withdrawPreview.fee > 0" class="warning-info">
                     <el-icon><Warning /></el-icon>
-                    <span>{{ $t('mining.withdrawFeeWarning', { fee: formatNumber(withdrawPreview.fee * 100, 2) }) }}</span>
+                    <span>{{ $t('farm.withdrawFeeWarning', { fee: formatNumber(withdrawPreview.fee * 100, 2) }) }}</span>
                   </div>
                 </div>
 
                 <!-- Withdraw Preview -->
                 <div v-if="withdrawPreview" class="preview-section">
-                  <h4 class="preview-title">{{ $t('mining.preview') }}</h4>
+                  <h4 class="preview-title">{{ $t('farm.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
-                      <span>{{ $t('mining.youWillReceive') }}</span>
+                      <span>{{ $t('farm.youWillReceive') }}</span>
                       <span class="preview-value">{{ formatNumber(withdrawPreview.netAmount, 4) }} {{ withdrawToken?.symbol }}</span>
                     </div>
                     <div v-if="withdrawPreview.fee > 0" class="preview-row fee">
-                      <span>{{ $t('mining.withdrawFee') }}</span>
+                      <span>{{ $t('farm.withdrawFee') }}</span>
                       <span class="preview-value fee-amount">-{{ formatNumber(withdrawPreview.feeAmount, 4) }} {{ withdrawToken?.symbol }}</span>
                     </div>
                     <div class="preview-row">
-                      <span>{{ $t('mining.remainingDeposited') }}</span>
+                      <span>{{ $t('farm.remainingDeposited') }}</span>
                       <span class="preview-value">{{ formatNumber(withdrawPreview.remainingAmount, 4) }} {{ withdrawToken?.symbol }}</span>
                     </div>
                   </div>
@@ -212,12 +205,12 @@
                 <el-button 
                   type="primary" 
                   size="large" 
-                  :loading="miningStore.withdrawInProgress"
+                  :loading="farmStore.withdrawInProgress"
                   :disabled="!isWithdrawValid" 
                   @click="handleWithdraw" 
                   class="action-button"
                 >
-                  {{ $t('mining.withdraw') }}
+                  {{ $t('farm.withdraw') }}
                 </el-button>
               </div>
             </div>
@@ -239,7 +232,7 @@ import {
 
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { useWalletStore } from '@/stores/wallet'
-import { useMiningStore } from '@/stores/mining'
+import { useFarmStore } from '@/stores/farm'
 import { formatNumber } from '@/utils/format'
 import { TOKENS } from '@/constants'
 
@@ -254,7 +247,6 @@ interface Token {
 interface DepositPreview {
   estimatedCINA: number
   dailyReward: number
-  exchangeRate: number
 }
 
 interface WithdrawPreview {
@@ -266,9 +258,9 @@ interface WithdrawPreview {
 
 const { t } = useI18n()
 const walletStore = useWalletStore()
-const miningStore = useMiningStore()
+const farmStore = useFarmStore()
 
-// Available tokens for mining
+// Available tokens for farm
 const availableTokens = computed<Token[]>(() => {
   const chainId = walletStore.chainId || 11155111
   
@@ -310,30 +302,29 @@ watch(availableTokens, (tokens) => {
 // Computed properties
 const isDepositValid = computed(() => {
   const amount = parseFloat(depositAmount.value)
-  return amount > 0 && amount <= parseFloat(miningStore.usdtBalance)
+  return amount > 0 && amount <= parseFloat(farmStore.usdtBalance)
 })
 
 const isClaimValid = computed(() => {
-  return parseFloat(miningStore.pendingCINA) > 0
+  return parseFloat(farmStore.pendingCINA) > 0
 })
 
 const isWithdrawValid = computed(() => {
   const amount = parseFloat(withdrawAmount.value)
-  return amount > 0 && amount <= parseFloat(miningStore.depositedAmount)
+  return amount > 0 && amount <= parseFloat(farmStore.depositedAmount)
 })
 
 const depositPreview = computed(() => {
   const amount = parseFloat(depositAmount.value)
   if (!amount || amount <= 0) return null
   
-  const exchangeRate = parseFloat(miningStore.exchangeRate)
+  const exchangeRate = parseFloat(farmStore.exchangeRate)
   const estimatedCINA = amount * exchangeRate
-  const dailyReward = estimatedCINA * parseFloat(miningStore.miningAPY) / 365 / 100
+  const dailyReward = estimatedCINA * parseFloat(farmStore.farmAPY) / 365 / 100
   
   return {
     estimatedCINA,
-    dailyReward,
-    exchangeRate
+    dailyReward
   }
 })
 
@@ -341,10 +332,10 @@ const withdrawPreview = computed(() => {
   const amount = parseFloat(withdrawAmount.value)
   if (!amount || amount <= 0) return null
   
-  const fee = parseFloat(miningStore.withdrawalFee || '0.02') // 2% default fee
+  const fee = parseFloat(farmStore.withdrawalFee || '0.02') // 2% default fee
   const feeAmount = amount * fee
   const netAmount = amount - feeAmount
-  const remainingAmount = parseFloat(miningStore.depositedAmount) - amount
+  const remainingAmount = parseFloat(farmStore.depositedAmount) - amount
   
   return {
     netAmount,
@@ -362,34 +353,34 @@ const handleDepositAmountChange = (value: string) => {
 }
 
 const setDepositPercentage = (percentage: number) => {
-  const balance = parseFloat(miningStore.usdtBalance)
+  const balance = parseFloat(farmStore.usdtBalance)
   const amount = (balance * percentage / 100).toFixed(6)
   depositAmount.value = amount
 }
 
 const setMaxDeposit = () => {
-  depositAmount.value = miningStore.usdtBalance
+  depositAmount.value = farmStore.usdtBalance
 }
 
 const handleDeposit = async () => {
   try {
     const amount = parseFloat(depositAmount.value)
-    await miningStore.depositUSDT(amount)
-    ElMessage.success(t('mining.depositSuccess'))
+    await farmStore.depositUSDT(amount)
+    ElMessage.success(t('farm.depositSuccess'))
     depositAmount.value = ''
   } catch (error) {
     console.error('Deposit failed:', error)
-    ElMessage.error(t('mining.depositFailed'))
+    ElMessage.error(t('farm.depositFailed'))
   }
 }
 
 const handleClaim = async () => {
   try {
-    await miningStore.claimCINA()
-    ElMessage.success(t('mining.claimSuccess'))
+    await farmStore.claimCINA()
+    ElMessage.success(t('farm.claimSuccess'))
   } catch (error) {
     console.error('Claim failed:', error)
-    ElMessage.error(t('mining.claimFailed'))
+    ElMessage.error(t('farm.claimFailed'))
   }
 }
 
@@ -400,13 +391,13 @@ const handleWithdrawAmountChange = (value: string) => {
 }
 
 const setWithdrawPercentage = (percentage: number) => {
-  const balance = parseFloat(miningStore.depositedAmount)
+  const balance = parseFloat(farmStore.depositedAmount)
   const amount = (balance * percentage / 100).toFixed(6)
   withdrawAmount.value = amount
 }
 
 const setMaxWithdraw = () => {
-  withdrawAmount.value = miningStore.depositedAmount
+  withdrawAmount.value = farmStore.depositedAmount
 }
 
 const handleWithdraw = async () => {
@@ -414,26 +405,26 @@ const handleWithdraw = async () => {
     const amount = parseFloat(withdrawAmount.value)
     
     // 如果选择了同时提取CINA，先执行CINA提取
-    if (withdrawCINA.value && parseFloat(miningStore.pendingCINA) > 0) {
-      await miningStore.claimCINA()
+    if (withdrawCINA.value && parseFloat(farmStore.pendingCINA) > 0) {
+      await farmStore.claimCINA()
     }
     
     // 执行USDT提现
-    await miningStore.withdrawUSDT(amount)
+    await farmStore.withdrawUSDT(amount)
     
-    ElMessage.success(t('mining.withdrawSuccess'))
+    ElMessage.success(t('farm.withdrawSuccess'))
     withdrawAmount.value = ''
     withdrawCINA.value = false // 重置开关状态
   } catch (error) {
     console.error('Withdraw failed:', error)
-    ElMessage.error(t('mining.withdrawFailed'))
+    ElMessage.error(t('farm.withdrawFailed'))
   }
 }
 
 // Lifecycle
 onMounted(async () => {
   if (walletStore.isConnected) {
-    await miningStore.fetchMiningData()
+    await farmStore.fetchFarmData()
   }
 })
 
@@ -442,18 +433,18 @@ watch(
   () => walletStore.isConnected,
   async (connected) => {
     if (connected) {
-      await miningStore.fetchMiningData()
+      await farmStore.fetchFarmData()
     }
   }
 )
 </script>
 
 <style scoped>
-.mining {
+.farm {
   @apply min-h-screen bg-gray-50 dark:bg-gray-900;
 }
 
-.mining-content {
+.farm-content {
   @apply max-w-6xl mx-auto px-6 py-8;
 }
 
@@ -482,7 +473,23 @@ watch(
 }
 
 .card-value {
-  @apply text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2;
+  @apply text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center justify-between gap-2;
+}
+
+.token-icon {
+  @apply w-8 h-8 rounded-full object-cover;
+}
+
+.animated-number {
+  @apply flex items-center;
+}
+
+.card-value .animated-number {
+  @apply flex-1;
+}
+
+.card-actions {
+  @apply mt-4;
 }
 
 .token-symbol {
@@ -497,7 +504,7 @@ watch(
   @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8;
 }
 
-.mining-tabs {
+.farm-tabs {
   @apply p-6;
 }
 
@@ -569,9 +576,15 @@ watch(
   @apply font-medium text-gray-900 dark:text-white;
 }
 
-.exchange-rate {
-  @apply pt-2 border-t border-gray-200 dark:border-gray-600;
+.preview-row.fee .preview-value {
+  @apply text-red-600 dark:text-red-400;
 }
+
+.fee-amount {
+  @apply text-red-600 dark:text-red-400;
+}
+
+
 
 .action-button {
   @apply w-full h-12 text-base font-medium;
@@ -670,7 +683,7 @@ watch(
 }
 
 @media (max-width: 768px) {
-  .mining-content {
+  .farm-content {
     @apply px-4 py-6;
   }
   

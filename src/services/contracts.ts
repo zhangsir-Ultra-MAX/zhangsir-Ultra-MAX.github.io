@@ -120,14 +120,14 @@ const STAKING_VAULT_ABI = [
   'event EmergencyWithdraw(address indexed user, uint256 amount)'
 ]
 
-const MINING_VAULT_ABI = [
+const FARM_VAULT_ABI = [
   'function totalCINAMined() view returns (uint256)',
   'function totalUSDTDeposited() view returns (uint256)',
   'function usdtBalance(address) view returns (uint256)',
   'function depositedAmount(address) view returns (uint256)',
   'function pendingCINA(address) view returns (uint256)',
-  'function miningAPY() view returns (uint256)',
-  'function miningRate() view returns (uint256)',
+  'function farmAPY() view returns (uint256)',
+  'function farmRate() view returns (uint256)',
   'function exchangeRate() view returns (uint256)',
   'function minDepositAmount() view returns (uint256)',
   'function depositFee() view returns (uint256)',
@@ -290,8 +290,8 @@ class ContractService {
     return new Interface(STAKING_VAULT_ABI)
   }
   
-  getMiningVaultInterface(): Interface {
-    return new Interface(MINING_VAULT_ABI)
+  getFarmVaultInterface(): Interface {
+    return new Interface(FARM_VAULT_ABI)
   }
 }
 

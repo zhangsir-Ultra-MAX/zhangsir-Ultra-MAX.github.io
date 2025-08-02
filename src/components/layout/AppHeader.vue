@@ -14,21 +14,57 @@
 
         <!-- Desktop Navigation -->
         <nav class="hidden md:flex items-center space-x-8">
-          <router-link
-            v-for="item in navigationItems"
-            :key="item.name"
-            :to="item.path"
-            class="nav-link"
-            :class="{
-              'text-primary-600 dark:text-primary-400': $route.path === item.path,
-              'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400': $route.path !== item.path
-            }"
-          >
-            <el-icon class="mr-1">
-              <component :is="item.icon" />
-            </el-icon>
-            {{ $t(`navigation.${item.name}`) }}
-          </router-link>
+          <template v-for="item in navigationItems" :key="item.name">
+            <!-- 带有子菜单的导航项 -->
+            <el-dropdown v-if="item.children" trigger="hover" class="nav-dropdown">
+              <span class="nav-link cursor-pointer text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                <el-icon class="mr-1">
+                  <img v-if="typeof item.icon === 'string'" :src="item.icon" alt="" class="w-4 h-4" />
+                  <component v-else :is="item.icon" />
+                </el-icon>
+                {{ $t(`navigation.${item.name}`) }}
+                <el-icon class="ml-1">
+                  <ArrowDown />
+                </el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-for="child in item.children" :key="child.name">
+                    <router-link
+                      :to="child.path"
+                      class="flex items-center w-full text-decoration-none"
+                      :class="{
+                        'text-primary-600 dark:text-primary-400': $route.path === child.path,
+                        'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400': $route.path !== child.path
+                      }"
+                    >
+                      <el-icon class="mr-2">
+                        <img v-if="typeof child.icon === 'string'" :src="child.icon" alt="" class="w-4 h-4" />
+                        <component v-else :is="child.icon" />
+                      </el-icon>
+                      {{ $t(`navigation.${child.name}`) }}
+                    </router-link>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <!-- 普通导航项 -->
+            <router-link
+              v-else
+              :to="item.path"
+              class="nav-link"
+              :class="{
+                'text-primary-600 dark:text-primary-400': $route.path === item.path,
+                'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400': $route.path !== item.path
+              }"
+            >
+              <el-icon class="mr-1">
+                <img v-if="typeof item.icon === 'string'" :src="item.icon" alt="" class="w-4 h-4" />
+                <component v-else :is="item.icon" />
+              </el-icon>
+              {{ $t(`navigation.${item.name}`) }}
+            </router-link>
+          </template>
         </nav>
 
         <!-- Right Side Actions -->
@@ -92,22 +128,52 @@
       <!-- Mobile Navigation -->
       <div v-show="mobileMenuOpen" class="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
         <nav class="flex flex-col space-y-2">
-          <router-link
-            v-for="item in navigationItems"
-            :key="item.name"
-            :to="item.path"
-            class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            :class="{
-              'bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-200': $route.path === item.path,
-              'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700': $route.path !== item.path
-            }"
-            @click="mobileMenuOpen = false"
-          >
-            <el-icon class="mr-2">
-              <component :is="item.icon" />
-            </el-icon>
-            {{ $t(`navigation.${item.name}`) }}
-          </router-link>
+          <template v-for="item in navigationItems" :key="item.name">
+            <!-- 带有子菜单的导航项 -->
+            <div v-if="item.children" class="space-y-1">
+              <div class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+                <el-icon class="mr-2">
+                  <img v-if="typeof item.icon === 'string'" :src="item.icon" alt="" class="w-4 h-4" />
+                  <component v-else :is="item.icon" />
+                </el-icon>
+                {{ $t(`navigation.${item.name}`) }}
+              </div>
+              <router-link
+                v-for="child in item.children"
+                :key="child.name"
+                :to="child.path"
+                class="flex items-center px-6 py-2 rounded-md text-sm font-medium transition-colors"
+                :class="{
+                  'bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-200': $route.path === child.path,
+                  'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700': $route.path !== child.path
+                }"
+                @click="mobileMenuOpen = false"
+              >
+                <el-icon class="mr-2">
+                  <img v-if="typeof child.icon === 'string'" :src="child.icon" alt="" class="w-4 h-4" />
+                  <component v-else :is="child.icon" />
+                </el-icon>
+                {{ $t(`navigation.${child.name}`) }}
+              </router-link>
+            </div>
+            <!-- 普通导航项 -->
+            <router-link
+              v-else
+              :to="item.path"
+              class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              :class="{
+                'bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-200': $route.path === item.path,
+                'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700': $route.path !== item.path
+              }"
+              @click="mobileMenuOpen = false"
+            >
+              <el-icon class="mr-2">
+                <img v-if="typeof item.icon === 'string'" :src="item.icon" alt="" class="w-4 h-4" />
+                <component v-else :is="item.icon" />
+              </el-icon>
+              {{ $t(`navigation.${item.name}`) }}
+            </router-link>
+          </template>
         </nav>
       </div>
     </div>
@@ -130,8 +196,13 @@ import {
   Link,
   Box,
   Coin,
-  Lock
+  Lock,
+  ArrowDown
 } from '@element-plus/icons-vue'
+
+// Import custom icons
+import WRMBIcon from '@/assets/wrmb.png'
+import CINAIcon from '@/assets/cina.png'
 
 import WalletConnect from '@/components/common/WalletConnect.vue'
 import { useAppStore } from '@/stores/app'
@@ -153,34 +224,46 @@ const navigationItems = [
     icon: DataBoard
   },
   {
-    name: 'savings',
-    path: '/savings',
-    icon: Wallet
+    name: 'WRMB',
+    icon: WRMBIcon,
+    children: [
+      {
+        name: 'savings',
+        path: '/savings',
+        icon: Wallet
+      },
+      {
+        name: 'wrap',
+        path: '/wrap',
+        icon: Box
+      }
+    ]
   },
   {
-    name: 'mining',
-    path: '/mining',
-    icon: Coin
-  },
-  {
-    name: 'staking',
-    path: '/staking',
-    icon: Lock
-  },
-  {
-    name: 'wrap',
-    path: '/wrap',
-    icon: Box
+    name: 'CINA',
+    icon: CINAIcon,
+    children: [
+      {
+        name: 'farm',
+        path: '/farm',
+        icon: Coin
+      },
+      {
+        name: 'staking',
+        path: '/staking',
+        icon: Lock
+      },
+      {
+        name: 'bonds',
+        path: '/bonds',
+        icon: Document
+      }
+    ]
   },
   {
     name: 'swap',
     path: '/swap',
     icon: Switch
-  },
-  {
-    name: 'bonds',
-    path: '/bonds',
-    icon: Document
   },
   {
     name: 'portfolio',

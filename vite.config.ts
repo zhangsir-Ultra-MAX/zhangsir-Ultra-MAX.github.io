@@ -35,7 +35,7 @@ export default defineConfig({
     __INTLIFY_PROD_DEVTOOLS__: false
   },
   server: {
-    allowedHosts: ['wrmb-dapp.dev.isecsp.cn', 'wrmb-v1.dev.isecsp.cn'],
+    allowedHosts: ['wrmb-dapp.dev.isecsp.cn', 'wrmb-v1.dev.isecsp.cn', 'wrmb-v2.dev.isecsp.cn'],
     host: '0.0.0.0',
     port: 3100,
   },

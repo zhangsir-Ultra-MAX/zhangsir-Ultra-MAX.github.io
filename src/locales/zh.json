@@ -1,4 +1,5 @@
 {
+  "available": "可用",
   "common": {
     "appName": "WRMB Dapp",
     "loading": "加载中...",
@@ -40,12 +41,14 @@
   },
   "navigation": {
     "dashboard": "仪表盘",
+    "WRMB": "WRMB",
     "savings": "储蓄",
-    "mining": "挖矿",
-    "staking": "质押",
     "wrap": "封装",
-    "swap": "交换",
+    "CINA": "CINA",
+    "farm": "农场",
+    "staking": "质押",
     "bonds": "债券",
+    "swap": "交换",
     "portfolio": "投资组合",
     "status": "状态"
   },
@@ -181,8 +184,8 @@
     "to": "到",
     "enterAmount": "输入金额",
     "estimatedAmount": "预估金额",
-    "transactionDetails": "交易详情",
-    "exchangeRate": "兑换率",
+    "preview": "预览",
+    "rate": "汇率",
     "fee": "手续费",
     "minimumReceived": "最少接收",
     "priceImpact": "价格影响",
@@ -227,7 +230,7 @@
     "requiredBurn": "需要燃烧",
     "estimatedBurn": "预估燃烧数量",
     "actualReceived": "实际接收",
-    "sWRMBRequired": "需要 sWRMB",
+    "required": "需要",
     "enterDesiredAmount": "输入期望的 sRMB 数量",
     "totalReserveTransferred": "总储备转移量",
     "reserveTransferredDescription": "转移到债券池作为储备的WRMB总量",
@@ -381,8 +384,10 @@
   },
   "swap": {
     "title": "交换",
-    "from": "从",
-    "to": "到",
+    "settings": "交换设置",
+    "details": "交换详情",
+    "sell": "卖出",
+    "buy": "买入",
     "balance": "余额",
     "enterAmount": "输入金额",
     "rate": "兑换率",
@@ -533,7 +538,7 @@
       "queryFailed": "查询失败，请检查地址是否正确"
     }
   },
-  "mining": {
+  "farm": {
     "title": "挖矿",
     "overview": "挖矿概览",
     "apy": "挖矿APY",
@@ -599,6 +604,7 @@
     "unstakeTransaction": "解除质押交易",
     "stakeAmount": "质押数量",
     "unstakeAmount": "解除质押数量",
-    "actualAmount": "实际数量"
+    "actualAmount": "实际数量",
+    "required": "预计需要"
   }
 }

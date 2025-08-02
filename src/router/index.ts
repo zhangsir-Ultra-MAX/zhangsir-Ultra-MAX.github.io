@@ -49,11 +49,11 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/mining',
-    name: 'Mining',
-    component: () => import('@/views/Mining.vue'),
+    path: '/farm',
+    name: 'Farm',
+    component: () => import('@/views/Farm.vue'),
     meta: {
-      title: 'Mining',
+      title: 'Farm',
       requiresAuth: true
     }
   },

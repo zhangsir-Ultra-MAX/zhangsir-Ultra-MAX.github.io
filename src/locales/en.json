@@ -1,4 +1,5 @@
 {
+  "available": "available",
   "common": {
     "appName": "WRMB Dapp",
     "loading": "Loading...",
@@ -40,12 +41,14 @@
   },
   "navigation": {
     "dashboard": "Dashboard",
+    "WRMB": "WRMB",
     "savings": "Savings",
-    "mining": "Mining",
-    "staking": "Staking",
     "wrap": "Wrap",
-    "swap": "Swap",
+    "CINA": "CINA",
+    "farm": "Farm",
+    "staking": "Staking",
     "bonds": "Bonds",
+    "swap": "Swap",
     "portfolio": "Portfolio",
     "status": "Status"
   },
@@ -181,8 +184,8 @@
     "to": "To",
     "enterAmount": "Enter amount",
     "estimatedAmount": "Estimated amount",
-    "transactionDetails": "Transaction Details",
-    "exchangeRate": "Exchange Rate",
+    "preview": "Preview",
+    "rate": "Rate",
     "fee": "Fee",
     "minimumReceived": "Minimum Received",
     "priceImpact": "Price Impact",
@@ -227,7 +230,7 @@
     "requiredBurn": "Required",
     "estimatedBurn": "Estimated Burn Amount",
     "actualReceived": "Actual Received",
-    "sWRMBRequired": "sWRMB Required",
+    "required": "Required",
     "enterDesiredAmount": "Enter amount",
     "totalReserveTransferred": "Total Reserve Transferred",
     "reserveTransferredDescription": "Total WRMB transferred to bond pool as reserves",
@@ -381,8 +384,10 @@
   },
   "swap": {
     "title": "Swap",
-    "from": "From",
-    "to": "To",
+    "settings": "Swap Settings",
+    "details": "Swap Details",
+    "sell": "Sell",
+    "buy": "Buy",
     "balance": "Balance",
     "enterAmount": "Enter amount",
     "rate": "Rate",
@@ -533,9 +538,9 @@
       "queryFailed": "Query failed, please check if the address is correct"
     }
   },
-  "mining": {
-    "title": "Mining",
-    "overview": "Mining",
+  "farm": {
+    "title": "Farm",
+    "overview": "CINA Farm",
     "apy": "APY",
     "deposit": "Deposit",
     "withdraw": "Withdraw",
@@ -554,7 +559,7 @@
     "claimSuccess": "Claim successful",
     "claimFailed": "Claim failed",
     "dailyReward": "Daily Reward",
-    "yourMined": "Your Mining",
+    "yourMined": "Your Farm",
     "estimatedCINA": "Estimated CINA",
     "remainingDeposited": "Remaining Deposited",
     "withdrawCINA": "Also claim CINA",
@@ -577,7 +582,7 @@
     "preview": "Preview",
     "youWillReceive": "You will receive",
     "dailyReward": "Daily Reward",
-    "exchangeRate": "Exchange Rate",
+    "exchangeRate": "Rate",
     "minStakeWarning": "Minimum stake amount is {amount} CINA",
     "earlyUnstakeWarning": "Early unstake penalty: {penalty}%",
     "penalty": "Penalty",
@@ -599,6 +604,7 @@
     "unstakeTransaction": "Unstake Transaction",
     "stakeAmount": "Stake Amount",
     "unstakeAmount": "Unstake Amount",
-    "actualAmount": "Actual Amount"
+    "actualAmount": "Actual Amount",
+    "required": "Required"
   }
 }

@@ -5,15 +5,15 @@ import { useWalletStore } from './wallet'
 import { useAppStore } from './app'
 import BigNumber from 'bignumber.js'
 
-export const useMiningStore = defineStore('mining', () => {
+export const useFarmStore = defineStore('farm', () => {
   // State
   const totalCINAMined = ref('0') // Total CINA mined from AMO
   const totalUSDTDeposited = ref('0') // Total USDT deposited in AMO
   const usdtBalance = ref('0') // User's USDT balance
   const depositedAmount = ref('0') // User's deposited USDT amount
   const pendingCINA = ref('0') // User's pending CINA rewards
-  const miningAPY = ref('0') // Current mining APY
-  const miningRate = ref('0') // CINA mining rate per USDT per second
+  const farmAPY = ref('0') // Current farm APY
+  const farmRate = ref('0') // CINA farm rate per USDT per second
   const exchangeRate = ref('1.0') // USDT to CINA exchange rate
   const minDepositAmount = ref('10.0') // Minimum deposit amount
   const depositFee = ref('0.001') // Deposit fee (0.1%)
@@ -51,7 +51,7 @@ export const useMiningStore = defineStore('mining', () => {
   })
 
   // Actions
-  const fetchMiningData = async () => {
+  const fetchFarmData = async () => {
     const walletStore = useWalletStore()
     const appStore = useAppStore()
 
@@ -67,11 +67,11 @@ export const useMiningStore = defineStore('mining', () => {
       // Mock data for demonstration
       await new Promise(resolve => setTimeout(resolve, 500)) // Simulate network delay
 
-      // Simulate fetching mining data
+      // Simulate fetching farm data
       totalCINAMined.value = '2500000.1234'
       totalUSDTDeposited.value = '1800000.56'
-      miningAPY.value = '15.8'
-      miningRate.value = '0.000000547' // Approximate rate for 15.8% APY
+      farmAPY.value = '15.8'
+      farmRate.value = '0.000000547' // Approximate rate for 15.8% APY
       exchangeRate.value = '1.389' // 1 USDT = 1.389 CINA
       minDepositAmount.value = '10.0'
       depositFee.value = '0.001' // 0.1%
@@ -79,26 +79,26 @@ export const useMiningStore = defineStore('mining', () => {
 
       // Fetch user-specific data if connected
       if (walletStore.address) {
-        await fetchUserMiningData()
+        await fetchUserFarmData()
       }
     } catch (error: any) {
-      console.error('Failed to fetch mining data:', error)
+      console.error('Failed to fetch farm data:', error)
       // appStore.addNotification({
       //   type: 'error',
       //   title: 'Data Fetch Failed',
-      //   message: error.message || 'Failed to fetch mining data'
+      //   message: error.message || 'Failed to fetch farm data'
       // })
     } finally {
       isLoading.value = false
     }
   }
 
-  const fetchUserMiningData = async () => {
+  const fetchUserFarmData = async () => {
     const walletStore = useWalletStore()
     if (!walletStore.address) return
 
     try {
-      // Mock user mining data - in real implementation, these would be actual contract calls
+      // Mock user farm data - in real implementation, these would be actual contract calls
       usdtBalance.value = parseUnits('1500.25', 6).toString() // USDT has 6 decimals
       depositedAmount.value = parseUnits('800.00', 6).toString()
       pendingCINA.value = '45.678901'
@@ -107,7 +107,7 @@ export const useMiningStore = defineStore('mining', () => {
 
 
     } catch (error) {
-      console.error('Failed to fetch user mining data:', error)
+      console.error('Failed to fetch user farm data:', error)
     }
   }
 
@@ -215,7 +215,7 @@ export const useMiningStore = defineStore('mining', () => {
       usdtBalance.value = (parseFloat(usdtBalance.value) + netAmount).toString()
 
       // Refresh data
-      await fetchUserMiningData()
+      await fetchUserFarmData()
 
     } catch (error: any) {
       console.error('Withdrawal failed:', error)
@@ -255,7 +255,7 @@ export const useMiningStore = defineStore('mining', () => {
 
     refreshInterval = setInterval(() => {
       if (Date.now() - lastUpdateTime.value > 15000) { // 15 seconds
-        fetchMiningData()
+        fetchFarmData()
       }
     }, 15000)
   }
@@ -274,8 +274,8 @@ export const useMiningStore = defineStore('mining', () => {
     usdtBalance,
     depositedAmount,
     pendingCINA,
-    miningAPY,
-    miningRate,
+    farmAPY,
+    farmRate,
     exchangeRate,
     minDepositAmount,
     depositFee,
@@ -296,8 +296,8 @@ export const useMiningStore = defineStore('mining', () => {
     pendingCINAFormatted,
 
     // Actions
-    fetchMiningData,
-    fetchUserMiningData,
+    fetchFarmData,
+    fetchUserFarmData,
     depositUSDT,
     claimCINA,
     withdrawUSDT,

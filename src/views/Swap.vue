@@ -11,23 +11,48 @@
             <!-- Swap Interface -->
             <div class="swap-interface">
                 <div class="interface-card">
+                    <!-- Settings Icon -->
+                    <el-popover placement="bottom-end" :width="300" trigger="click">
+                        <template #reference>
+                            <div class="settings-icon">
+                                <el-icon class="settings-btn">
+                                    <Setting />
+                                </el-icon>
+                            </div>
+                        </template>
+                        <div class="settings-content">
+                            <h4 class="settings-title">{{ $t('swap.settings') }}</h4>
+                            <div class="detail-item">
+                                <span>{{ $t('swap.slippage') }}</span>
+                                <div class="slippage-selector">
+                                    <button v-for="value in slippageOptions" :key="value"
+                                        :class="{ active: slippage === value }" @click="slippage = value">
+                                        {{ value }}%
+                                    </button>
+                                    <div class="custom-slippage">
+                                        <input type="number" v-model="customSlippage" @input="handleCustomSlippage"
+                                            placeholder="Custom" />
+                                        <span>%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </el-popover>
                     <!-- Token Selection -->
                     <div class="token-selection">
                         <div class="token-input-container">
                             <div class="token-input-header">
-                                <span>{{ $t('swap.from') }}</span>
-                                <span class="balance" v-if="walletStore.isConnected">
-                                    {{ $t('swap.balance') }}: {{ formatNumber(fromTokenBalance) }}
-                                </span>
+                                <span>{{ $t('swap.sell') }}</span>
                             </div>
                             <div class="input-section">
                                 <div class="input-group">
                                     <div class="amount-input">
                                         <div class="input-with-select">
                                             <el-input type="number" v-model="fromAmount"
-                                                :placeholder="$t('swap.enterAmount')" @input="handleFromAmountChange"
-                                                size="large" />
-                                            <el-select v-model="fromToken" class="token-select" size="large" value-key="symbol">
+                                                :placeholder="formatNumber(fromTokenBalance) + '  ' + $t('available')"
+                                                @input="handleFromAmountChange" size="large" />
+                                            <el-select v-model="fromToken" class="token-select" size="large"
+                                                value-key="symbol">
                                                 <el-option v-for="token in availableTokens" :key="token.symbol"
                                                     :label="token.symbol" :value="token">
                                                     <div class="token-option">
@@ -53,28 +78,26 @@
 
                         <!-- Swap Direction Button -->
                         <div class="swap-direction">
-                            <button class="swap-direction-btn" @click="swapTokens">
-                                <el-icon>
+                            <el-button circle @click="swapTokens" class="swap-direction-btn">
+                                <el-icon class="swap-icon" :style="{ transform: `rotate(${swapIconRotation}deg)` }">
                                     <Sort />
                                 </el-icon>
-                            </button>
+                            </el-button>
                         </div>
 
                         <div class="token-input-container">
                             <div class="token-input-header">
-                                <span>{{ $t('swap.to') }}</span>
-                                <span class="balance" v-if="walletStore.isConnected">
-                                    {{ $t('swap.balance') }}: {{ formatNumber(toTokenBalance) }}
-                                </span>
+                                <span>{{ $t('swap.buy') }}</span>
                             </div>
                             <div class="input-section">
                                 <div class="input-group">
                                     <div class="amount-input">
                                         <div class="input-with-select">
                                             <el-input type="number" v-model="toAmount"
-                                                :placeholder="$t('swap.enterAmount')" @input="handleToAmountChange"
-                                                size="large" />
-                                            <el-select v-model="toToken" class="token-select" size="large" value-key="symbol">
+                                                :placeholder="formatNumber(toTokenBalance) + '  ' + $t('available')"
+                                                @input="handleToAmountChange" size="large" />
+                                            <el-select v-model="toToken" class="token-select" size="large"
+                                                value-key="symbol">
                                                 <el-option v-for="token in availableTokens" :key="token.symbol"
                                                     :label="token.symbol" :value="token">
                                                     <div class="token-option">
@@ -91,67 +114,69 @@
 
                     <!-- Swap Details -->
                     <div class="swap-details">
-                        <!-- Uniswap V4 Status -->
-                        <div class="detail-item" v-if="walletStore.isConnected">
-                            <span>{{ $t('swap.protocolStatus') }}</span>
-                            <span class="status-indicator">
-                                <span v-if="isV4Supported" class="status-supported">✓ {{ $t('swap.uniswapV4Available') }}</span>
-                                <span v-else class="status-unsupported">
-                                    ⚠ {{ $t('swap.v4NotSupported') }}
-                                    <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
-                                        <el-icon class="info-icon"><InfoFilled /></el-icon>
-                                    </el-tooltip>
+                        <h4 class="details-title">{{ $t('swap.details') }}</h4>
+                        <div class="details-content">
+                            <!-- Uniswap V4 Status -->
+                            <div class="detail-row" v-if="walletStore.isConnected">
+                                <span>{{ $t('swap.protocolStatus') }}</span>
+                                <span class="status-indicator">
+                                    <span v-if="isV4Supported" class="status-supported">✓ {{
+                                        $t('swap.uniswapV4Available')
+                                        }}</span>
+                                    <span v-else class="status-unsupported">
+                                        ⚠ {{ $t('swap.v4NotSupported') }}
+                                        <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
+                                            <el-icon class="info-icon">
+                                                <InfoFilled />
+                                            </el-icon>
+                                        </el-tooltip>
+                                    </span>
                                 </span>
-                            </span>
-                        </div>
-                        
-                        <!-- Pool Status -->
-                        <div class="detail-item" v-if="isV4Supported && fromToken && toToken && fromToken.symbol !== toToken.symbol">
-                            <span>{{ $t('swap.poolStatus') }}</span>
-                            <span class="status-indicator">
-                                <span v-if="poolExists" class="status-supported">✓ {{ $t('swap.poolAvailable') }}</span>
-                                <span v-else class="status-warning">
-                                    ⚠ {{ $t('swap.poolNotExists') }}
-                                    <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
-                                        <el-icon class="info-icon"><InfoFilled /></el-icon>
-                                    </el-tooltip>
+                            </div>
+
+                            <!-- Pool Status -->
+                            <div class="detail-row"
+                                v-if="isV4Supported && fromToken && toToken && fromToken.symbol !== toToken.symbol">
+                                <span>{{ $t('swap.poolStatus') }}</span>
+                                <span class="status-indicator">
+                                    <span v-if="poolExists" class="status-supported">✓ {{ $t('swap.poolAvailable')
+                                        }}</span>
+                                    <span v-else class="status-warning">
+                                        ⚠ {{ $t('swap.poolNotExists') }}
+                                        <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
+                                            <el-icon class="info-icon">
+                                                <InfoFilled />
+                                            </el-icon>
+                                        </el-tooltip>
+                                    </span>
                                 </span>
-                            </span>
-                        </div>
-                        
-                        <div class="detail-item">
-                            <span>{{ $t('swap.rate') }}</span>
-                            <span v-if="isLoadingQuote" class="loading-text">{{ $t('swap.fetchingRate') }}</span>
-                            <span v-else-if="exchangeRate > 0 && fromToken && toToken">1 {{ fromToken.symbol }} = {{ formatNumber(exchangeRate) }} {{ toToken.symbol }}</span>
-                            <span v-else class="no-rate-text">{{ $t('swap.enterAmountForRate') }}</span>
-                        </div>
-                        
-                        <!-- Price Impact -->
-                        <div class="detail-item" v-if="currentQuote && poolExists">
-                            <span>{{ $t('swap.priceImpact') }}</span>
-                            <span :class="{
-                                'price-impact-low': parseFloat(priceImpact) < 1,
-                                'price-impact-medium': parseFloat(priceImpact) >= 1 && parseFloat(priceImpact) < 3,
-                                'price-impact-high': parseFloat(priceImpact) >= 3
-                            }">{{ formatNumber(parseFloat(priceImpact)) }}%</span>
-                        </div>
-                        
-                        <div class="detail-item">
-                            <span>{{ $t('swap.fee') }}</span>
-                            <span>{{ formatNumber(swapFee) }}%</span>
-                        </div>
-                        <div class="detail-item">
-                            <span>{{ $t('swap.slippage') }}</span>
-                            <div class="slippage-selector">
-                                <button v-for="value in slippageOptions" :key="value"
-                                    :class="{ active: slippage === value }" @click="slippage = value">
-                                    {{ value }}%
-                                </button>
-                                <div class="custom-slippage">
-                                    <input type="number" v-model="customSlippage" @input="handleCustomSlippage"
-                                        placeholder="Custom" />
-                                    <span>%</span>
-                                </div>
+                            </div>
+
+                            <!-- Price Impact -->
+                            <div class="detail-row" v-if="currentQuote && poolExists">
+                                <span>{{ $t('swap.priceImpact') }}</span>
+                                <span class="detail-value" :class="{
+                                    'price-impact-low': parseFloat(priceImpact) < 1,
+                                    'price-impact-medium': parseFloat(priceImpact) >= 1 && parseFloat(priceImpact) < 3,
+                                    'price-impact-high': parseFloat(priceImpact) >= 3
+                                }">{{ formatNumber(parseFloat(priceImpact)) }}%</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span>{{ $t('swap.fee') }}</span>
+                                <span class="detail-value fee-value">{{ formatNumber(swapFee) }}%</span>
+                            </div>
+
+                            <div class="detail-row exchange-rate">
+                                <span>{{ $t('swap.rate') }}</span>
+                                <span v-if="isLoadingQuote" class="detail-value loading-text">{{ $t('swap.fetchingRate')
+                                    }}</span>
+                                <span v-else-if="exchangeRate > 0 && fromToken && toToken"
+                                    class="detail-value rate-value">1 {{
+                                    fromToken.symbol }} = {{
+                                        formatNumber(exchangeRate) }} {{ toToken.symbol }}</span>
+                                <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -165,21 +190,12 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Transaction Modal -->
-        <TransactionModal
-            v-model:visible="showTransactionModal"
-            :title="$t('swap.swapTransaction')"
-            :steps="transactionSteps"
-            :current-step="currentTransactionStep"
-            :status="transactionStatus"
-            :transaction-details="transactionDetails"
-            :gas-info="gasInfo"
-            :transaction-hash="transactionHash"
-            :error-message="transactionError"
-            @close="handleTransactionModalClose"
-            @retry="retryTransaction"
-        />
+        <TransactionModal v-model:visible="showTransactionModal" :title="$t('swap.swapTransaction')"
+            :steps="transactionSteps" :current-step="currentTransactionStep" :status="transactionStatus"
+            :transaction-details="transactionDetails" :gas-info="gasInfo" :transaction-hash="transactionHash"
+            :error-message="transactionError" @close="handleTransactionModalClose" @retry="retryTransaction" />
     </div>
 </template>
 
@@ -188,9 +204,9 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
 import { formatNumber } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
-import { Sort, InfoFilled } from '@element-plus/icons-vue'
+import { Sort, InfoFilled, Setting } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { TOKENS, NETWORKS } from '@/constants'
+import { TOKENS } from '@/constants'
 import { uniswapV4Service, type SwapParams, type QuoteResult } from '@/services/uniswapV4'
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import { ethers, parseUnits } from 'ethers'
@@ -198,6 +214,9 @@ import { ethers, parseUnits } from 'ethers'
 // Stores and composables
 const walletStore = useWalletStore()
 const { t } = useI18n()
+
+// Swap icon rotation state
+const swapIconRotation = ref(0)
 
 // Define types
 interface Token {
@@ -211,7 +230,7 @@ interface Token {
 // Available tokens for Uniswap V4
 const availableTokens = computed<Token[]>(() => {
     const chainId = walletStore.chainId || 11155111
-    
+
     return [
         {
             symbol: TOKENS.WRMB.symbol,
@@ -266,16 +285,16 @@ watch(toToken, (newToToken, oldToToken) => {
 watch(() => walletStore.chainId, (newChainId) => {
     if (newChainId) {
         uniswapV4Service.reinitialize()
-        
+
         const tokens = availableTokens.value
         if (tokens.length >= 2) {
             fromToken.value = tokens[0]
             toToken.value = tokens[1]
         }
-        
+
         checkUniswapV4Support()
         checkPoolInfo()
-        
+
         currentQuote.value = null
         fromAmount.value = ''
         toAmount.value = ''
@@ -285,11 +304,11 @@ watch(() => walletStore.chainId, (newChainId) => {
 // Amounts
 const fromAmount = ref('')
 const toAmount = ref('')
-const fromTokenBalance = ref(0)
-const toTokenBalance = ref(0)
+const fromTokenBalance = ref('0')
+const toTokenBalance = ref('0')
 
 // Swap settings
-const slippageOptions = [0.5, 1.0, 2.0, 5.0]
+const slippageOptions = [1.0, 5.0]
 const slippage = ref(1.0)
 const customSlippage = ref('')
 const exchangeRate = ref(6.5)
@@ -339,12 +358,12 @@ const transactionSteps = computed(() => [
 // Transaction details
 const transactionDetails = computed(() => [
     {
-        label: t('swap.from'),
+        label: t('swap.sell'),
         value: `${fromAmount.value} ${fromToken.value?.symbol || ''}`,
         highlight: true
     },
     {
-        label: t('swap.to'),
+        label: t('swap.buy'),
         value: `${toAmount.value} ${toToken.value?.symbol || ''}`,
         highlight: true
     },
@@ -389,7 +408,7 @@ const canSwap = computed(() => {
         poolExists.value &&
         fromAmount.value &&
         parseFloat(fromAmount.value) > 0 &&
-        parseFloat(fromAmount.value) <= fromTokenBalance.value &&
+        parseFloat(fromAmount.value) <= parseFloat(fromTokenBalance.value) &&
         !isSwapping.value &&
         fromToken.value?.symbol !== toToken.value?.symbol
 })
@@ -416,15 +435,15 @@ function handleToAmountChange() {
 }
 
 const setDepositPercentage = (percentage: number) => {
-    if (fromTokenBalance.value > 0) {
-        fromAmount.value = (fromTokenBalance.value * percentage / 100).toString()
+    if (parseFloat(fromTokenBalance.value) > 0) {
+        fromAmount.value = (parseFloat(fromTokenBalance.value) * percentage / 100).toString()
         handleFromAmountChange()
     }
 }
 
 function setMaxFromAmount() {
-    if (fromTokenBalance.value > 0) {
-        fromAmount.value = fromTokenBalance.value.toString()
+    if (parseFloat(fromTokenBalance.value) > 0) {
+        fromAmount.value = fromTokenBalance.value
         handleFromAmountChange()
         ElMessage.success(t('swap.maxAmountSet'))
     } else {
@@ -452,21 +471,24 @@ function swapTokens() {
     toTokenBalance.value = tempBalance
 
     exchangeRate.value = 1 / exchangeRate.value
+
+    // Rotate icon by 180 degrees each time
+    swapIconRotation.value += 180
 }
 
 function getSwapButtonText() {
     if (!walletStore.isConnected) {
         return t('common.connected')
     }
-    
+
     if (isSwapping.value) {
         return t('swap.swapping')
     }
-    
+
     if (isLoadingQuote.value) {
         return t('swap.fetchingQuote')
     }
-    
+
     if (!isV4Supported.value) {
         const supportedNetworks = uniswapV4Service.getSupportedNetworks()
         const networkNames = supportedNetworks.map(id => {
@@ -476,15 +498,15 @@ function getSwapButtonText() {
         }).join('、')
         return t('swap.unsupportedNetwork', { networks: networkNames })
     }
-    
+
     if (!fromAmount.value || parseFloat(fromAmount.value) <= 0) {
         return t('swap.enterAmount')
     }
-    
-    if (parseFloat(fromAmount.value) > fromTokenBalance.value) {
+
+    if (parseFloat(fromAmount.value) > parseFloat(fromTokenBalance.value)) {
         return t('swap.insufficientBalance')
     }
-    
+
     return t('swap.swap')
 }
 
@@ -492,7 +514,7 @@ function executeSwap() {
     if (!canSwap.value) return
 
     resetTransactionState()
-    
+
     showTransactionModal.value = true
     transactionStatus.value = 'loading'
     currentTransactionStep.value = 0
@@ -517,7 +539,7 @@ async function getUniswapV4Quote() {
     }
 
     isLoadingQuote.value = true
-    
+
     try {
         const swapParams: SwapParams = {
             tokenIn: fromToken.value!.address,
@@ -527,7 +549,7 @@ async function getUniswapV4Quote() {
         }
 
         const quote = await uniswapV4Service.getQuote(swapParams)
-        
+
         if (quote) {
             currentQuote.value = quote
             toAmount.value = quote.amountOut
@@ -540,7 +562,7 @@ async function getUniswapV4Quote() {
             toAmount.value = ''
             poolExists.value = false
             updateExchangeRate()
-            
+
             // ElMessage.warning(t('swap.cannotGetQuote', { fromToken: fromToken.value?.symbol, toToken: toToken.value?.symbol }))
         }
     } catch (error) {
@@ -548,7 +570,7 @@ async function getUniswapV4Quote() {
         toAmount.value = ''
         poolExists.value = false
         updateExchangeRate()
-        
+
         ElMessage.error(t('swap.getQuoteFailed', { error: (error as Error).message }))
     } finally {
         isLoadingQuote.value = false
@@ -567,7 +589,7 @@ async function getReverseUniswapV4Quote() {
     }
 
     isLoadingQuote.value = true
-    
+
     try {
         // 反向报价：交换tokenIn和tokenOut，使用toAmount作为amountIn
         const swapParams: SwapParams = {
@@ -578,7 +600,7 @@ async function getReverseUniswapV4Quote() {
         }
 
         const quote = await uniswapV4Service.getQuote(swapParams)
-        
+
         if (quote) {
             // 反向报价的结果需要设置到fromAmount
             fromAmount.value = quote.amountOut
@@ -599,7 +621,7 @@ async function getReverseUniswapV4Quote() {
         fromAmount.value = ''
         poolExists.value = false
         updateExchangeRate()
-        
+
         ElMessage.error(t('swap.getReverseQuoteFailed', { error: (error as Error).message }))
     } finally {
         isLoadingQuote.value = false
@@ -611,7 +633,7 @@ async function executeUniswapV4Swap() {
     if (!currentQuote.value || isSwapping.value) return
 
     isSwapping.value = true
-    
+
     try {
         const swapParams: SwapParams = {
             tokenIn: fromToken.value!.address,
@@ -627,7 +649,7 @@ async function executeUniswapV4Swap() {
         }
 
         await uniswapV4Service.reinitialize()
-        
+
         const userAddress = walletStore.address
         if (!userAddress) {
             transactionStatus.value = 'error'
@@ -644,30 +666,30 @@ async function executeUniswapV4Swap() {
 
         currentTransactionStep.value = 0
         transactionStatus.value = 'loading'
-        
+
         const addresses = uniswapV4Service.getContractAddresses(walletStore.chainId)
         const PERMIT2_ADDRESS = addresses.PERMIT2
-        
+
         const permit2Allowance = await uniswapV4Service.checkAllowance(
-            swapParams.tokenIn, 
-            PERMIT2_ADDRESS, 
+            swapParams.tokenIn,
+            PERMIT2_ADDRESS,
             userAddress
         )
-        
+
         const tokenInContract = uniswapV4Service.getTokenContract(swapParams.tokenIn, true)
         const tokenInDecimals = await tokenInContract.decimals()
         const amountIn = parseUnits(swapParams.amountIn, tokenInDecimals)
-        
+
         if (BigInt(permit2Allowance) < BigInt(amountIn)) {
             currentTransactionStep.value = 1
             transactionStatus.value = 'pending'
-            
+
             const approveSuccess = await uniswapV4Service.approveToken(
                 swapParams.tokenIn,
                 PERMIT2_ADDRESS,
                 ethers.MaxUint256.toString()
             )
-            
+
             if (!approveSuccess) {
                 transactionStatus.value = 'error'
                 transactionError.value = t('swap.permit2AuthFailed')
@@ -681,18 +703,18 @@ async function executeUniswapV4Swap() {
             ],
             uniswapV4Service.provider
         )
-        
+
         const permit2AllowanceData = await permit2Contract.allowance(
             userAddress,
             swapParams.tokenIn,
             addresses.UNIVERSAL_ROUTER
         )
-        
+
         if (BigInt(permit2AllowanceData.amount) < BigInt(amountIn)) {
             currentTransactionStep.value = 1
             transactionStatus.value = 'pending'
-            
-            const deadline = Math.floor(Date.now() / 1000) + 3600
+
+            const deadline = Math.floor(Date.now() / 1000) + (30 * 24 * 3600)
             const permit2ContractWithSigner = new ethers.Contract(
                 PERMIT2_ADDRESS,
                 [
@@ -700,7 +722,7 @@ async function executeUniswapV4Swap() {
                 ],
                 uniswapV4Service.signer
             )
-            
+
             const permit2ApproveTx = await permit2ContractWithSigner.approve(
                 swapParams.tokenIn,
                 addresses.UNIVERSAL_ROUTER,
@@ -709,17 +731,17 @@ async function executeUniswapV4Swap() {
             )
             await permit2ApproveTx.wait()
         }
-        
+
         currentTransactionStep.value = 2
         transactionStatus.value = 'loading'
-        
+
 
         const tokenOutContract = uniswapV4Service.getTokenContract(swapParams.tokenOut)
         const tokenOutDecimals = await tokenOutContract.decimals()
         const amountOutBigInt = parseUnits(quote.amountOut, tokenOutDecimals)
         const slippageMultiplier = BigInt(Math.floor((100 - swapParams.slippage) * 100))
         const minAmountOut = amountOutBigInt * slippageMultiplier / BigInt(10000)
-        
+
         const poolKey = {
             currency0: swapParams.tokenIn < swapParams.tokenOut ? swapParams.tokenIn : swapParams.tokenOut,
             currency1: swapParams.tokenIn < swapParams.tokenOut ? swapParams.tokenOut : swapParams.tokenIn,
@@ -731,27 +753,27 @@ async function executeUniswapV4Swap() {
         if (poolKey.currency0 == '0x45Dd667b7C97F7c7B9135dA7f8674dF7d6662737' || poolKey.currency1 == '0x45Dd667b7C97F7c7B9135dA7f8674dF7d6662737') {
             poolKey.hooks = '0x7d08875f51879bedD9a01d71a804f012e1304fC0'
         }
-        
+
         const zeroForOne = poolKey.currency0 === swapParams.tokenIn
         const deadline = Math.floor(Date.now() / 1000) + 3600
-        
+
 
         const Actions = {
             SWAP_EXACT_IN_SINGLE: 0x06,
             SETTLE_ALL: 0x0c,
             TAKE_ALL: 0x0f
         }
-        
+
         const CommandType = {
             V4_SWAP: 0x10
         }
-        
+
         const POOL_KEY_STRUCT = '(address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks)'
         const SWAP_EXACT_IN_SINGLE_STRUCT = '(' + POOL_KEY_STRUCT + ' poolKey,bool zeroForOne,uint128 amountIn,uint128 amountOutMinimum,bytes hookData)'
-        
+
         let v4Actions = '0x'
         const v4Params: string[] = []
-        
+
         const swapParamsForTx = {
             poolKey: poolKey,
             zeroForOne: zeroForOne,
@@ -759,44 +781,44 @@ async function executeUniswapV4Swap() {
             amountOutMinimum: minAmountOut,
             hookData: '0x'
         }
-        
+
         const swapEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
             [SWAP_EXACT_IN_SINGLE_STRUCT],
             [swapParamsForTx]
         )
         v4Params.push(swapEncodedParam)
         v4Actions = v4Actions + Actions.SWAP_EXACT_IN_SINGLE.toString(16).padStart(2, '0')
-        
+
         const settleEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
             ['address', 'uint256'],
             [swapParams.tokenIn, amountIn]
         )
         v4Params.push(settleEncodedParam)
         v4Actions = v4Actions + Actions.SETTLE_ALL.toString(16).padStart(2, '0')
-        
+
         const takeEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
             ['address', 'uint256'],
             [swapParams.tokenOut, minAmountOut]
         )
         v4Params.push(takeEncodedParam)
         v4Actions = v4Actions + Actions.TAKE_ALL.toString(16).padStart(2, '0')
-        
+
         const encodedV4Actions = ethers.AbiCoder.defaultAbiCoder().encode(
             ['bytes', 'bytes[]'],
             [v4Actions, v4Params]
         )
-        
+
         let commands = '0x'
         const inputs: string[] = []
-        
+
         inputs.push(encodedV4Actions)
         commands = commands + CommandType.V4_SWAP.toString(16).padStart(2, '0')
-        
+
 
         const txOptions: any = {
             value: swapParams.tokenIn === ethers.ZeroAddress ? amountIn : 0
         }
-        
+
 
         const swapRouterContract = uniswapV4Service.swapRouterContract
         const tx = await swapRouterContract!.execute(
@@ -805,13 +827,13 @@ async function executeUniswapV4Swap() {
             deadline,
             txOptions
         )
-        
+
         currentTransactionStep.value = 3
         transactionStatus.value = 'loading'
-        
+
         const receipt = await tx.wait()
         transactionHash.value = receipt.hash
-        
+
         transactionStatus.value = 'success'
         setTimeout(() => {
             fromAmount.value = ''
@@ -820,15 +842,15 @@ async function executeUniswapV4Swap() {
             priceImpact.value = '0'
             swapFee.value = 0.3
         }, 2000)
-        
+
         await updateTokenBalances()
-        
+
         await checkPoolInfo()
     } catch (error) {
         const errorMessage = (error as Error).message
-        
+
         transactionStatus.value = 'error'
-        
+
         if (errorMessage.includes('insufficient funds')) {
             transactionError.value = t('swap.insufficientFundsError')
         } else if (errorMessage.includes('allowance')) {
@@ -876,7 +898,7 @@ async function checkPoolInfo() {
             toToken.value.address,
             500
         )
-        
+
         poolExists.value = poolInfo !== null
     } catch (error) {
         poolExists.value = false
@@ -923,8 +945,8 @@ watch(() => walletStore.chainId, async (newChainId) => {
 
 async function updateTokenBalances() {
     if (!walletStore.isConnected || !walletStore.address) {
-        fromTokenBalance.value = 0
-        toTokenBalance.value = 0
+        fromTokenBalance.value = '0'
+        toTokenBalance.value = '0'
         return
     }
 
@@ -933,12 +955,12 @@ async function updateTokenBalances() {
             uniswapV4Service.getTokenBalance(fromToken.value!.address, walletStore.address),
             uniswapV4Service.getTokenBalance(toToken.value!.address, walletStore.address)
         ])
-        
-        fromTokenBalance.value = parseFloat(fromBalance)
-        toTokenBalance.value = parseFloat(toBalance)
+
+        fromTokenBalance.value = fromBalance
+        toTokenBalance.value = toBalance
     } catch (error) {
-        fromTokenBalance.value = 1000
-        toTokenBalance.value = 500
+        fromTokenBalance.value = '1000'
+        toTokenBalance.value = '500'
     }
 }
 
@@ -987,7 +1009,23 @@ onMounted(async () => {
 }
 
 .interface-card {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-all duration-200 hover:shadow-md;
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-all duration-200 hover:shadow-md relative;
+}
+
+.settings-icon {
+    @apply absolute top-4 right-4 cursor-pointer;
+}
+
+.settings-btn {
+    @apply w-5 h-5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200;
+}
+
+.settings-content {
+    @apply space-y-4;
+}
+
+.settings-title {
+    @apply text-sm font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-600 pb-2;
 }
 
 .token-selection {
@@ -1047,19 +1085,55 @@ onMounted(async () => {
 }
 
 .swap-direction {
-    @apply flex justify-center relative h-0;
+    @apply flex justify-center;
 }
 
 .swap-direction-btn {
-    @apply absolute -top-4 w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center cursor-pointer border-4 border-white dark:border-gray-800 z-10;
+    @apply bg-primary-50 dark:bg-primary-900 border-primary-200 dark:border-primary-700 hover:bg-primary-100 dark:hover:bg-primary-800;
+}
+
+.swap-icon {
+    @apply text-primary-600 dark:text-primary-400 transition-transform duration-200;
 }
 
 .swap-details {
-    @apply mt-6 pt-6 border-t border-gray-200 dark:border-gray-700;
+    @apply bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mt-6;
 }
 
-.detail-item {
-    @apply flex justify-between mb-3 text-sm;
+.details-title {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-3;
+}
+
+.details-content {
+    @apply space-y-2;
+}
+
+.detail-row {
+    @apply flex items-center justify-between text-sm;
+}
+
+.detail-row span:first-child:not(.status-supported):not(.status-unsupported):not(.status-warning):not(.network-mainnet) {
+    @apply text-gray-600 dark:text-gray-400;
+}
+
+.detail-row.exchange-rate {
+    @apply border-t border-gray-200 dark:border-gray-600 pt-2 mt-2;
+}
+
+.detail-value {
+    @apply font-medium text-gray-900 dark:text-white;
+}
+
+.fee-value {
+    @apply text-yellow-600 dark:text-yellow-400 font-medium;
+}
+
+.rate-value {
+    @apply text-primary-600 dark:text-primary-400 font-semibold;
+}
+
+.no-rate-text {
+    @apply text-gray-500 dark:text-gray-400;
 }
 
 /* Status indicators */
@@ -1273,11 +1347,11 @@ onMounted(async () => {
     .swap-content {
         @apply px-4 py-6;
     }
-    
+
     .status-indicator {
         @apply text-sm;
     }
-    
+
     .detail-item {
         @apply text-sm;
     }

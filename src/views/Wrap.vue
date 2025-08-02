@@ -27,16 +27,13 @@
               <div class="token-input">
                 <div class="input-header">
                   <span class="input-label">{{ $t('wrap.from') }}</span>
-                  <span class="balance-info">
-                    {{ $t('wrap.maxUnwrappableAmount') }}: {{ formatNumber(sRMBBalance) }} sRMB
-                  </span>
                 </div>
                 
                 <div class="input-section">
                   <div class="input-group">
                     <el-input
                       v-model="wrapAmount"
-                      :placeholder="$t('wrap.enterAmount')"
+                      :placeholder="formatNumber(sRMBBalance) + '  ' + $t('available')"
                       size="large"
                       class="amount-input"
                       @input="handleWrapAmountChange"
@@ -109,21 +106,21 @@
               </div>
             </div>
 
-            <!-- Transaction Details -->
-            <div v-if="wrapPreview" class="transaction-details">
-              <h4 class="details-title">{{ $t('wrap.transactionDetails') }}</h4>
-              <div class="details-list">
-                <div class="detail-row">
-                  <span>{{ $t('wrap.exchangeRate') }}</span>
-                  <span>1 sRMB = {{ formatNumber(wrapPreview.exchangeRate, 6) }} sWRMB</span>
-                </div>
-                <div class="detail-row">
+            <!-- Preview -->
+            <div v-if="wrapPreview" class="preview-section">
+              <h4 class="preview-title">{{ $t('wrap.preview') }}</h4>
+              <div class="preview-details">
+                <div class="preview-row">
                   <span>{{ $t('wrap.fee') }} ({{ formatNumber(wrapPreview.feePercentage) }}%)</span>
                   <span class="fee-value">{{ formatNumber(wrapPreview.fee) }} sRMB</span>
                 </div>
-                <div class="detail-row">
+                <div class="preview-row">
                   <span>{{ $t('wrap.minimumReceived') }}</span>
-                  <span>{{ formatNumber(wrapPreview.minimumReceived) }} sWRMB</span>
+                  <span class="preview-value">{{ formatNumber(wrapPreview.minimumReceived) }} sWRMB</span>
+                </div>
+                <div class="preview-row exchange-rate">
+                  <span>{{ $t('wrap.rate') }}</span>
+                  <span class="preview-value">1 sRMB = {{ formatNumber(wrapPreview.exchangeRate, 6) }} sWRMB</span>
                 </div>
               </div>
             </div>
@@ -164,16 +161,13 @@
               <div class="token-input">
                 <div class="input-header">
                   <span class="input-label">{{ $t('wrap.desiredAmount') }}</span>
-                  <span class="balance-info">
-                    {{ $t('wrap.maxUnwrappableAmount') }}: {{ formatNumber(userMaxUnwrappableAmount) }} sRMB
-                  </span>
                 </div>
                 
                 <div class="input-section">
                   <div class="input-group">
                     <el-input
                       v-model="unwrapAmount"
-                      :placeholder="$t('wrap.enterDesiredAmount')"
+                      :placeholder="formatNumber(userMaxUnwrappableAmount) + '  ' + $t('available')"
                       size="large"
                       class="amount-input"
                       @input="handleUnwrapAmountChange"
@@ -246,25 +240,29 @@
               </div>
             </div>
 
-            <!-- Transaction Details -->
-            <div v-if="unwrapPreview" class="transaction-details">
-              <h4 class="details-title">{{ $t('wrap.transactionDetails') }}</h4>
-              <div class="details-list">
-                <div class="detail-row">
+            <!-- Preview -->
+            <div v-if="unwrapPreview" class="preview-section">
+              <h4 class="preview-title">{{ $t('wrap.preview') }}</h4>
+              <div class="preview-details">
+                <div class="preview-row">
                   <span>{{ $t('wrap.desiredAmount') }}</span>
-                  <span>{{ formatNumber(unwrapAmount) }} sRMB</span>
+                  <span class="preview-value">{{ formatNumber(unwrapAmount) }} sRMB</span>
                 </div>
-                <div class="detail-row">
+                <div class="preview-row">
                   <span>{{ $t('wrap.fee') }} ({{ formatNumber(unwrapPreview.feePercentage) }}%)</span>
                   <span class="fee-value">{{ formatNumber(unwrapPreview.fee) }} sRMB</span>
                 </div>
-                <div class="detail-row">
+                <div class="preview-row">
                   <span>{{ $t('wrap.actualReceived') }}</span>
-                  <span>{{ formatNumber(unwrapPreview.sRMBReceived) }} CNY</span>
+                  <span class="preview-value">{{ formatNumber(unwrapPreview.sRMBReceived) }} CNY</span>
                 </div>
-                <div class="detail-row">
-                  <span>{{ $t('wrap.sWRMBRequired') }}</span>
-                  <span>{{ formatNumber(unwrapPreview.sWRMBBurned) }} sWRMB</span>
+                <div class="preview-row">
+                  <span>{{ $t('wrap.required') }}</span>
+                  <span class="preview-value">{{ formatNumber(unwrapPreview.sWRMBBurned) }} sWRMB</span>
+                </div>
+                <div class="preview-row exchange-rate">
+                  <span>{{ $t('wrap.rate') }}</span>
+                  <span class="preview-value">1 sWRMB = {{ formatNumber(unwrapPreview.exchangeRate, 6) }} sRMB</span>
                 </div>
               </div>
             </div>
@@ -396,6 +394,7 @@ interface UnwrapPreview {
   sRMBReceived: string
   fee: string
   feePercentage: string
+  exchangeRate: string
   waitTime: number
 }
 
@@ -608,11 +607,15 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
     const waitTimeSeconds = Number(waitTime)
     unwrapWaitTime.value = waitTimeSeconds
     
+    // 计算汇率：1 sWRMB = ? sRMB
+    const exchangeRate = parseFloat(sWRMBBurnedAmount) > 0 ? inputAmount / parseFloat(sWRMBBurnedAmount) : 0
+    
     return {
       sWRMBBurned: sWRMBBurnedAmount,
       sRMBReceived: sRMBReceivedAmount,
       fee: feeAmount,
       feePercentage: feePercentage.toFixed(2),
+      exchangeRate: exchangeRate.toFixed(6),
       waitTime: waitTimeSeconds
     }
   } catch (error) {
@@ -1112,20 +1115,36 @@ onMounted(() => {
   @apply rotate-180;
 }
 
-.transaction-details {
-  @apply bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-8;
+.preview-section {
+  @apply bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6;
 }
 
-.details-title {
-  @apply text-lg font-semibold text-gray-900 dark:text-white mb-4;
+.preview-title {
+  @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-3;
 }
 
-.details-list {
-  @apply space-y-3;
+.preview-details {
+  @apply space-y-2;
 }
 
-.detail-row {
+.preview-row {
   @apply flex items-center justify-between text-sm;
+}
+
+.preview-row span:first-child {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.preview-row.exchange-rate {
+  @apply border-t border-gray-200 dark:border-gray-600 pt-2 mt-2;
+}
+
+.preview-row.exchange-rate .preview-value {
+  @apply text-primary-400 dark:text-primary-300 font-semibold;
+}
+
+.preview-value {
+  @apply font-medium text-gray-900 dark:text-white;
 }
 
 .fee-value {
