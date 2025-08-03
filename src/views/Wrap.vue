@@ -984,6 +984,16 @@ watch(()=>walletStore.chainId, (chainId) => {
   }
 })
 
+// Watch for mode changes to reset input fields
+watch(mode, () => {
+  wrapAmount.value = ''
+  unwrapAmount.value = ''
+  wrapPreview.value = null
+  unwrapPreview.value = null
+  wrapWaitTime.value = 0
+  unwrapWaitTime.value = 0
+})
+
 onMounted(() => {
   // Initialize data on mount
   if (walletStore.isConnected) {

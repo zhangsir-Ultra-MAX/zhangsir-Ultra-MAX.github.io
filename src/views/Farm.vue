@@ -375,6 +375,13 @@ watch(
     }
   }
 )
+
+// Watch for tab changes and reset input fields
+watch(activeTab, (newTab) => {
+  // Reset input amounts when switching tabs
+  depositAmount.value = ''
+  withdrawAmount.value = ''
+})
 </script>
 
 <style scoped>

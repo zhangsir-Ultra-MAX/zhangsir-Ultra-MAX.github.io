@@ -462,6 +462,13 @@ watch(
   }
 )
 
+// Watch for tab changes and reset input fields
+watch(activeTab, (newTab) => {
+  // Reset input amounts when switching tabs
+  stakeAmount.value = ''
+  unstakeAmount.value = ''
+})
+
 const handleTransactionModalClose = () => {
   showTransactionModal.value = false
   transactionHash.value = ''
