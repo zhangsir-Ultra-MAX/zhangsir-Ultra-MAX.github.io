@@ -203,8 +203,6 @@ import { ethers, parseUnits } from 'ethers'
 const walletStore = useWalletStore()
 const { t } = useI18n()
 
-
-
 // Swap icon rotation state
 const swapIconRotation = ref(0)
 
@@ -403,7 +401,36 @@ const canSwap = computed(() => {
         fromToken.value?.symbol !== toToken.value?.symbol
 })
 
+// 验证和格式化输入金额，确保不超过token的小数位数
+function validateAndFormatAmount(amount: string, decimals: number): string {
+    if (!amount) return ''
+    
+    // 移除非数字和小数点的字符
+    const cleanAmount = amount.replace(/[^0-9.]/g, '')
+    
+    // 确保只有一个小数点
+    const parts = cleanAmount.split('.')
+    if (parts.length > 2) {
+        return parts[0] + '.' + parts.slice(1).join('')
+    }
+    
+    // 限制小数位数
+    if (parts.length === 2 && parts[1].length > decimals) {
+        return parts[0] + '.' + parts[1].substring(0, decimals)
+    }
+    
+    return cleanAmount
+}
+
 function handleFromAmountChange() {
+    if (fromToken.value) {
+        const validatedAmount = validateAndFormatAmount(fromAmount.value, fromToken.value.decimals)
+        if (validatedAmount !== fromAmount.value) {
+            fromAmount.value = validatedAmount
+            return
+        }
+    }
+    
     if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
         getUniswapV4Quote()
     } else {
@@ -414,6 +441,14 @@ function handleFromAmountChange() {
 }
 
 function handleToAmountChange() {
+    if (toToken.value) {
+        const validatedAmount = validateAndFormatAmount(toAmount.value, toToken.value.decimals)
+        if (validatedAmount !== toAmount.value) {
+            toAmount.value = validatedAmount
+            return
+        }
+    }
+    
     if (toAmount.value && parseFloat(toAmount.value) > 0) {
         // 反向计算需要重新获取报价
         getReverseUniswapV4Quote()
@@ -617,7 +652,6 @@ async function getReverseUniswapV4Quote() {
         isLoadingQuote.value = false
     }
 }
-
 
 async function executeUniswapV4Swap() {
     if (!currentQuote.value || isSwapping.value) return
@@ -953,7 +987,6 @@ async function updateTokenBalances() {
         toTokenBalance.value = '500'
     }
 }
-
 
 function resetTransactionState() {
     currentTransactionStep.value = 0
