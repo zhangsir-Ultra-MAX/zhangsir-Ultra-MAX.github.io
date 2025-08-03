@@ -1,5 +1,6 @@
 <template>
-  <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+  <header
+    class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
     <div class="container mx-auto px-4">
       <div class="flex items-center justify-between h-16">
         <!-- Logo and Brand -->
@@ -17,11 +18,8 @@
           <template v-for="item in navigationItems" :key="item.name">
             <!-- 带有子菜单的导航项 -->
             <el-dropdown v-if="item.children" trigger="hover" class="nav-dropdown">
-              <span class="nav-link cursor-pointer text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
-                <el-icon class="mr-1">
-                  <img v-if="typeof item.icon === 'string'" :src="item.icon" alt="" class="w-4 h-4" />
-                  <component v-else :is="item.icon" />
-                </el-icon>
+              <span
+                class="nav-link cursor-pointer text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                 {{ $t(`navigation.${item.name}`) }}
                 <el-icon class="ml-1">
                   <ArrowDown />
@@ -30,18 +28,10 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item v-for="child in item.children" :key="child.name">
-                    <router-link
-                      :to="child.path"
-                      class="flex items-center w-full text-decoration-none"
-                      :class="{
-                        'text-primary-600 dark:text-primary-400': $route.path === child.path,
-                        'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400': $route.path !== child.path
-                      }"
-                    >
-                      <el-icon class="mr-2">
-                        <img v-if="typeof child.icon === 'string'" :src="child.icon" alt="" class="w-4 h-4" />
-                        <component v-else :is="child.icon" />
-                      </el-icon>
+                    <router-link :to="child.path" class="flex items-center w-full text-decoration-none" :class="{
+                      'text-primary-600 dark:text-primary-400': $route.path === child.path,
+                      'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400': $route.path !== child.path
+                    }">
                       {{ $t(`navigation.${child.name}`) }}
                     </router-link>
                   </el-dropdown-item>
@@ -49,19 +39,10 @@
               </template>
             </el-dropdown>
             <!-- 普通导航项 -->
-            <router-link
-              v-else
-              :to="item.path"
-              class="nav-link"
-              :class="{
-                'text-primary-600 dark:text-primary-400': $route.path === item.path,
-                'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400': $route.path !== item.path
-              }"
-            >
-              <el-icon class="mr-1">
-                <img v-if="typeof item.icon === 'string'" :src="item.icon" alt="" class="w-4 h-4" />
-                <component v-else :is="item.icon" />
-              </el-icon>
+            <router-link v-else :to="item.path" class="nav-link" :class="{
+              'text-primary-600 dark:text-primary-400': $route.path === item.path,
+              'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400': $route.path !== item.path
+            }">
               {{ $t(`navigation.${item.name}`) }}
             </router-link>
           </template>
@@ -72,19 +53,15 @@
           <!-- Network Status -->
           <div v-if="walletStore.isConnected" class="hidden sm:flex items-center space-x-2">
             <div class="flex items-center space-x-1 px-2 py-1 rounded-full text-xs"
-                 :class="walletStore.isNetworkSupported ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'">
-              <div class="w-2 h-2 rounded-full"
-                   :class="walletStore.isNetworkSupported ? 'bg-green-500' : 'bg-red-500'"></div>
+              :class="walletStore.isNetworkSupported ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'">
+              <div class="w-2 h-2 rounded-full" :class="walletStore.isNetworkSupported ? 'bg-green-500' : 'bg-red-500'">
+              </div>
               <span>{{ walletStore.currentNetwork?.name || 'Unknown' }}</span>
             </div>
           </div>
 
           <!-- Theme Toggle -->
-          <el-button
-            circle
-            @click="appStore.toggleTheme()"
-            class="!border-gray-300 dark:!border-gray-600"
-          >
+          <el-button circle @click="appStore.toggleTheme()" class="!border-gray-300 dark:!border-gray-600">
             <el-icon>
               <Sunny v-if="appStore.isDark" />
               <Moon v-else />
@@ -112,16 +89,13 @@
           <WalletConnect />
 
           <!-- Mobile Menu Toggle -->
-           <div class="md:hidden">
-             <el-button
-               class="!border-gray-300 dark:!border-gray-600"
-               @click="mobileMenuOpen = !mobileMenuOpen"
-             >
-               <el-icon>
-                 <Menu />
-               </el-icon>
-             </el-button>
-           </div>
+          <div class="md:hidden">
+            <el-button class="!border-gray-300 dark:!border-gray-600" @click="mobileMenuOpen = !mobileMenuOpen">
+              <el-icon>
+                <Menu />
+              </el-icon>
+            </el-button>
+          </div>
         </div>
       </div>
 
@@ -132,45 +106,22 @@
             <!-- 带有子菜单的导航项 -->
             <div v-if="item.children" class="space-y-1">
               <div class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                <el-icon class="mr-2">
-                  <img v-if="typeof item.icon === 'string'" :src="item.icon" alt="" class="w-4 h-4" />
-                  <component v-else :is="item.icon" />
-                </el-icon>
                 {{ $t(`navigation.${item.name}`) }}
               </div>
-              <router-link
-                v-for="child in item.children"
-                :key="child.name"
-                :to="child.path"
-                class="flex items-center px-6 py-2 rounded-md text-sm font-medium transition-colors"
-                :class="{
+              <router-link v-for="child in item.children" :key="child.name" :to="child.path"
+                class="flex items-center px-6 py-2 rounded-md text-sm font-medium transition-colors" :class="{
                   'bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-200': $route.path === child.path,
                   'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700': $route.path !== child.path
-                }"
-                @click="mobileMenuOpen = false"
-              >
-                <el-icon class="mr-2">
-                  <img v-if="typeof child.icon === 'string'" :src="child.icon" alt="" class="w-4 h-4" />
-                  <component v-else :is="child.icon" />
-                </el-icon>
+                }" @click="mobileMenuOpen = false">
                 {{ $t(`navigation.${child.name}`) }}
               </router-link>
             </div>
             <!-- 普通导航项 -->
-            <router-link
-              v-else
-              :to="item.path"
-              class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{
+            <router-link v-else :to="item.path"
+              class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors" :class="{
                 'bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-200': $route.path === item.path,
                 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700': $route.path !== item.path
-              }"
-              @click="mobileMenuOpen = false"
-            >
-              <el-icon class="mr-2">
-                <img v-if="typeof item.icon === 'string'" :src="item.icon" alt="" class="w-4 h-4" />
-                <component v-else :is="item.icon" />
-              </el-icon>
+              }" @click="mobileMenuOpen = false">
               {{ $t(`navigation.${item.name}`) }}
             </router-link>
           </template>
@@ -220,60 +171,45 @@ const currentLanguage = computed(() => locale.value)
 const navigationItems = [
   {
     name: 'dashboard',
-    path: '/',
-    icon: DataBoard
+    path: '/'
   },
   {
     name: 'WRMB',
-    icon: WRMBIcon,
     children: [
       {
+        name: 'swap',
+        path: '/swap'
+      },
+      {
         name: 'savings',
-        path: '/savings',
-        icon: Wallet
+        path: '/savings'
       },
       {
         name: 'wrap',
-        path: '/wrap',
-        icon: Box
+        path: '/wrap'
       }
     ]
   },
   {
     name: 'CINA',
-    icon: CINAIcon,
     children: [
       {
         name: 'farm',
-        path: '/farm',
-        icon: Coin
+        path: '/farm'
       },
       {
         name: 'staking',
-        path: '/staking',
-        icon: Lock
+        path: '/staking'
       },
       {
         name: 'bonds',
-        path: '/bonds',
-        icon: Document
+        path: '/bonds'
       }
     ]
   },
   {
-    name: 'swap',
-    path: '/swap',
-    icon: Switch
-  },
-  {
-    name: 'portfolio',
-    path: '/portfolio',
-    icon: TrendCharts
-  },
-  {
     name: 'status',
-    path: '/status',
-    icon: Link
+    path: '/status'
   }
 ]
 

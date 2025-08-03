@@ -525,7 +525,7 @@ watch(activeTab, (newTab) => {
 }
 
 .savings-content {
-  @apply max-w-4xl mx-auto px-6 py-8 space-y-8;
+  @apply max-w-xl mx-auto px-6 py-8 space-y-8;
 }
 
 .section-title {
@@ -533,7 +533,7 @@ watch(activeTab, (newTab) => {
 }
 
 .overview-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6;
+  @apply grid grid-cols-1 gap-6;
 }
 
 .overview-card {

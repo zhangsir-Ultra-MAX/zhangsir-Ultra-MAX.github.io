@@ -1022,7 +1022,7 @@ onMounted(() => {
 }
 
 .wrap-content {
-  @apply mx-auto px-6 py-8 space-y-8;
+  @apply max-w-xl mx-auto px-6 py-8 space-y-8;
 }
 
 .section-title {
@@ -1166,7 +1166,7 @@ onMounted(() => {
 }
 
 .info-grid {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+  @apply grid grid-cols-1 gap-6;
 }
 
 .info-card {

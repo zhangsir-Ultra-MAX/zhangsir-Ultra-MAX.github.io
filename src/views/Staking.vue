@@ -490,7 +490,7 @@ const handleTransactionRetry = () => {
 }
 
 .staking-content {
-  @apply max-w-6xl mx-auto px-6 py-8;
+  @apply max-w-xl mx-auto px-6 py-8;
 }
 
 .section-title {
@@ -498,7 +498,7 @@ const handleTransactionRetry = () => {
 }
 
 .overview-grid {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
+  @apply grid grid-cols-1 gap-6 mb-8;
 }
 
 .overview-card {

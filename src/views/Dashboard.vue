@@ -200,6 +200,73 @@
         </div>
       </div>
 
+      <!-- Performance Chart -->
+      <div class="performance-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            {{ $t('portfolio.performance') }}
+          </h2>
+          <div class="time-range">
+            <el-radio-group v-model="performanceRange" size="small">
+              <el-radio-button label="7d">7D</el-radio-button>
+              <el-radio-button label="30d">30D</el-radio-button>
+              <el-radio-button label="90d">90D</el-radio-button>
+              <el-radio-button label="1y">1Y</el-radio-button>
+            </el-radio-group>
+          </div>
+        </div>
+        
+        <div class="performance-chart">
+          <!-- Line Chart Placeholder -->
+          <div class="chart-placeholder">
+            <svg viewBox="0 0 800 300" class="w-full h-full">
+              <!-- Grid lines -->
+              <defs>
+                <pattern id="grid" width="80" height="30" patternUnits="userSpaceOnUse">
+                  <path d="M 80 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+              
+              <!-- Performance line -->
+              <polyline
+                :points="performancePoints"
+                fill="none"
+                stroke="#6366f1"
+                stroke-width="3"
+                class="transition-all duration-500"
+              />
+              
+              <!-- Data points -->
+              <circle
+                v-for="(point, index) in performanceData"
+                :key="index"
+                :cx="point.x"
+                :cy="point.y"
+                r="4"
+                fill="#6366f1"
+                class="transition-all duration-300 hover:r-6"
+              />
+            </svg>
+          </div>
+          
+          <div class="chart-stats">
+            <div class="stat-item">
+              <span class="stat-label">{{ $t('portfolio.highestValue') }}</span>
+              <span class="stat-value">${{ formatNumber(performanceStats.highest) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">{{ $t('portfolio.lowestValue') }}</span>
+              <span class="stat-value">${{ formatNumber(performanceStats.lowest) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">{{ $t('portfolio.volatility') }}</span>
+              <span class="stat-value">{{ formatNumber(performanceStats.volatility) }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Recent Activity -->
       <div class="activity-section">
         <div class="section-header">
@@ -291,6 +358,7 @@ const savingsStore = useSavingsStore()
 
 const refreshing = ref(false)
 const allocationView = ref('chart')
+const performanceRange = ref('30d')
 
 // Mock data for demonstration
 const portfolioChange = ref(2.34)
@@ -335,6 +403,23 @@ const assetAllocation = ref<AssetAllocation[]>([
   }
 ])
 
+const performanceData = ref([
+  { x: 50, y: 250 },
+  { x: 150, y: 200 },
+  { x: 250, y: 180 },
+  { x: 350, y: 220 },
+  { x: 450, y: 160 },
+  { x: 550, y: 140 },
+  { x: 650, y: 120 },
+  { x: 750, y: 100 }
+])
+
+const performanceStats = ref({
+  highest: 26500,
+  lowest: 23800,
+  volatility: 12.5
+})
+
 const recentActivities = ref([
   {
     id: 1,
@@ -374,6 +459,10 @@ const chartSegments = computed(() => {
     offset += length
     return segment
   })
+})
+
+const performancePoints = computed(() => {
+  return performanceData.value.map(point => `${point.x},${point.y}`).join(' ')
 })
 
 const getActivityIcon = (type: string) => {
@@ -704,6 +793,38 @@ watch(
 
 .change-cell .el-icon {
   @apply text-sm font-bold;
+}
+
+.performance-section {
+  @apply space-y-6;
+}
+
+.time-range {
+  @apply flex items-center;
+}
+
+.performance-chart {
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8;
+}
+
+.chart-placeholder {
+  @apply w-full h-64 mb-6;
+}
+
+.chart-stats {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+.stat-item {
+  @apply flex flex-col items-center text-center;
+}
+
+.stat-label {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.stat-value {
+  @apply text-lg font-semibold text-gray-900 dark:text-white mt-1;
 }
 
 .actions-grid {

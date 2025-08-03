@@ -1234,7 +1234,7 @@ onUnmounted(() => {
 }
 
 .swap-content {
-    @apply max-w-4xl mx-auto px-6 py-8 space-y-8;
+    @apply max-w-xl mx-auto px-6 py-8 space-y-8;
 }
 
 .section-title {

@@ -839,20 +839,8 @@ onMounted(async () => {
   @apply bg-gray-50 dark:bg-gray-900;
 }
 
-.bonds-header {
-  @apply bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-8;
-}
-
-.header-content {
-  @apply max-w-7xl mx-auto flex items-center justify-between;
-}
-
-.header-actions {
-  @apply flex items-center space-x-4;
-}
-
 .bonds-content {
-  @apply max-w-7xl mx-auto px-6 py-8 space-y-8;
+  @apply max-w-6xl mx-auto px-6 py-8 space-y-8;
 }
 
 .section-title {
