@@ -50,19 +50,20 @@
                                         <div class="input-with-select">
                                             <el-input type="number" v-model="fromAmount"
                                                 :placeholder="formatNumber(fromTokenBalance) + '  ' + $t('available')"
-                                                @input="handleFromAmountChange" size="large" />
+                                                @input="handleFromAmountChange" size="large" 
+                                                :disabled="isSwapping || isLoadingQuote" />
                                             <TokenSelect v-model="fromToken" :tokens="availableTokens"
-                                                placeholder="Select token" />
+                                                placeholder="Select token" :disabled="isSwapping" />
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Quick Amount Buttons -->
                                 <div class="quick-amounts">
                                     <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                                        @click="setDepositPercentage(percentage)">
+                                        @click="setDepositPercentage(percentage)" :disabled="isSwapping">
                                         {{ percentage }}%
                                     </el-button>
-                                    <el-button @click="setMaxFromAmount" class="max-button" size="small">
+                                    <el-button @click="setMaxFromAmount" class="max-button" size="small" :disabled="isSwapping">
                                         {{ $t('common.max') }}
                                     </el-button>
                                 </div>
@@ -71,7 +72,7 @@
 
                         <!-- Swap Direction Button -->
                         <div class="swap-direction">
-                            <el-button circle @click="swapTokens" class="swap-direction-btn">
+                            <el-button circle @click="swapTokens" class="swap-direction-btn" :disabled="isSwapping || isLoadingQuote">
                                 <el-icon class="swap-icon" :style="{ transform: `rotate(${swapIconRotation}deg)` }">
                                     <Sort />
                                 </el-icon>
@@ -88,9 +89,10 @@
                                         <div class="input-with-select">
                                             <el-input type="number" v-model="toAmount"
                                                 :placeholder="formatNumber(toTokenBalance) + '  ' + $t('available')"
-                                                @input="handleToAmountChange" size="large" />
+                                                @input="handleToAmountChange" size="large" 
+                                                :disabled="isSwapping || isLoadingQuote" />
                                             <TokenSelect v-model="toToken" :tokens="availableTokens"
-                                                placeholder="Select token" />
+                                                placeholder="Select token" :disabled="isSwapping" />
                                         </div>
                                     </div>
                                 </div>
@@ -108,7 +110,7 @@
                                 <span class="status-indicator">
                                     <span v-if="isV4Supported" class="status-supported">✓ {{
                                         $t('swap.uniswapV4Available')
-                                        }}</span>
+                                    }}</span>
                                     <span v-else class="status-unsupported">
                                         ⚠ {{ $t('swap.v4NotSupported') }}
                                         <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
@@ -126,7 +128,7 @@
                                 <span>{{ $t('swap.poolStatus') }}</span>
                                 <span class="status-indicator">
                                     <span v-if="poolExists" class="status-supported">✓ {{ $t('swap.poolAvailable')
-                                        }}</span>
+                                    }}</span>
                                     <span v-else class="status-warning">
                                         ⚠ {{ $t('swap.poolNotExists') }}
                                         <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
@@ -156,13 +158,13 @@
                             <div class="detail-row exchange-rate">
                                 <span>{{ $t('swap.rate') }}</span>
                                 <span v-if="isLoadingQuote" class="detail-value loading-text">{{ $t('swap.fetchingRate')
-                                    }}</span>
+                                }}</span>
                                 <span v-else-if="exchangeRate > 0 && fromToken && toToken"
                                     class="detail-value rate-value">1 {{
                                         fromToken.symbol }} = {{
                                         formatNumber(exchangeRate) }} {{ toToken.symbol }}</span>
                                 <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
@@ -187,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
 import { formatNumber } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
@@ -232,12 +234,12 @@ const availableTokens = computed<Token[]>(() => {
             address: TOKENS.USDC.addresses[chainId as keyof typeof TOKENS.USDC.addresses] || TOKENS.USDC.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
             decimals: TOKENS.USDC.decimals
         },
-        {
-            symbol: TOKENS.USDT.symbol,
-            name: TOKENS.USDT.name,
-            address: TOKENS.USDT.addresses[chainId as keyof typeof TOKENS.USDT.addresses] || TOKENS.USDT.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-            decimals: TOKENS.USDT.decimals
-        }
+        // {
+        //     symbol: TOKENS.USDT.symbol,
+        //     name: TOKENS.USDT.name,
+        //     address: TOKENS.USDT.addresses[chainId as keyof typeof TOKENS.USDT.addresses] || TOKENS.USDT.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+        //     decimals: TOKENS.USDT.decimals
+        // }
     ]
 })
 
@@ -260,13 +262,43 @@ watch(availableTokens, (tokens) => {
 // Watch for same token selection and auto-swap
 watch(fromToken, (newFromToken, oldFromToken) => {
     if (newFromToken && toToken.value && newFromToken.symbol === toToken.value.symbol && oldFromToken) {
+        // 代币相同时，交换代币并对调数值
         toToken.value = oldFromToken
+        
+        // 对调输入框数值
+        const tempAmount = fromAmount.value
+        fromAmount.value = toAmount.value
+        toAmount.value = tempAmount
+        
+        // 取消当前请求并重新获取报价
+        cancelCurrentQuoteRequest()
+        currentQuote.value = null
+        
+        if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
+            isForwardSwap.value = true
+            debouncedGetQuote()
+        }
     }
 })
 
 watch(toToken, (newToToken, oldToToken) => {
     if (newToToken && fromToken.value && newToToken.symbol === fromToken.value.symbol && oldToToken) {
+        // 代币相同时，交换代币并对调数值
         fromToken.value = oldToToken
+        
+        // 对调输入框数值
+        const tempAmount = fromAmount.value
+        fromAmount.value = toAmount.value
+        toAmount.value = tempAmount
+        
+        // 取消当前请求并重新获取报价
+        cancelCurrentQuoteRequest()
+        currentQuote.value = null
+        
+        if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
+            isForwardSwap.value = true
+            debouncedGetQuote()
+        }
     }
 })
 
@@ -311,6 +343,12 @@ const priceImpact = ref('0')
 const isV4Supported = ref(false)
 // 跟踪交换方向：true表示正向(fromAmount->toAmount)，false表示反向(toAmount->fromAmount)
 const isForwardSwap = ref(true)
+
+// 请求管理状态
+const currentQuoteController = ref<AbortController | null>(null)
+const quoteRequestId = ref(0)
+const isUserInputting = ref(false)
+const lastQuoteTime = ref(0)
 
 // Transaction Modal state
 const showTransactionModal = ref(false)
@@ -371,14 +409,6 @@ const transactionDetails = computed(() => [
     }
 ])
 
-watch([fromToken, toToken], () => {
-    currentQuote.value = null
-    updateExchangeRate()
-    if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
-        getUniswapV4Quote()
-    }
-})
-
 function updateExchangeRate() {
     if (currentQuote.value && fromAmount.value && parseFloat(fromAmount.value) > 0) {
         const fromAmountNum = parseFloat(fromAmount.value)
@@ -391,7 +421,6 @@ function updateExchangeRate() {
     }
 }
 
-
 const canSwap = computed(() => {
     return walletStore.isConnected &&
         isV4Supported.value &&
@@ -400,6 +429,8 @@ const canSwap = computed(() => {
         parseFloat(fromAmount.value) > 0 &&
         parseFloat(fromAmount.value) <= parseFloat(fromTokenBalance.value) &&
         !isSwapping.value &&
+        !isLoadingQuote.value &&
+        !isUserInputting.value &&
         fromToken.value?.symbol !== toToken.value?.symbol
 })
 
@@ -424,7 +455,32 @@ function validateAndFormatAmount(amount: string, decimals: number): string {
     return cleanAmount
 }
 
+// 防抖函数
+function debounce<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
+    let timeoutId: NodeJS.Timeout
+    return (...args: Parameters<T>) => {
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => func(...args), delay)
+    }
+}
+
+// 取消当前报价请求
+function cancelCurrentQuoteRequest() {
+    if (currentQuoteController.value) {
+        currentQuoteController.value.abort()
+        currentQuoteController.value = null
+    }
+}
+
+// 检查请求是否应该被忽略
+function shouldIgnoreQuoteRequest(requestId: number): boolean {
+    return requestId !== quoteRequestId.value
+}
+
 function handleFromAmountChange() {
+    // 标记用户正在输入
+    isUserInputting.value = true
+    
     if (fromToken.value) {
         const validatedAmount = validateAndFormatAmount(fromAmount.value, fromToken.value.decimals)
         if (validatedAmount !== fromAmount.value) {
@@ -437,15 +493,20 @@ function handleFromAmountChange() {
     isForwardSwap.value = true
 
     if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
-        getUniswapV4Quote()
+        debouncedGetQuote()
     } else {
+        cancelCurrentQuoteRequest()
         toAmount.value = ''
         currentQuote.value = null
         updateExchangeRate()
+        isUserInputting.value = false
     }
 }
 
 function handleToAmountChange() {
+    // 标记用户正在输入
+    isUserInputting.value = true
+    
     if (toToken.value) {
         const validatedAmount = validateAndFormatAmount(toAmount.value, toToken.value.decimals)
         if (validatedAmount !== toAmount.value) {
@@ -458,14 +519,28 @@ function handleToAmountChange() {
     isForwardSwap.value = false
 
     if (toAmount.value && parseFloat(toAmount.value) > 0) {
-        // 反向计算需要重新获取报价
-        getReverseUniswapV4Quote()
+        debouncedGetReverseQuote()
     } else {
+        cancelCurrentQuoteRequest()
         fromAmount.value = ''
         currentQuote.value = null
         updateExchangeRate()
+        isUserInputting.value = false
     }
 }
+
+// 防抖的报价获取函数
+const debouncedGetQuote = debounce(() => {
+    if (!isSwapping.value) {
+        getUniswapV4Quote()
+    }
+}, 500)
+
+const debouncedGetReverseQuote = debounce(() => {
+    if (!isSwapping.value) {
+        getReverseUniswapV4Quote()
+    }
+}, 500)
 
 const setDepositPercentage = (percentage: number) => {
     isForwardSwap.value = true
@@ -493,6 +568,14 @@ function handleCustomSlippage() {
 }
 
 function swapTokens() {
+    // 防止在交换过程中或加载报价时切换代币
+    if (isSwapping.value || isLoadingQuote.value) {
+        return
+    }
+    
+    // 取消当前的报价请求
+    cancelCurrentQuoteRequest()
+    
     const temp = fromToken.value
     fromToken.value = toToken.value
     toToken.value = temp
@@ -509,6 +592,12 @@ function swapTokens() {
 
     // Rotate icon by 180 degrees each time
     swapIconRotation.value += 180
+    
+    // 重新获取报价
+    if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
+        isForwardSwap.value = true
+        debouncedGetQuote()
+    }
 }
 
 function getSwapButtonText() {
@@ -573,7 +662,18 @@ async function getUniswapV4Quote() {
         return
     }
 
+    // 取消之前的请求
+    cancelCurrentQuoteRequest()
+    
+    // 生成新的请求ID
+    const requestId = ++quoteRequestId.value
+    
+    // 创建新的AbortController
+    currentQuoteController.value = new AbortController()
+    const controller = currentQuoteController.value
+
     isLoadingQuote.value = true
+    lastQuoteTime.value = Date.now()
 
     try {
         const swapParams: SwapParams = {
@@ -585,8 +685,13 @@ async function getUniswapV4Quote() {
         }
 
         const quote = await uniswapV4Service.getQuote(swapParams)
+        
+        // 检查请求是否已被取消或过期
+        if (controller.signal.aborted || shouldIgnoreQuoteRequest(requestId)) {
+            return
+        }
 
-        if (quote && fromAmount.value) {
+        if (quote) {
             currentQuote.value = quote
             toAmount.value = quote.amountOut
             priceImpact.value = quote.priceImpact
@@ -598,10 +703,13 @@ async function getUniswapV4Quote() {
             toAmount.value = ''
             poolExists.value = false
             updateExchangeRate()
-
-            // ElMessage.warning(t('swap.cannotGetQuote', { fromToken: fromToken.value?.symbol, toToken: toToken.value?.symbol }))
         }
     } catch (error) {
+        // 如果是取消错误，不显示错误消息
+        if (controller.signal.aborted || shouldIgnoreQuoteRequest(requestId)) {
+            return
+        }
+        
         currentQuote.value = null
         toAmount.value = ''
         poolExists.value = false
@@ -609,7 +717,16 @@ async function getUniswapV4Quote() {
 
         ElMessage.error(t('swap.getQuoteFailed', { error: (error as Error).message }))
     } finally {
-        isLoadingQuote.value = false
+        // 只有当前请求才更新加载状态
+        if (!shouldIgnoreQuoteRequest(requestId)) {
+            isLoadingQuote.value = false
+            isUserInputting.value = false
+        }
+        
+        // 清理controller
+        if (currentQuoteController.value === controller) {
+            currentQuoteController.value = null
+        }
     }
 }
 
@@ -624,7 +741,18 @@ async function getReverseUniswapV4Quote() {
         return
     }
 
+    // 取消之前的请求
+    cancelCurrentQuoteRequest()
+    
+    // 生成新的请求ID
+    const requestId = ++quoteRequestId.value
+    
+    // 创建新的AbortController
+    currentQuoteController.value = new AbortController()
+    const controller = currentQuoteController.value
+
     isLoadingQuote.value = true
+    lastQuoteTime.value = Date.now()
 
     try {
         // 反向报价：使用exactOutput模式，指定期望的输出数量
@@ -637,8 +765,13 @@ async function getReverseUniswapV4Quote() {
         }
 
         const quote = await uniswapV4Service.getQuote(swapParams)
+        
+        // 检查请求是否已被取消或过期
+        if (controller.signal.aborted || shouldIgnoreQuoteRequest(requestId)) {
+            return
+        }
 
-        if (quote && toAmount.value) {
+        if (quote) {
             // 反向报价的结果：quote.amountIn是需要的输入数量，quote.amountOut是期望的输出数量
             fromAmount.value = quote.amountIn!
             currentQuote.value = quote
@@ -653,6 +786,11 @@ async function getReverseUniswapV4Quote() {
             updateExchangeRate()
         }
     } catch (error) {
+        // 如果是取消错误，不显示错误消息
+        if (controller.signal.aborted || shouldIgnoreQuoteRequest(requestId)) {
+            return
+        }
+        
         currentQuote.value = null
         fromAmount.value = ''
         poolExists.value = false
@@ -660,14 +798,28 @@ async function getReverseUniswapV4Quote() {
 
         ElMessage.error(t('swap.getReverseQuoteFailed', { error: (error as Error).message }))
     } finally {
-        isLoadingQuote.value = false
+        // 只有当前请求才更新加载状态
+        if (!shouldIgnoreQuoteRequest(requestId)) {
+            isLoadingQuote.value = false
+            isUserInputting.value = false
+        }
+        
+        // 清理controller
+        if (currentQuoteController.value === controller) {
+            currentQuoteController.value = null
+        }
     }
 }
 
 async function executeUniswapV4Swap() {
     if (!currentQuote.value || isSwapping.value) return
 
+    // 取消所有正在进行的报价请求
+    cancelCurrentQuoteRequest()
+    
+    // 设置交易状态，防止其他操作干扰
     isSwapping.value = true
+    isUserInputting.value = false
 
     try {
         // 交换方向始终是从fromToken到toToken
@@ -980,10 +1132,12 @@ async function checkPoolInfo() {
 
 watch([fromToken, toToken], async () => {
     if (walletStore.isConnected) {
+        currentQuote.value = null
+        updateExchangeRate()
         await updateTokenBalances()
         await checkPoolInfo()
-        if (fromAmount.value) {
-            await getUniswapV4Quote()
+        if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
+            getUniswapV4Quote()
         }
     }
 })
@@ -1060,6 +1214,17 @@ onMounted(async () => {
     await updateTokenBalances()
     updateExchangeRate()
     await checkPoolInfo()
+})
+
+// 组件卸载时清理资源
+onUnmounted(() => {
+    // 取消所有正在进行的请求
+    cancelCurrentQuoteRequest()
+    
+    // 重置状态
+    isSwapping.value = false
+    isLoadingQuote.value = false
+    isUserInputting.value = false
 })
 </script>
 
