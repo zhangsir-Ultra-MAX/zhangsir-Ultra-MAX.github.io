@@ -26,7 +26,7 @@
         
         <div class="stats-grid">
           <!-- Total Value -->
-          <div class="stat-card primary">
+          <router-link to="/wrap" class="stat-card primary">
             <div class="stat-header">
               <h3 class="stat-title">{{ $t('dashboard.totalValue') }}</h3>
               <el-icon class="stat-icon">
@@ -45,10 +45,10 @@
                 {{ Math.abs(portfolioChange).toFixed(2) }}%
               </div>
             </div>
-          </div>
+          </router-link>
 
           <!-- Savings Balance -->
-          <div class="stat-card">
+          <router-link to="/savings" class="stat-card">
             <div class="stat-header">
               <h3 class="stat-title">WRMB {{ $t('dashboard.savingsLiquidity') }}</h3>
               <el-icon class="stat-icon">
@@ -63,10 +63,10 @@
                 ≈ ${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}
               </div>
             </div>
-          </div>
+          </router-link>
 
           <!-- Current APY -->
-          <div class="stat-card">
+          <router-link to="/savings" class="stat-card">
             <div class="stat-header">
               <h3 class="stat-title">{{ $t('dashboard.currentAPY') }}</h3>
               <el-icon class="stat-icon">
@@ -82,55 +82,121 @@
                 <span class="text-sm text-green-600 dark:text-green-400">+{{ formatNumber(savingsStore.dynamicWRMB) }} WRMB</span>
               </div>
             </div>
-          </div>
+          </router-link>
         </div>
       </div>
 
-      <!-- Quick Actions -->
-      <div class="actions-section">
-        <h2 class="section-title">
-          {{ $t('dashboard.quickActions') }}
-        </h2>
+      <!-- Asset Allocation -->
+      <div class="allocation-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            {{ $t('portfolio.assetAllocation') }}
+          </h2>
+          <div class="view-toggle">
+            <el-radio-group v-model="allocationView" size="small">
+              <el-radio-button label="chart">{{ $t('portfolio.chart') }}</el-radio-button>
+              <el-radio-button label="table">{{ $t('portfolio.table') }}</el-radio-button>
+            </el-radio-group>
+          </div>
+        </div>
         
-        <div class="actions-grid">
-          <router-link to="/savings" class="action-card">
-            <div class="action-icon savings">
-              <el-icon><Wallet /></el-icon>
+        <div class="allocation-content">
+          <div v-if="allocationView === 'chart'" class="chart-container">
+            <div class="chart-wrapper">
+              <!-- Pie Chart Placeholder -->
+              <div class="pie-chart">
+                <svg viewBox="0 0 200 200" class="w-full h-full">
+                  <circle
+                    v-for="(segment, index) in chartSegments"
+                    :key="index"
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    :stroke="segment.color"
+                    stroke-width="20"
+                    :stroke-dasharray="`${segment.length} ${314 - segment.length}`"
+                    :stroke-dashoffset="segment.offset"
+                    class="transition-all duration-500"
+                  />
+                </svg>
+                <div class="chart-center">
+                  <div class="center-value">${{ formatNumber(portfolioStats.totalValue) }}</div>
+                  <div class="center-label">{{ $t('portfolio.totalValue') }}</div>
+                </div>
+              </div>
             </div>
-            <div class="action-content">
-              <h3 class="action-title">{{ $t('navigation.savings') }}</h3>
-              <p class="action-description">{{ $t('dashboard.savingsDescription') }}</p>
+            
+            <div class="chart-legend">
+              <div
+                v-for="asset in assetAllocation"
+                :key="asset.symbol"
+                class="legend-item"
+              >
+                <div class="legend-color" :style="{ backgroundColor: asset.color }"></div>
+                <div class="legend-info">
+                  <div class="legend-name">{{ asset.name }}</div>
+                  <div class="legend-details">
+                    <span class="legend-value">${{ formatNumber(asset.value) }}</span>
+                    <span class="legend-percentage">({{ formatNumber(asset.percentage) }}%)</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <el-icon class="action-arrow">
-              <ArrowRight />
-            </el-icon>
-          </router-link>
-
-          <router-link to="/wrap" class="action-card">
-            <div class="action-icon wrap">
-              <el-icon><Switch /></el-icon>
-            </div>
-            <div class="action-content">
-              <h3 class="action-title">{{ $t('navigation.wrap') }}</h3>
-              <p class="action-description">{{ $t('dashboard.wrapDescription') }}</p>
-            </div>
-            <el-icon class="action-arrow">
-              <ArrowRight />
-            </el-icon>
-          </router-link>
-
-          <router-link to="/bonds" class="action-card">
-            <div class="action-icon bonds">
-              <el-icon><TrendCharts /></el-icon>
-            </div>
-            <div class="action-content">
-              <h3 class="action-title">{{ $t('navigation.bonds') }}</h3>
-              <p class="action-description">{{ $t('dashboard.bondsDescription') }}</p>
-            </div>
-            <el-icon class="action-arrow">
-              <ArrowRight />
-            </el-icon>
-          </router-link>
+          </div>
+          
+          <div v-else class="allocation-table">
+            <el-table :data="assetAllocation" style="width: 100%">
+              <el-table-column prop="name" :label="$t('portfolio.asset')" min-width="120">
+                <template #default="{ row }">
+                  <div class="asset-cell">
+                    <div class="asset-color" :style="{ backgroundColor: row.color }"></div>
+                    <div class="asset-info">
+                      <div class="asset-name">{{ row.name }}</div>
+                      <div class="asset-symbol">{{ row.symbol }}</div>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              
+              <el-table-column prop="balance" :label="$t('portfolio.balance')" min-width="120">
+                <template #default="{ row }">
+                  {{ formatNumber(row.balance) }} {{ row.symbol }}
+                </template>
+              </el-table-column>
+              
+              <el-table-column prop="value" :label="$t('portfolio.value')" min-width="120">
+                <template #default="{ row }">
+                  ${{ formatNumber(row.value) }}
+                </template>
+              </el-table-column>
+              
+              <el-table-column prop="percentage" :label="$t('portfolio.allocation')" min-width="100">
+                <template #default="{ row }">
+                  <div class="percentage-cell">
+                    <div class="percentage-bar">
+                      <div 
+                        class="percentage-fill"
+                        :style="{ width: `${row.percentage}%`, backgroundColor: row.color }"
+                      ></div>
+                    </div>
+                    <span class="percentage-text">{{ formatNumber(row.percentage) }}%</span>
+                  </div>
+                </template>
+              </el-table-column>
+              
+              <el-table-column prop="change24h" :label="$t('portfolio.change24h')" min-width="100">
+                <template #default="{ row }">
+                  <div class="change-cell" :class="{ positive: row.change24h >= 0, negative: row.change24h < 0 }">
+                    <el-icon>
+                      <component :is="row.change24h >= 0 ? 'ArrowUp' : 'ArrowDown'" />
+                    </el-icon>
+                    {{ formatNumber(Math.abs(row.change24h)) }}%
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </div>
       </div>
 
@@ -188,7 +254,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   Wallet,
@@ -209,15 +275,66 @@ import { formatNumber, formatTimeAgo } from '@/utils/format'
 import { contractService } from '@/services/contracts'
 import { formatUnits } from 'ethers'
 
+interface AssetAllocation {
+  name: string
+  symbol: string
+  balance: number
+  value: number
+  percentage: number
+  color: string
+  change24h: number
+}
+
 const { t } = useI18n()
 const walletStore = useWalletStore()
 const savingsStore = useSavingsStore()
 
 const refreshing = ref(false)
+const allocationView = ref('chart')
 
 // Mock data for demonstration
 const portfolioChange = ref(2.34)
 const totalSRMBValue = ref('')
+
+const portfolioStats = ref({
+  totalValue: 25750.50,
+  totalInvested: 24000.00,
+  totalReturns: 1750.50,
+  returnPercentage: 7.29,
+  totalChange: 2.45,
+  avgAPY: 8.2
+})
+
+const assetAllocation = ref<AssetAllocation[]>([
+  {
+    name: 'Savings Vault',
+    symbol: 'sWRMB',
+    balance: 12500,
+    value: 15000,
+    percentage: 58.3,
+    color: '#6366f1',
+    change24h: 1.2
+  },
+  {
+    name: 'Bond Pool',
+    symbol: 'WRMB',
+    balance: 8000,
+    value: 8500,
+    percentage: 33.0,
+    color: '#10b981',
+    change24h: 0.8
+  },
+  {
+    name: 'Wrapped Tokens',
+    symbol: 'sWRMB',
+    balance: 2000,
+    value: 2250.50,
+    percentage: 8.7,
+    color: '#f59e0b',
+    change24h: -0.5
+  }
+])
+
 const recentActivities = ref([
   {
     id: 1,
@@ -244,6 +361,20 @@ const recentActivities = ref([
     timestamp: Date.now() - 86400000
   }
 ])
+
+const chartSegments = computed(() => {
+  let offset = 0
+  return assetAllocation.value.map(asset => {
+    const length = (asset.percentage / 100) * 314 // 2π * 50 (radius)
+    const segment = {
+      length,
+      offset: -offset,
+      color: asset.color
+    }
+    offset += length
+    return segment
+  })
+})
 
 const getActivityIcon = (type: string) => {
   switch (type) {
@@ -409,6 +540,191 @@ watch(
 
 .stat-card.primary .stat-change {
   @apply text-primary-100;
+}
+
+.allocation-section {
+  @apply space-y-6;
+}
+
+.view-toggle {
+  @apply flex items-center;
+}
+
+.allocation-content {
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-2;
+}
+
+.chart-container {
+  @apply flex flex-col lg:flex-row items-center space-y-8 lg:space-y-0 lg:space-x-12;
+}
+
+.chart-wrapper {
+  @apply flex-shrink-0;
+}
+
+.pie-chart {
+  @apply relative w-64 h-64;
+}
+
+.chart-center {
+  @apply absolute inset-0 flex flex-col items-center justify-center;
+}
+
+.center-value {
+  @apply text-2xl font-bold text-gray-900 dark:text-white;
+}
+
+.center-label {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.chart-legend {
+  @apply flex-1 space-y-4;
+}
+
+.legend-item {
+  @apply flex items-center space-x-4;
+}
+
+.legend-color {
+  @apply w-4 h-4 rounded-full;
+}
+
+.legend-info {
+  @apply flex-1;
+}
+
+.legend-name {
+  @apply font-medium text-gray-900 dark:text-white;
+}
+
+.legend-details {
+  @apply text-sm text-gray-600 dark:text-gray-400 mt-1;
+}
+
+.legend-value {
+  @apply font-medium;
+}
+
+.legend-percentage {
+  @apply ml-2;
+}
+
+.allocation-table {
+  @apply overflow-auto rounded-lg;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.allocation-table :deep(.el-table) {
+  @apply bg-white dark:bg-gray-800 border-0;
+  border-radius: 8px;
+}
+
+.allocation-table :deep(.el-table__header) {
+  @apply bg-white dark:bg-gray-700;
+}
+
+.allocation-table :deep(.el-table__body) {
+  @apply bg-white dark:bg-gray-800;
+}
+
+.allocation-table :deep(.el-table__cell) {
+  @apply border-b border-gray-100 dark:border-gray-600;
+  padding: 16px 12px !important;
+  font-size: 14px;
+}
+
+.allocation-table :deep(.el-table__header .el-table__cell) {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px !important;
+  @apply bg-white dark:bg-gray-700 border-b border-gray-600  text-gray-500 dark:text-gray-400;
+}
+
+.allocation-table :deep(.el-table__header-wrapper) {
+  @apply bg-white dark:bg-gray-700;
+  border-radius: 8px 8px 0 0;
+}
+
+.allocation-table :deep(.el-table__header th) {
+  @apply bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400;
+}
+
+.allocation-table :deep(.el-table__row) {
+  transition: background-color 0.2s ease;
+}
+
+.allocation-table :deep(.el-table__row:hover) {
+  @apply bg-gray-50 dark:bg-gray-700;
+}
+
+.allocation-table :deep(.el-table__row:last-child .el-table__cell) {
+  border-bottom: none;
+}
+
+.asset-cell {
+  @apply flex items-center space-x-3;
+}
+
+.asset-color {
+  @apply w-4 h-4 rounded-full;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.asset-info {
+  @apply flex flex-col;
+}
+
+.asset-name {
+  @apply font-semibold text-gray-900 dark:text-white;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.asset-symbol {
+  @apply text-xs text-gray-500 dark:text-gray-400;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.percentage-cell {
+  @apply flex items-center space-x-3;
+}
+
+.percentage-bar {
+  @apply w-20 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.percentage-fill {
+  @apply h-full transition-all duration-500 ease-out;
+  border-radius: 9999px;
+}
+
+.percentage-text {
+  @apply text-sm font-semibold text-gray-700 dark:text-gray-300;
+  min-width: 45px;
+  text-align: right;
+}
+
+.change-cell {
+  @apply flex items-center space-x-1.5 font-semibold;
+  font-size: 13px;
+}
+
+.change-cell.positive {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.change-cell.negative {
+  @apply text-red-600 dark:text-red-400;
+}
+
+.change-cell .el-icon {
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .actions-grid {
