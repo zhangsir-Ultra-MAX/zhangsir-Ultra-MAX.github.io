@@ -139,19 +139,19 @@
                             </div>
 
                             <!-- Price Impact -->
-                            <div class="detail-row" v-if="currentQuote && poolExists">
+                            <!-- <div class="detail-row" v-if="currentQuote && poolExists">
                                 <span>{{ $t('swap.priceImpact') }}</span>
                                 <span class="detail-value" :class="{
                                     'price-impact-low': parseFloat(priceImpact) < 1,
                                     'price-impact-medium': parseFloat(priceImpact) >= 1 && parseFloat(priceImpact) < 3,
                                     'price-impact-high': parseFloat(priceImpact) >= 3
                                 }">{{ formatNumber(parseFloat(priceImpact)) }}%</span>
-                            </div>
+                            </div> -->
 
-                            <div class="detail-row">
+                            <!-- <div class="detail-row">
                                 <span>{{ $t('swap.fee') }}</span>
                                 <span class="detail-value fee-value">{{ formatNumber(swapFee) }}%</span>
-                            </div>
+                            </div> -->
 
                             <div class="detail-row exchange-rate">
                                 <span>{{ $t('swap.rate') }}</span>
@@ -309,6 +309,8 @@ const currentQuote = ref<QuoteResult | null>(null)
 const poolExists = ref(false)
 const priceImpact = ref('0')
 const isV4Supported = ref(false)
+// 跟踪交换方向：true表示正向(fromAmount->toAmount)，false表示反向(toAmount->fromAmount)
+const isForwardSwap = ref(true)
 
 // Transaction Modal state
 const showTransactionModal = ref(false)
@@ -404,21 +406,21 @@ const canSwap = computed(() => {
 // 验证和格式化输入金额，确保不超过token的小数位数
 function validateAndFormatAmount(amount: string, decimals: number): string {
     if (!amount) return ''
-    
+
     // 移除非数字和小数点的字符
     const cleanAmount = amount.replace(/[^0-9.]/g, '')
-    
+
     // 确保只有一个小数点
     const parts = cleanAmount.split('.')
     if (parts.length > 2) {
         return parts[0] + '.' + parts.slice(1).join('')
     }
-    
+
     // 限制小数位数
     if (parts.length === 2 && parts[1].length > decimals) {
         return parts[0] + '.' + parts[1].substring(0, decimals)
     }
-    
+
     return cleanAmount
 }
 
@@ -430,7 +432,10 @@ function handleFromAmountChange() {
             return
         }
     }
-    
+
+    // 设置为正向交换
+    isForwardSwap.value = true
+
     if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
         getUniswapV4Quote()
     } else {
@@ -448,7 +453,10 @@ function handleToAmountChange() {
             return
         }
     }
-    
+
+    // 设置为反向交换
+    isForwardSwap.value = false
+
     if (toAmount.value && parseFloat(toAmount.value) > 0) {
         // 反向计算需要重新获取报价
         getReverseUniswapV4Quote()
@@ -460,6 +468,7 @@ function handleToAmountChange() {
 }
 
 const setDepositPercentage = (percentage: number) => {
+    isForwardSwap.value = true
     if (parseFloat(fromTokenBalance.value) > 0) {
         fromAmount.value = (parseFloat(fromTokenBalance.value) * percentage / 100).toString()
         handleFromAmountChange()
@@ -467,6 +476,7 @@ const setDepositPercentage = (percentage: number) => {
 }
 
 function setMaxFromAmount() {
+    isForwardSwap.value = true
     if (parseFloat(fromTokenBalance.value) > 0) {
         fromAmount.value = fromTokenBalance.value
         handleFromAmountChange()
@@ -570,12 +580,13 @@ async function getUniswapV4Quote() {
             tokenIn: fromToken.value!.address,
             tokenOut: toToken.value!.address,
             amountIn: fromAmount.value,
+            swapType: 'exactInput',
             slippage: slippage.value
         }
 
         const quote = await uniswapV4Service.getQuote(swapParams)
 
-        if (quote) {
+        if (quote && fromAmount.value) {
             currentQuote.value = quote
             toAmount.value = quote.amountOut
             priceImpact.value = quote.priceImpact
@@ -616,20 +627,20 @@ async function getReverseUniswapV4Quote() {
     isLoadingQuote.value = true
 
     try {
-        // 反向报价：交换tokenIn和tokenOut，使用toAmount作为amountIn
+        // 反向报价：使用exactOutput模式，指定期望的输出数量
         const swapParams: SwapParams = {
-            tokenIn: toToken.value!.address,
-            tokenOut: fromToken.value!.address,
-            amountIn: toAmount.value,
+            tokenIn: fromToken.value!.address,
+            tokenOut: toToken.value!.address,
+            amountOut: toAmount.value,
+            swapType: 'exactOutput',
             slippage: slippage.value
         }
 
         const quote = await uniswapV4Service.getQuote(swapParams)
 
-        if (quote) {
-            // 反向报价的结果需要设置到fromAmount
-            fromAmount.value = quote.amountOut
-            // 保存反向报价结果，但需要注意这是反向的
+        if (quote && toAmount.value) {
+            // 反向报价的结果：quote.amountIn是需要的输入数量，quote.amountOut是期望的输出数量
+            fromAmount.value = quote.amountIn!
             currentQuote.value = quote
             priceImpact.value = quote.priceImpact
             swapFee.value = parseFloat(quote.fee)
@@ -659,10 +670,14 @@ async function executeUniswapV4Swap() {
     isSwapping.value = true
 
     try {
+        // 交换方向始终是从fromToken到toToken
+        // 区别在于：正向交换指定输入数量，反向交换指定输出数量
         const swapParams: SwapParams = {
             tokenIn: fromToken.value!.address,
             tokenOut: toToken.value!.address,
-            amountIn: fromAmount.value,
+            amountIn: isForwardSwap.value ? fromAmount.value : (currentQuote.value.amountIn || fromAmount.value),
+            amountOut: isForwardSwap.value ? undefined : toAmount.value,
+            swapType: isForwardSwap.value ? 'exactInput' : 'exactOutput',
             slippage: slippage.value
         }
 
@@ -702,7 +717,11 @@ async function executeUniswapV4Swap() {
 
         const tokenInContract = uniswapV4Service.getTokenContract(swapParams.tokenIn, true)
         const tokenInDecimals = await tokenInContract.decimals()
-        const amountIn = parseUnits(swapParams.amountIn, tokenInDecimals)
+        const amountInFrom = parseUnits(fromAmount.value, tokenInDecimals)
+
+        const slippageMultiplierOut = BigInt(Math.floor((100 + swapParams.slippage) * 100))
+        const maxAmountInBigInt = amountInFrom * slippageMultiplierOut / BigInt(10000)
+        const amountIn = isForwardSwap.value ? amountInFrom : maxAmountInBigInt
 
         if (BigInt(permit2Allowance) < BigInt(amountIn)) {
             currentTransactionStep.value = 1
@@ -762,9 +781,10 @@ async function executeUniswapV4Swap() {
 
         const tokenOutContract = uniswapV4Service.getTokenContract(swapParams.tokenOut)
         const tokenOutDecimals = await tokenOutContract.decimals()
-        const amountOutBigInt = parseUnits(quote.amountOut, tokenOutDecimals)
         const slippageMultiplier = BigInt(Math.floor((100 - swapParams.slippage) * 100))
+        const amountOutBigInt = parseUnits(quote.amountOut, tokenOutDecimals)
         const minAmountOut = amountOutBigInt * slippageMultiplier / BigInt(10000)
+        const amountOutTo = parseUnits(toAmount.value, tokenOutDecimals)
 
         const poolKey = {
             currency0: swapParams.tokenIn < swapParams.tokenOut ? swapParams.tokenIn : swapParams.tokenOut,
@@ -781,9 +801,9 @@ async function executeUniswapV4Swap() {
         const zeroForOne = poolKey.currency0 === swapParams.tokenIn
         const deadline = Math.floor(Date.now() / 1000) + 3600
 
-
         const Actions = {
             SWAP_EXACT_IN_SINGLE: 0x06,
+            SWAP_EXACT_OUT_SINGLE: 0x08,
             SETTLE_ALL: 0x0c,
             TAKE_ALL: 0x0f
         }
@@ -794,38 +814,69 @@ async function executeUniswapV4Swap() {
 
         const POOL_KEY_STRUCT = '(address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks)'
         const SWAP_EXACT_IN_SINGLE_STRUCT = '(' + POOL_KEY_STRUCT + ' poolKey,bool zeroForOne,uint128 amountIn,uint128 amountOutMinimum,bytes hookData)'
+        const SWAP_EXACT_OUT_SINGLE_STRUCT = '(' + POOL_KEY_STRUCT + ' poolKey,bool zeroForOne,uint128 amountOut,uint128 amountInMaximum,bytes hookData)'
 
         let v4Actions = '0x'
         const v4Params: string[] = []
 
-        const swapParamsForTx = {
-            poolKey: poolKey,
-            zeroForOne: zeroForOne,
-            amountIn: amountIn,
-            amountOutMinimum: minAmountOut,
-            hookData: '0x'
+
+        if (isForwardSwap.value) {
+            const swapParamsForTx = {
+                poolKey: poolKey,
+                zeroForOne: zeroForOne,
+                amountIn: amountIn,
+                amountOutMinimum: minAmountOut,
+                hookData: '0x'
+            }
+            const swapEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
+                [SWAP_EXACT_IN_SINGLE_STRUCT],
+                [swapParamsForTx]
+            )
+            v4Params.push(swapEncodedParam)
+            v4Actions = v4Actions + Actions.SWAP_EXACT_IN_SINGLE.toString(16).padStart(2, '0')
+
+            const settleEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
+                ['address', 'uint256'],
+                [swapParams.tokenIn, amountIn]
+            )
+            v4Params.push(settleEncodedParam)
+            v4Actions = v4Actions + Actions.SETTLE_ALL.toString(16).padStart(2, '0')
+
+            const takeEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
+                ['address', 'uint256'],
+                [swapParams.tokenOut, minAmountOut]
+            )
+            v4Params.push(takeEncodedParam)
+            v4Actions = v4Actions + Actions.TAKE_ALL.toString(16).padStart(2, '0')
+        } else {
+            const swapParamsForTxOut = {
+                poolKey: poolKey,
+                zeroForOne: zeroForOne,
+                amountOut: amountOutTo,
+                amountInMaximum: maxAmountInBigInt,
+                hookData: '0x'
+            }
+            const swapEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
+                [SWAP_EXACT_OUT_SINGLE_STRUCT],
+                [swapParamsForTxOut]
+            )
+            v4Params.push(swapEncodedParam)
+            v4Actions = v4Actions + Actions.SWAP_EXACT_OUT_SINGLE.toString(16).padStart(2, '0')
+
+            const settleEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
+                ['address', 'uint256'],
+                [swapParams.tokenIn, maxAmountInBigInt]
+            )
+            v4Params.push(settleEncodedParam)
+            v4Actions = v4Actions + Actions.SETTLE_ALL.toString(16).padStart(2, '0')
+
+            const takeEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
+                ['address', 'uint256'],
+                [swapParams.tokenOut, amountOutTo]
+            )
+            v4Params.push(takeEncodedParam)
+            v4Actions = v4Actions + Actions.TAKE_ALL.toString(16).padStart(2, '0')
         }
-
-        const swapEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
-            [SWAP_EXACT_IN_SINGLE_STRUCT],
-            [swapParamsForTx]
-        )
-        v4Params.push(swapEncodedParam)
-        v4Actions = v4Actions + Actions.SWAP_EXACT_IN_SINGLE.toString(16).padStart(2, '0')
-
-        const settleEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
-            ['address', 'uint256'],
-            [swapParams.tokenIn, amountIn]
-        )
-        v4Params.push(settleEncodedParam)
-        v4Actions = v4Actions + Actions.SETTLE_ALL.toString(16).padStart(2, '0')
-
-        const takeEncodedParam = ethers.AbiCoder.defaultAbiCoder().encode(
-            ['address', 'uint256'],
-            [swapParams.tokenOut, minAmountOut]
-        )
-        v4Params.push(takeEncodedParam)
-        v4Actions = v4Actions + Actions.TAKE_ALL.toString(16).padStart(2, '0')
 
         const encodedV4Actions = ethers.AbiCoder.defaultAbiCoder().encode(
             ['bytes', 'bytes[]'],
@@ -838,13 +889,11 @@ async function executeUniswapV4Swap() {
         inputs.push(encodedV4Actions)
         commands = commands + CommandType.V4_SWAP.toString(16).padStart(2, '0')
 
-
         const txOptions: any = {
             value: swapParams.tokenIn === ethers.ZeroAddress ? amountIn : 0
         }
-
-
         const swapRouterContract = uniswapV4Service.swapRouterContract
+
         const tx = await swapRouterContract!.execute(
             commands,
             inputs,
@@ -1103,8 +1152,6 @@ onMounted(async () => {
     @apply ml-2 w-32;
 }
 
-
-
 .swap-direction {
     @apply flex justify-center;
 }
@@ -1232,7 +1279,7 @@ onMounted(async () => {
 }
 
 .custom-slippage input {
-    @apply w-12 bg-transparent border-none py-1 text-xs outline-none;
+    @apply w-14 bg-transparent border-none py-1 text-xs outline-none;
 }
 
 .action-container {

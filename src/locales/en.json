@@ -392,7 +392,7 @@
     "enterAmount": "Enter amount",
     "rate": "Rate",
     "fee": "Fee",
-    "slippage": "Slippage",
+    "slippage": "Max slippage",
     "swap": "Swap",
     "insufficientBalance": "Insufficient Balance",
     "connectWallet": "Connect Wallet",

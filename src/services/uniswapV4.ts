@@ -80,13 +80,16 @@ const ERC20_ABI = [
 interface SwapParams {
   tokenIn: string
   tokenOut: string
-  amountIn: string
+  amountIn?: string
+  amountOut?: string
+  swapType: 'exactInput' | 'exactOutput'
   slippage: number
   recipient?: string
 }
 
 interface QuoteResult {
   amountOut: string
+  amountIn?: string
   priceImpact: string
   fee: string
   route: string[]
@@ -177,7 +180,6 @@ class UniswapV4Service {
         [currency0, currency1, fee, tickSpacing, hooks]
       )
     )
-    console.log(poolKey);
     return poolKey
   }
 
@@ -280,9 +282,6 @@ class UniswapV4Service {
       ])
 
       const poolId = this.generatePoolId(params.tokenIn, params.tokenOut, 500)
-      const amountIn = parseUnits(params.amountIn, tokenInDecimals)
-      const deadline = Math.floor(Date.now() / 1000) + 1800
-
       const token0 = params.tokenIn.toLowerCase() < params.tokenOut.toLowerCase() ? params.tokenIn : params.tokenOut
       const token1 = params.tokenIn.toLowerCase() < params.tokenOut.toLowerCase() ? params.tokenOut : params.tokenIn
       const zeroForOne = params.tokenIn.toLowerCase() === token0.toLowerCase()
@@ -296,7 +295,7 @@ class UniswapV4Service {
           hooks: '0x0000000000000000000000000000000000000000'
         },
         zeroForOne: zeroForOne,
-        exactAmount: amountIn,
+        exactAmount: BigInt(0), // 将在下面设置
         hookData: '0x'
       }
 
@@ -304,14 +303,37 @@ class UniswapV4Service {
         quoteParams.poolKey.hooks = '0x7d08875f51879bedD9a01d71a804f012e1304fC0'
       }
 
-      const result = await this.quoterContract.quoteExactInputSingle.staticCall(quoteParams)
-      const amountOut = formatUnits(result.amountOut, tokenOutDecimals)
+      let result: any
+      let amountOut: string
+      let amountIn: string
+      let inputAmount: string
+      let outputAmount: string
+
+      if (params.swapType === 'exactInput') {
+        if (!params.amountIn) throw new Error('amountIn is required for exactInput')
+        const exactAmountIn = parseUnits(params.amountIn, tokenInDecimals)
+        quoteParams.exactAmount = exactAmountIn
+        result = await this.quoterContract.quoteExactInputSingle.staticCall(quoteParams)
+        amountOut = formatUnits(result.amountOut, tokenOutDecimals)
+        amountIn = params.amountIn
+        inputAmount = params.amountIn
+        outputAmount = amountOut
+      } else {
+        if (!params.amountOut) throw new Error('amountOut is required for exactOutput')
+        const exactAmountOut = parseUnits(params.amountOut, tokenOutDecimals)
+        quoteParams.exactAmount = exactAmountOut
+        result = await this.quoterContract.quoteExactOutputSingle.staticCall(quoteParams)
+        amountIn = formatUnits(result.amountIn, tokenInDecimals)
+        amountOut = params.amountOut
+        inputAmount = amountIn
+        outputAmount = params.amountOut
+      }
 
       const priceImpact = await this.calculatePriceImpact(
         params.tokenIn,
         params.tokenOut,
-        params.amountIn,
-        amountOut,
+        inputAmount,
+        outputAmount,
         poolId
       )
 
@@ -319,6 +341,7 @@ class UniswapV4Service {
 
       return {
         amountOut,
+        amountIn,
         priceImpact: priceImpact.toString(),
         fee,
         route: [params.tokenIn, params.tokenOut]
