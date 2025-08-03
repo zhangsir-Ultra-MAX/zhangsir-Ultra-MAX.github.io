@@ -1,6 +1,6 @@
 <template>
   <span>
-    <span class="integer-part">{{ formatNumber(integerPart, 0) }}</span>
+    <span class="integer-part">{{ formatNumber(integerPart, 0, 'en-US', false) }}</span>
     <span class="decimal-part" v-if="decimalPart">{{ decimalPart }}</span>
   </span>
 </template>

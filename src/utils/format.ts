@@ -7,16 +7,32 @@
  * @param value - The number to format
  * @param decimals - Number of decimal places (default: 2)
  * @param locale - Locale for formatting (default: 'en-US')
+ * @param abbreviated - Whether to use abbreviated format (K, M, B) (default: true)
  * @returns Formatted number string
  */
 export const formatNumber = (
   value: number | string,
   decimals: number = 2,
-  locale: string = 'en-US'
+  locale: string = 'en-US',
+  abbreviated: boolean = true
 ): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value
   
   if (isNaN(num)) return '0'
+  
+  // 如果启用简写功能
+  if (abbreviated) {
+    const absNum = Math.abs(num)
+    if (absNum >= 1e9) {
+      return (num / 1e9).toFixed(2) + 'B'
+    }
+    if (absNum >= 1e6) {
+      return (num / 1e6).toFixed(2) + 'M'
+    }
+    if (absNum >= 1e3) {
+      return (num / 1e3).toFixed(2) + 'K'
+    }
+  }
   
   // 使用截取而非四舍五入
   const factor = Math.pow(10, decimals)
