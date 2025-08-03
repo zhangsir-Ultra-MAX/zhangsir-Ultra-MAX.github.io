@@ -4,7 +4,7 @@
       <!-- Staking Overview -->
       <div class="staking-overview">
         <h2 class="section-title">
-          CINA {{ $t('staking.overview') }}
+          {{ $t('staking.overview') }}
         </h2>
 
         <div class="overview-grid">

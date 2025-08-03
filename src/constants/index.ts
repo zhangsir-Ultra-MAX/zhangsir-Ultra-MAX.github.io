@@ -136,6 +136,17 @@ export const TOKENS = {
       [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_CINA_ADDRESS || '',
       [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_CINA_ADDRESS || ''
     }
+  },
+  stCINA: {
+    symbol: 'stCINA',
+    name: 'Staking CINA Vault',
+    decimals: 18,
+    addresses: {
+      [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_STAKING_VAULT_ADDRESS || '',
+      [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_STAKING_VAULT_ADDRESS || '',
+      [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_STAKING_VAULT_ADDRESS || '',
+      [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_STAKING_VAULT_ADDRESS || ''
+    }
   }
 } as const
 

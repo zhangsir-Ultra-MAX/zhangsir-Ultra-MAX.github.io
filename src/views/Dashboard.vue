@@ -611,13 +611,11 @@ watch(
 }
 
 .allocation-table {
-  @apply overflow-auto rounded-lg;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  @apply overflow-auto rounded-lg shadow-sm;
 }
 
 .allocation-table :deep(.el-table) {
-  @apply bg-white dark:bg-gray-800 border-0;
-  border-radius: 8px;
+  @apply bg-white dark:bg-gray-800 border-0 rounded-lg;
 }
 
 .allocation-table :deep(.el-table__header) {
@@ -629,23 +627,15 @@ watch(
 }
 
 .allocation-table :deep(.el-table__cell) {
-  @apply border-b border-gray-100 dark:border-gray-600;
-  padding: 16px 12px !important;
-  font-size: 14px;
+  @apply border-b border-gray-100 dark:border-gray-600 px-3 py-4 text-sm;
 }
 
 .allocation-table :deep(.el-table__header .el-table__cell) {
-  font-weight: 600 !important;
-  font-size: 13px !important;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 12px !important;
-  @apply bg-white dark:bg-gray-700 border-b border-gray-600  text-gray-500 dark:text-gray-400;
+  @apply bg-white dark:bg-gray-700 border-b border-gray-600 text-gray-500 dark:text-gray-400 font-semibold text-xs uppercase tracking-wider p-3;
 }
 
 .allocation-table :deep(.el-table__header-wrapper) {
-  @apply bg-white dark:bg-gray-700;
-  border-radius: 8px 8px 0 0;
+  @apply bg-white dark:bg-gray-700 rounded-t-lg;
 }
 
 .allocation-table :deep(.el-table__header th) {
@@ -653,7 +643,7 @@ watch(
 }
 
 .allocation-table :deep(.el-table__row) {
-  transition: background-color 0.2s ease;
+  @apply transition-colors duration-200 ease-in-out;
 }
 
 .allocation-table :deep(.el-table__row:hover) {
@@ -661,7 +651,7 @@ watch(
 }
 
 .allocation-table :deep(.el-table__row:last-child .el-table__cell) {
-  border-bottom: none;
+  @apply border-b-0;
 }
 
 .asset-cell {
@@ -669,8 +659,7 @@ watch(
 }
 
 .asset-color {
-  @apply w-4 h-4 rounded-full;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  @apply w-4 h-4 rounded-full shadow-md;
 }
 
 .asset-info {
@@ -678,15 +667,11 @@ watch(
 }
 
 .asset-name {
-  @apply font-semibold text-gray-900 dark:text-white;
-  font-size: 14px;
-  line-height: 1.4;
+  @apply font-semibold text-gray-900 dark:text-white text-sm leading-snug;
 }
 
 .asset-symbol {
-  @apply text-xs text-gray-500 dark:text-gray-400;
-  font-weight: 500;
-  margin-top: 2px;
+  @apply text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5;
 }
 
 .percentage-cell {
@@ -694,24 +679,19 @@ watch(
 }
 
 .percentage-bar {
-  @apply w-20 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  @apply w-20 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner;
 }
 
 .percentage-fill {
-  @apply h-full transition-all duration-500 ease-out;
-  border-radius: 9999px;
+  @apply h-full transition-all duration-500 ease-out rounded-full;
 }
 
 .percentage-text {
-  @apply text-sm font-semibold text-gray-700 dark:text-gray-300;
-  min-width: 45px;
-  text-align: right;
+  @apply text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-11 text-right;
 }
 
 .change-cell {
-  @apply flex items-center space-x-1.5 font-semibold;
-  font-size: 13px;
+  @apply flex items-center space-x-1.5 font-semibold text-xs;
 }
 
 .change-cell.positive {
@@ -723,8 +703,7 @@ watch(
 }
 
 .change-cell .el-icon {
-  font-size: 14px;
-  font-weight: bold;
+  @apply text-sm font-bold;
 }
 
 .actions-grid {
@@ -732,8 +711,7 @@ watch(
 }
 
 .action-card {
-  @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-all duration-200 hover:shadow-md hover:border-primary-300 dark:hover:border-primary-600;
-  text-decoration: none;
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-all duration-200 hover:shadow-md hover:border-primary-300 dark:hover:border-primary-600 no-underline;
 }
 
 .action-icon {
