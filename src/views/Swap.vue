@@ -359,12 +359,12 @@ const transactionSteps = computed(() => [
 const transactionDetails = computed(() => [
     {
         label: t('swap.sell'),
-        value: `${fromAmount.value} ${fromToken.value?.symbol || ''}`,
+        value: `${formatNumber(fromAmount.value, 6)} ${fromToken.value?.symbol || ''}`,
         highlight: true
     },
     {
         label: t('swap.buy'),
-        value: `${toAmount.value} ${toToken.value?.symbol || ''}`,
+        value: `${formatNumber(toAmount.value, 6)} ${toToken.value?.symbol || ''}`,
         highlight: true
     },
     {
