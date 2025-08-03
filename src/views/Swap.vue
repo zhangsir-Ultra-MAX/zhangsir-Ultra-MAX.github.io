@@ -51,15 +51,8 @@
                                             <el-input type="number" v-model="fromAmount"
                                                 :placeholder="formatNumber(fromTokenBalance) + '  ' + $t('available')"
                                                 @input="handleFromAmountChange" size="large" />
-                                            <el-select v-model="fromToken" class="token-select" size="large"
-                                                value-key="symbol">
-                                                <el-option v-for="token in availableTokens" :key="token.symbol"
-                                                    :label="token.symbol" :value="token">
-                                                    <div class="token-option">
-                                                        <span>{{ token.symbol }}</span>
-                                                    </div>
-                                                </el-option>
-                                            </el-select>
+                                            <TokenSelect v-model="fromToken" :tokens="availableTokens"
+                                                placeholder="Select token" />
                                         </div>
                                     </div>
                                 </div>
@@ -96,15 +89,8 @@
                                             <el-input type="number" v-model="toAmount"
                                                 :placeholder="formatNumber(toTokenBalance) + '  ' + $t('available')"
                                                 @input="handleToAmountChange" size="large" />
-                                            <el-select v-model="toToken" class="token-select" size="large"
-                                                value-key="symbol">
-                                                <el-option v-for="token in availableTokens" :key="token.symbol"
-                                                    :label="token.symbol" :value="token">
-                                                    <div class="token-option">
-                                                        <span>{{ token.symbol }}</span>
-                                                    </div>
-                                                </el-option>
-                                            </el-select>
+                                            <TokenSelect v-model="toToken" :tokens="availableTokens"
+                                                placeholder="Select token" />
                                         </div>
                                     </div>
                                 </div>
@@ -122,7 +108,7 @@
                                 <span class="status-indicator">
                                     <span v-if="isV4Supported" class="status-supported">✓ {{
                                         $t('swap.uniswapV4Available')
-                                    }}</span>
+                                        }}</span>
                                     <span v-else class="status-unsupported">
                                         ⚠ {{ $t('swap.v4NotSupported') }}
                                         <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
@@ -140,7 +126,7 @@
                                 <span>{{ $t('swap.poolStatus') }}</span>
                                 <span class="status-indicator">
                                     <span v-if="poolExists" class="status-supported">✓ {{ $t('swap.poolAvailable')
-                                    }}</span>
+                                        }}</span>
                                     <span v-else class="status-warning">
                                         ⚠ {{ $t('swap.poolNotExists') }}
                                         <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
@@ -170,20 +156,21 @@
                             <div class="detail-row exchange-rate">
                                 <span>{{ $t('swap.rate') }}</span>
                                 <span v-if="isLoadingQuote" class="detail-value loading-text">{{ $t('swap.fetchingRate')
-                                }}</span>
+                                    }}</span>
                                 <span v-else-if="exchangeRate > 0 && fromToken && toToken"
                                     class="detail-value rate-value">1 {{
                                         fromToken.symbol }} = {{
                                         formatNumber(exchangeRate) }} {{ toToken.symbol }}</span>
                                 <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Action Button -->
                     <div class="action-container">
-                        <el-button class="action-button" type="primary" size="large" :disabled="!canSwap" @click="executeSwap">
+                        <el-button class="action-button" type="primary" size="large" :disabled="!canSwap"
+                            @click="executeSwap">
                             {{ getSwapButtonText() }}
                         </el-button>
                     </div>
@@ -209,11 +196,14 @@ import { ElMessage } from 'element-plus'
 import { TOKENS } from '@/constants'
 import { uniswapV4Service, type SwapParams, type QuoteResult } from '@/services/uniswapV4'
 import TransactionModal from '@/components/common/TransactionModal.vue'
+import TokenSelect from '@/components/TokenSelect.vue'
 import { ethers, parseUnits } from 'ethers'
 
 // Stores and composables
 const walletStore = useWalletStore()
 const { t } = useI18n()
+
+
 
 // Swap icon rotation state
 const swapIconRotation = ref(0)
@@ -1080,13 +1070,7 @@ onMounted(async () => {
     @apply ml-2 w-32;
 }
 
-.token-option {
-    @apply flex items-center gap-2;
-}
 
-.token-icon {
-    @apply w-6 h-6 rounded-full;
-}
 
 .swap-direction {
     @apply flex justify-center;
@@ -1223,7 +1207,7 @@ onMounted(async () => {
 }
 
 .action-button {
-  @apply w-full;
+    @apply w-full;
 }
 
 .swap-button:hover {

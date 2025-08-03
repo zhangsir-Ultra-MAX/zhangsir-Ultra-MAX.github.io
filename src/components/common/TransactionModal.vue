@@ -356,7 +356,7 @@ watch(
 
 <style scoped>
 .transaction-modal {
-  @apply max-h-96 overflow-y-auto;
+  @apply max-h-full overflow-y-auto;
 }
 
 .steps-container {

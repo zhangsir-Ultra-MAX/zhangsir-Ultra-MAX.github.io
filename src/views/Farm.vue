@@ -17,17 +17,11 @@
               </div>
             </div>
             <div class="card-value">
-              <img src="../assets/logo.png" alt="" class="token-icon"> 
-              <AnimatedNumber 
-                class="animated-number"
-                :value="farmStore.totalCINAMined" 
-                :decimals="8"
+              <img src="../assets/logo.png" alt="" class="token-icon">
+              <AnimatedNumber class="animated-number" :value="farmStore.totalCINAMined" :decimals="8"
                 :auto-increment="walletStore.isConnected && parseFloat(farmStore.totalCINAMined) > 0"
-                :increment-amount="parseFloat(farmStore.farmRate)"
-                :increment-interval="1000"
-                :cache-key="`totalCINAMined_${walletStore.address}`"
-                :use-cache="false"
-              />
+                :increment-amount="parseFloat(farmStore.farmRate)" :increment-interval="1000"
+                :cache-key="`totalCINAMined_${walletStore.address}`" :use-cache="false" />
             </div>
           </div>
         </div>
@@ -43,32 +37,17 @@
                 <div class="input-section">
                   <div class="input-group">
                     <div class="input-with-select">
-                      <el-input 
-                        v-model="depositAmount" 
-                        :placeholder="formatNumber(farmStore.usdtBalance)+'  '+$t('available')" 
-                        size="large"
-                        class="amount-input" 
-                        @input="handleDepositAmountChange"
-                      />
-                      <el-select v-model="depositToken" class="token-select" size="large" value-key="symbol">
-                        <el-option v-for="token in availableTokens" :key="token.symbol"
-                          :label="token.symbol" :value="token">
-                          <div class="token-option">
-                            <span>{{ token.symbol }}</span>
-                          </div>
-                        </el-option>
-                      </el-select>
+                      <el-input v-model="depositAmount"
+                        :placeholder="formatNumber(farmStore.usdtBalance) + '  ' + $t('available')" size="large"
+                        class="amount-input" @input="handleDepositAmountChange" />
+                      <TokenSelect v-model="depositToken" :tokens="availableTokens" placeholder="Select token" />
                     </div>
                   </div>
-                  
+
                   <!-- Quick Amount Buttons -->
                   <div class="quick-amounts">
-                    <el-button 
-                      v-for="percentage in [25, 50, 75]" 
-                      :key="percentage" 
-                      size="small"
-                      @click="setDepositPercentage(percentage)"
-                    >
+                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                      @click="setDepositPercentage(percentage)">
                       {{ percentage }}%
                     </el-button>
                     <el-button @click="setMaxDeposit" class="max-button" size="small">
@@ -88,14 +67,8 @@
                   </div>
                 </div>
 
-                <el-button 
-                  type="primary" 
-                  size="large" 
-                  :loading="farmStore.depositInProgress"
-                  :disabled="!isDepositValid" 
-                  @click="handleDeposit" 
-                  class="action-button"
-                >
+                <el-button type="primary" size="large" :loading="farmStore.depositInProgress"
+                  :disabled="!isDepositValid" @click="handleDeposit" class="action-button">
                   {{ $t('farm.deposit') }}
                 </el-button>
               </div>
@@ -109,32 +82,17 @@
                 <div class="input-section">
                   <div class="input-group">
                     <div class="input-with-select">
-                      <el-input 
-                        v-model="withdrawAmount" 
-                        :placeholder="formatNumber(farmStore.depositedAmount)+'  '+$t('available')" 
-                        size="large"
-                        class="amount-input" 
-                        @input="handleWithdrawAmountChange"
-                      />
-                      <el-select v-model="withdrawToken" class="token-select" size="large" value-key="symbol">
-                        <el-option v-for="token in availableTokens" :key="token.symbol"
-                          :label="token.symbol" :value="token">
-                          <div class="token-option">
-                            <span>{{ token.symbol }}</span>
-                          </div>
-                        </el-option>
-                      </el-select>
+                      <el-input v-model="withdrawAmount"
+                        :placeholder="formatNumber(farmStore.depositedAmount) + '  ' + $t('available')" size="large"
+                        class="amount-input" @input="handleWithdrawAmountChange" />
+                      <TokenSelect v-model="withdrawToken" :tokens="availableTokens" placeholder="Select token" />
                     </div>
                   </div>
-                  
+
                   <!-- Quick Amount Buttons -->
                   <div class="quick-amounts">
-                    <el-button 
-                      v-for="percentage in [25, 50, 75]" 
-                      :key="percentage" 
-                      size="small"
-                      @click="setWithdrawPercentage(percentage)"
-                    >
+                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                      @click="setWithdrawPercentage(percentage)">
                       {{ percentage }}%
                     </el-button>
                     <el-button @click="setMaxWithdraw" class="max-button" size="small">
@@ -156,11 +114,13 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>Liquidity</span>
-                      <span class="preview-value liquidity-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} {{ withdrawToken?.symbol }}</span>
+                      <span class="preview-value liquidity-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} {{
+                        withdrawToken?.symbol }}</span>
                     </div>
                     <div class="preview-row">
                       <span>{{ $t('farm.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} {{ withdrawToken?.symbol }}</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} {{
+                        withdrawToken?.symbol }}</span>
                     </div>
                     <div v-if="withdrawCINA" class="preview-row">
                       <span>Farm Reward</span>
@@ -169,15 +129,11 @@
                   </div>
                 </div>
 
-                <el-button 
-                  type="primary" 
-                  size="large" 
-                  :loading="farmStore.withdrawInProgress || farmStore.claimInProgress"
-                  :disabled="!isWithdrawValid" 
-                  @click="handleWithdraw" 
-                  class="action-button"
-                >
-                  {{ withdrawCINA && (!withdrawAmount || parseFloat(withdrawAmount) === 0) ? $t('farm.claim') : $t('farm.withdraw') }}
+                <el-button type="primary" size="large"
+                  :loading="farmStore.withdrawInProgress || farmStore.claimInProgress" :disabled="!isWithdrawValid"
+                  @click="handleWithdraw" class="action-button">
+                  {{ withdrawCINA && (!withdrawAmount || parseFloat(withdrawAmount) === 0) ? $t('farm.claim') :
+                    $t('farm.withdraw') }}
                 </el-button>
               </div>
             </div>
@@ -198,6 +154,7 @@ import {
 } from '@element-plus/icons-vue'
 
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
+import TokenSelect from '@/components/TokenSelect.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useFarmStore } from '@/stores/farm'
 import { formatNumber } from '@/utils/format'
@@ -230,7 +187,7 @@ const farmStore = useFarmStore()
 // Available tokens for farm
 const availableTokens = computed<Token[]>(() => {
   const chainId = walletStore.chainId || 11155111
-  
+
   return [
     {
       symbol: TOKENS.USDC.symbol,
@@ -289,11 +246,11 @@ const isWithdrawValid = computed(() => {
 const depositPreview = computed(() => {
   const amount = parseFloat(depositAmount.value)
   if (!amount || amount <= 0) return null
-  
+
   const exchangeRate = parseFloat(farmStore.exchangeRate)
   const estimatedCINA = amount * exchangeRate
   const dailyReward = estimatedCINA * parseFloat(farmStore.farmAPY) / 365 / 100
-  
+
   return {
     estimatedCINA,
     dailyReward
@@ -303,12 +260,12 @@ const depositPreview = computed(() => {
 const withdrawPreview = computed(() => {
   const amount = parseFloat(withdrawAmount.value)
   if (!amount || amount <= 0) return null
-  
+
   const fee = parseFloat(farmStore.withdrawalFee || '0.02') // 2% default fee
   const feeAmount = amount * fee
   const netAmount = amount - feeAmount
   const remainingAmount = parseFloat(farmStore.depositedAmount) - amount
-  
+
   return {
     netAmount,
     feeAmount,
@@ -375,7 +332,7 @@ const setMaxWithdraw = () => {
 const handleWithdraw = async () => {
   try {
     const amount = parseFloat(withdrawAmount.value)
-    
+
     // 如果勾选了withdrawCINA但没有输入金额，只执行claim
     if (withdrawCINA.value && (!withdrawAmount.value || amount === 0)) {
       if (parseFloat(farmStore.pendingCINA) > 0) {
@@ -387,13 +344,13 @@ const handleWithdraw = async () => {
       if (withdrawCINA.value && parseFloat(farmStore.pendingCINA) > 0) {
         await farmStore.claimCINA()
       }
-      
+
       // 执行USDT提现
       await farmStore.withdrawUSDT(amount)
-      
+
       ElMessage.success(t('farm.withdrawSuccess'))
     }
-    
+
     withdrawAmount.value = ''
     withdrawCINA.value = false // 重置开关状态
   } catch (error) {
@@ -669,7 +626,7 @@ watch(
   .farm-content {
     @apply px-4 py-6;
   }
-  
+
   .overview-grid {
     @apply grid-cols-1 gap-4;
   }
