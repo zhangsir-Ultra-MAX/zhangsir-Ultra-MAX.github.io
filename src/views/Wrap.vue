@@ -1172,7 +1172,7 @@ onMounted(() => {
 }
 
 .preview-value {
-  @apply font-medium text-gray-900 dark:text-white;
+  @apply font-medium text-gray-600 dark:text-white;
 }
 
 .fee-value {

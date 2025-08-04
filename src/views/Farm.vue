@@ -418,7 +418,7 @@ watch(activeTab, (newTab) => {
 }
 
 .card-value {
-  @apply text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center justify-between gap-2;
+  @apply text-2xl font-bold text-gray-700 dark:text-white mb-2 flex items-center justify-between gap-2;
 }
 
 .token-icon {
@@ -518,7 +518,7 @@ watch(activeTab, (newTab) => {
 }
 
 .preview-value {
-  @apply font-medium text-gray-900 dark:text-white;
+  @apply font-medium text-gray-600 dark:text-white;
 }
 
 .preview-row.fee .preview-value {

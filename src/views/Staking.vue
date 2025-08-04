@@ -518,7 +518,7 @@ const handleTransactionRetry = () => {
 }
 
 .card-value {
-  @apply text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2;
+  @apply text-2xl font-bold text-gray-700 dark:text-white mb-2 flex items-center gap-2;
 }
 
 .token-icon {
@@ -618,7 +618,7 @@ const handleTransactionRetry = () => {
 }
 
 .preview-value {
-  @apply font-medium text-gray-900 dark:text-white;
+  @apply font-medium text-gray-700 dark:text-white;
 }
 
 .preview-row.penalty .preview-value {
@@ -630,7 +630,7 @@ const handleTransactionRetry = () => {
 }
 
 .preview-row.exchange-rate .preview-value {
-  @apply text-primary-700 dark:text-primary-300 font-semibold;
+  @apply text-primary-400 dark:text-primary-300 font-semibold;
 }
 
 .action-button {

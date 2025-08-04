@@ -1355,7 +1355,7 @@ onUnmounted(() => {
 }
 
 .rate-value {
-    @apply text-primary-600 dark:text-primary-400 font-semibold;
+    @apply text-primary-400 dark:text-primary-300 font-semibold;
 }
 
 .no-rate-text {
