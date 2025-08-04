@@ -160,7 +160,7 @@
                                 <span v-if="exchangeRate > 0 && fromToken && toToken"
                                     class="detail-value rate-value">1 {{
                                         fromToken.symbol }} ≈ {{
-                                        formatNumber(exchangeRate, 2) }} {{ toToken.symbol }}</span>
+                                        formatNumber(exchangeRate, 6) }} {{ toToken.symbol }}</span>
                                 <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
                                 }}</span>
                             </div>
@@ -408,18 +408,6 @@ const transactionDetails = computed(() => [
         value: `${formatNumber(toAmount.value, 6)} ${toToken.value?.symbol || ''}`,
         highlight: true
     },
-    {
-        label: t('swap.rate'),
-        value: exchangeRate.value > 0 && fromToken.value && toToken.value ? `1 ${fromToken.value.symbol} ≈ ${formatNumber(exchangeRate.value, 6)} ${toToken.value.symbol}` : '--'
-    },
-    {
-        label: t('swap.slippage'),
-        value: `${slippage.value}%`
-    },
-    {
-        label: t('swap.fee'),
-        value: `${formatNumber(swapFee.value)}%`
-    }
 ])
 
 function updateExchangeRate() {
