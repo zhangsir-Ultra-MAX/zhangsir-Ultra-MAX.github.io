@@ -42,7 +42,7 @@
               <div class="action-form">
                 <div class="input-section">
                   <div class="input-group">
-                    <el-input v-model="depositAmount" :placeholder="formatNumber(savingsStore.wrmbBalance) + '  ' + $t('available')" size="large"
+                    <el-input v-model="depositAmount" :placeholder="formatNumberK(savingsStore.wrmbBalance) + '  ' + $t('available')" size="large"
                       class="amount-input" @input="handleDepositAmountChange">
                       <template #suffix>
                         <span class="input-suffix">WRMB</span>
@@ -91,7 +91,7 @@
               <div class="action-form">
                 <div class="input-section">
                   <div class="input-group">
-                    <el-input v-model="withdrawAmount" :placeholder="formatNumber(savingsStore.userAssetValue) + '  ' + $t('available')" size="large"
+                    <el-input v-model="withdrawAmount" :placeholder="formatNumberK(savingsStore.userAssetValue) + '  ' + $t('available')" size="large"
                       class="amount-input" @input="handleWithdrawAmountChange">
                       <template #suffix>
                         <span class="input-suffix">WRMB</span>
@@ -115,10 +115,6 @@
                 <div v-if="withdrawPreview.shares" class="preview-section">
                   <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
                   <div class="preview-details">
-                    <div class="preview-row">
-                      <span>{{ $t('savings.sharesRequired') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.shares, 2) }} sWRMB</span>
-                    </div>
                     <div class="preview-row">
                       <span>{{ $t('savings.youWillReceive') }}</span>
                       <span class="preview-value">{{ formatNumber(withdrawPreview.assets, 2) }} WRMB</span>
@@ -154,22 +150,22 @@
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.totalSupply') }}</div>
-            <div class="stat-value">{{ formatNumber(savingsStore.totalAssets) }}</div>
+            <div class="stat-value">{{ formatNumberK(savingsStore.totalAssets) }}</div>
           </div>
 
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.yourShare') }}</div>
-            <div class="stat-value">{{ formatNumber(savingsStore.userSharePercentage) }}%</div>
+            <div class="stat-value">{{ formatNumberK(savingsStore.userSharePercentage) }}%</div>
           </div>
 
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.totalValue') }}</div>
-            <div class="stat-value">${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14, 2) }}</div>
+            <div class="stat-value">${{ formatNumberK(parseFloat(savingsStore.totalAssets) * 0.14, 2) }}</div>
           </div>
 
           <div class="stat-item">
             <div class="stat-label">{{ $t('savings.yourValue') }}</div>
-            <div class="stat-value">${{ formatNumber(parseFloat(savingsStore.userAssetValue) * 0.14, 2) }}</div>
+            <div class="stat-value">${{ formatNumberK(parseFloat(savingsStore.userAssetValue) * 0.14, 2) }}</div>
           </div>
         </div>
       </div>
@@ -197,7 +193,7 @@ import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { useSavingsStore } from '@/stores/savings'
 import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
-import { formatNumber } from '@/utils/format'
+import { formatNumber, formatNumberK } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
 
 const { t } = useI18n()
@@ -382,7 +378,7 @@ const handleDeposit = async () => {
     depositAmount.value = ''
     depositPreview.value = { shares: '', fee: '0' }
     await savingsStore.fetchVaultData()
-    
+    currentTransactionStep.value = 3
     ElMessage.success(t('savings.depositSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'
@@ -433,7 +429,7 @@ const handleWithdraw = async () => {
     withdrawAmount.value = ''
     withdrawPreview.value = { shares: '', assets: '', fee: '0' }
     await savingsStore.fetchVaultData()
-    
+    currentTransactionStep.value = 3
     ElMessage.success(t('savings.withdrawSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'

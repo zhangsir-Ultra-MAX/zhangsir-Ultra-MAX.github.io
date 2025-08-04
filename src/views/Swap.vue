@@ -49,7 +49,7 @@
                                     <div class="amount-input">
                                         <div class="input-with-select">
                                             <el-input type="number" v-model="fromAmount"
-                                                :placeholder="formatNumber(fromTokenBalance) + '  ' + $t('available')"
+                                                :placeholder="formatNumberK(fromTokenBalance) + '  ' + $t('available')"
                                                 @input="handleFromAmountChange" size="large" 
                                                 :disabled="isSwapping || isLoadingQuote" />
                                             <TokenSelect v-model="fromToken" :tokens="availableTokens"
@@ -88,7 +88,7 @@
                                     <div class="amount-input">
                                         <div class="input-with-select">
                                             <el-input type="number" v-model="toAmount"
-                                                :placeholder="formatNumber(toTokenBalance) + '  ' + $t('available')"
+                                                :placeholder="formatNumberK(toTokenBalance) + '  ' + $t('available')"
                                                 @input="handleToAmountChange" size="large" 
                                                 :disabled="isSwapping || isLoadingQuote" />
                                             <TokenSelect v-model="toToken" :tokens="availableTokens"
@@ -100,7 +100,7 @@
                         </div>
                     </div>
 
-                    <!-- Swap Details -->
+                    <!-- Swap Preview -->
                     <div class="swap-details">
                         <h4 class="details-title">{{ $t('swap.details') }}</h4>
                         <div class="details-content">
@@ -108,11 +108,11 @@
                             <div class="detail-row" v-if="walletStore.isConnected">
                                 <span>{{ $t('swap.protocolStatus') }}</span>
                                 <span class="status-indicator">
-                                    <span v-if="isV4Supported" class="status-supported">✓ {{
+                                    <span v-if="isV4Supported" class="status-supported">{{
                                         $t('swap.uniswapV4Available')
                                     }}</span>
                                     <span v-else class="status-unsupported">
-                                        ⚠ {{ $t('swap.v4NotSupported') }}
+                                        {{ $t('swap.v4NotSupported') }}
                                         <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
                                             <el-icon class="info-icon">
                                                 <InfoFilled />
@@ -127,10 +127,10 @@
                                 v-if="isV4Supported && fromToken && toToken && fromToken.symbol !== toToken.symbol">
                                 <span>{{ $t('swap.poolStatus') }}</span>
                                 <span class="status-indicator">
-                                    <span v-if="poolExists" class="status-supported">✓ {{ $t('swap.poolAvailable')
+                                    <span v-if="poolExists" class="status-supported">{{ $t('swap.poolAvailable')
                                     }}</span>
                                     <span v-else class="status-warning">
-                                        ⚠ {{ $t('swap.poolNotExists') }}
+                                        {{ $t('swap.poolNotExists') }}
                                         <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
                                             <el-icon class="info-icon">
                                                 <InfoFilled />
@@ -157,12 +157,10 @@
 
                             <div class="detail-row exchange-rate">
                                 <span>{{ $t('swap.rate') }}</span>
-                                <span v-if="isLoadingQuote" class="detail-value loading-text">{{ $t('swap.fetchingRate')
-                                }}</span>
-                                <span v-else-if="exchangeRate > 0 && fromToken && toToken"
+                                <span v-if="exchangeRate > 0 && fromToken && toToken"
                                     class="detail-value rate-value">1 {{
-                                        fromToken.symbol }} = {{
-                                        formatNumber(exchangeRate) }} {{ toToken.symbol }}</span>
+                                        fromToken.symbol }} ≈ {{
+                                        formatNumber(exchangeRate, 2) }} {{ toToken.symbol }}</span>
                                 <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
                                 }}</span>
                             </div>
@@ -191,7 +189,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
-import { formatNumber } from '@/utils/format'
+import { formatNumber, formatNumberK } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
 import { Sort, InfoFilled, Setting } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -261,10 +259,12 @@ watch(availableTokens, (tokens) => {
 
 // Watch for same token selection and auto-swap
 watch(fromToken, (newFromToken, oldFromToken) => {
-    if (newFromToken && toToken.value && newFromToken.symbol === toToken.value.symbol && oldFromToken) {
+    if (newFromToken && toToken.value && newFromToken.symbol === toToken.value.symbol && oldFromToken && !isTokenSwapping.value) {
+        // 设置标志位防止循环触发
+        isTokenSwapping.value = true
+        
         // 代币相同时，交换代币并对调数值
         toToken.value = oldFromToken
-        
         // 对调输入框数值
         const tempAmount = fromAmount.value
         fromAmount.value = toAmount.value
@@ -274,15 +274,21 @@ watch(fromToken, (newFromToken, oldFromToken) => {
         cancelCurrentQuoteRequest()
         currentQuote.value = null
         
+        // fromToken切换时使用正向计算
         if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
             isForwardSwap.value = true
             debouncedGetQuote()
         }
+        
+        // 重置标志位
+        isTokenSwapping.value = false
     }
 })
 
 watch(toToken, (newToToken, oldToToken) => {
-    if (newToToken && fromToken.value && newToToken.symbol === fromToken.value.symbol && oldToToken) {
+    if (newToToken && fromToken.value && newToToken.symbol === fromToken.value.symbol && oldToToken && !isTokenSwapping.value) {
+        // 设置标志位防止循环触发
+        isTokenSwapping.value = true
         // 代币相同时，交换代币并对调数值
         fromToken.value = oldToToken
         
@@ -295,10 +301,14 @@ watch(toToken, (newToToken, oldToToken) => {
         cancelCurrentQuoteRequest()
         currentQuote.value = null
         
-        if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
-            isForwardSwap.value = true
-            debouncedGetQuote()
+        // toToken切换时使用反向计算
+        if (toAmount.value && parseFloat(toAmount.value) > 0) {
+            isForwardSwap.value = false
+            debouncedGetReverseQuote()
         }
+        
+        // 重置标志位
+        isTokenSwapping.value = false
     }
 })
 
@@ -350,6 +360,9 @@ const quoteRequestId = ref(0)
 const isUserInputting = ref(false)
 const lastQuoteTime = ref(0)
 
+// 防止循环触发的标志位
+const isTokenSwapping = ref(false)
+
 // Transaction Modal state
 const showTransactionModal = ref(false)
 const currentTransactionStep = ref(0)
@@ -397,7 +410,7 @@ const transactionDetails = computed(() => [
     },
     {
         label: t('swap.rate'),
-        value: exchangeRate.value > 0 && fromToken.value && toToken.value ? `1 ${fromToken.value.symbol} = ${formatNumber(exchangeRate.value)} ${toToken.value.symbol}` : '--'
+        value: exchangeRate.value > 0 && fromToken.value && toToken.value ? `1 ${fromToken.value.symbol} ≈ ${formatNumber(exchangeRate.value, 6)} ${toToken.value.symbol}` : '--'
     },
     {
         label: t('swap.slippage'),
@@ -480,7 +493,6 @@ function shouldIgnoreQuoteRequest(requestId: number): boolean {
 function handleFromAmountChange() {
     // 标记用户正在输入
     isUserInputting.value = true
-    
     if (fromToken.value) {
         const validatedAmount = validateAndFormatAmount(fromAmount.value, fromToken.value.decimals)
         if (validatedAmount !== fromAmount.value) {
@@ -506,7 +518,6 @@ function handleFromAmountChange() {
 function handleToAmountChange() {
     // 标记用户正在输入
     isUserInputting.value = true
-    
     if (toToken.value) {
         const validatedAmount = validateAndFormatAmount(toAmount.value, toToken.value.decimals)
         if (validatedAmount !== toAmount.value) {
@@ -534,13 +545,13 @@ const debouncedGetQuote = debounce(() => {
     if (!isSwapping.value) {
         getUniswapV4Quote()
     }
-}, 500)
+}, 1000)
 
 const debouncedGetReverseQuote = debounce(() => {
     if (!isSwapping.value) {
         getReverseUniswapV4Quote()
     }
-}, 500)
+}, 1000)
 
 const setDepositPercentage = (percentage: number) => {
     isForwardSwap.value = true
@@ -555,9 +566,6 @@ function setMaxFromAmount() {
     if (parseFloat(fromTokenBalance.value) > 0) {
         fromAmount.value = fromTokenBalance.value
         handleFromAmountChange()
-        ElMessage.success(t('swap.maxAmountSet'))
-    } else {
-        ElMessage.warning(t('swap.noBalance'))
     }
 }
 
@@ -623,13 +631,13 @@ function getSwapButtonText() {
         return t('swap.unsupportedNetwork', { networks: networkNames })
     }
 
-    if (!fromAmount.value || parseFloat(fromAmount.value) <= 0) {
-        return t('swap.enterAmount')
-    }
+    // if (!fromAmount.value || parseFloat(fromAmount.value) <= 0) {
+    //     return t('swap.enterAmount')
+    // }
 
-    if (parseFloat(fromAmount.value) > parseFloat(fromTokenBalance.value)) {
-        return t('swap.insufficientBalance')
-    }
+    // if (parseFloat(fromAmount.value) > parseFloat(fromTokenBalance.value)) {
+    //     return t('swap.insufficientBalance')
+    // }
 
     return t('swap.swap')
 }
@@ -1058,7 +1066,7 @@ async function executeUniswapV4Swap() {
 
         const receipt = await tx.wait()
         transactionHash.value = receipt.hash
-
+        currentTransactionStep.value = 4
         transactionStatus.value = 'success'
         setTimeout(() => {
             fromAmount.value = ''
@@ -1136,9 +1144,6 @@ watch([fromToken, toToken], async () => {
         updateExchangeRate()
         await updateTokenBalances()
         await checkPoolInfo()
-        if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
-            getUniswapV4Quote()
-        }
     }
 })
 

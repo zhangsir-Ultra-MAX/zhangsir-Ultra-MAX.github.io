@@ -2,47 +2,57 @@
  * Utility functions for formatting numbers, dates, and other data
  */
 
+export const formatNumberK = (value: number | string,
+  decimals: number = 2): string => {
+  return formatNumber(value, decimals, 'en-US', 3)
+}
+
+export const formatNumberM = (value: number | string,
+  decimals: number = 2): string => {
+  return formatNumber(value, decimals, 'en-US', 3)
+}
+
 /**
  * Format a number with commas and specified decimal places
  * @param value - The number to format
  * @param decimals - Number of decimal places (default: 2)
  * @param locale - Locale for formatting (default: 'en-US')
- * @param abbreviated - Whether to use abbreviated format (K, M, B) (default: true)
+ * @param minAbbreviated - Minimum value to use abbreviated format (K, M, B) (default: '')
  * @returns Formatted number string
  */
 export const formatNumber = (
   value: number | string,
   decimals: number = 2,
   locale: string = 'en-US',
-  abbreviated: boolean = true
+  minAbbreviated: number = 0, // 3:K, 2:M, 1:B
 ): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value
-  
+
   if (isNaN(num)) return '0'
-  
+
   // 如果启用简写功能
-  if (abbreviated) {
+  if (minAbbreviated > 0) {
     const absNum = Math.abs(num)
-    if (absNum >= 1e9) {
+    if (absNum >= 1e9 && minAbbreviated >= 1) {
       return (num / 1e9).toFixed(2) + 'B'
     }
-    if (absNum >= 1e6) {
+    if (absNum >= 1e6 && minAbbreviated >= 2) {
       return (num / 1e6).toFixed(2) + 'M'
     }
-    if (absNum >= 1e3) {
+    if (absNum >= 1e3 && minAbbreviated >= 3) {
       return (num / 1e3).toFixed(2) + 'K'
     }
   }
-  
+
   // 使用截取而非四舍五入
   const factor = Math.pow(10, decimals)
   const truncatedNum = Math.floor(num * factor) / factor
-  
+
   const formatted = new Intl.NumberFormat(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
   }).format(truncatedNum)
-  
+
   // 如果格式化后为0但原始值不等于0，添加"<"符号
   if (formatted === '0.00' || formatted === '0' || parseFloat(formatted) === 0) {
     if (num > 0) {
@@ -55,7 +65,7 @@ export const formatNumber = (
       return `<${minFormatted}`
     }
   }
-  
+
   return formatted
 }
 
@@ -72,9 +82,9 @@ export const formatCurrency = (
   locale: string = 'en-US'
 ): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value
-  
+
   if (isNaN(num)) return '$0.00'
-  
+
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency
@@ -92,12 +102,12 @@ export const formatLargeNumber = (
   decimals: number = 1
 ): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value
-  
+
   if (isNaN(num)) return '0'
-  
+
   const absNum = Math.abs(num)
   const sign = num < 0 ? '-' : ''
-  
+
   if (absNum >= 1e9) {
     return sign + (absNum / 1e9).toFixed(decimals) + 'B'
   } else if (absNum >= 1e6) {
@@ -105,7 +115,7 @@ export const formatLargeNumber = (
   } else if (absNum >= 1e3) {
     return sign + (absNum / 1e3).toFixed(decimals) + 'K'
   }
-  
+
   return sign + absNum.toFixed(decimals)
 }
 
@@ -120,9 +130,9 @@ export const formatPercentage = (
   decimals: number = 2
 ): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value
-  
+
   if (isNaN(num)) return '0%'
-  
+
   return (num * 100).toFixed(decimals) + '%'
 }
 
@@ -143,7 +153,7 @@ export const formatDate = (
   locale: string = 'en-US'
 ): string => {
   let dateObj: Date
-  
+
   if (typeof date === 'number') {
     dateObj = new Date(date)
   } else if (typeof date === 'string') {
@@ -151,9 +161,9 @@ export const formatDate = (
   } else {
     dateObj = date
   }
-  
+
   if (isNaN(dateObj.getTime())) return 'Invalid Date'
-  
+
   return new Intl.DateTimeFormat(locale, options).format(dateObj)
 }
 
@@ -187,7 +197,7 @@ export const formatTimeAgo = (
   locale: string = 'en-US'
 ): string => {
   let dateObj: Date
-  
+
   if (typeof date === 'number') {
     dateObj = new Date(date)
   } else if (typeof date === 'string') {
@@ -195,14 +205,14 @@ export const formatTimeAgo = (
   } else {
     dateObj = date
   }
-  
+
   if (isNaN(dateObj.getTime())) return 'Invalid Date'
-  
+
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000)
-  
+
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
-  
+
   if (diffInSeconds < 60) {
     return rtf.format(-diffInSeconds, 'second')
   } else if (diffInSeconds < 3600) {
@@ -233,7 +243,7 @@ export const formatAddress = (
   if (!address || address.length < startLength + endLength) {
     return address || ''
   }
-  
+
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`
 }
 
@@ -250,7 +260,7 @@ export const formatTxHash = (
   if (!hash || hash.length <= length) {
     return hash || ''
   }
-  
+
   const halfLength = Math.floor(length / 2)
   return `${hash.slice(0, halfLength)}...${hash.slice(-halfLength)}`
 }
@@ -268,12 +278,12 @@ export const formatTokenAmount = (
   displayDecimals: number = 4
 ): string => {
   const amountStr = typeof amount === 'number' ? amount.toString() : amount
-  
+
   if (!amountStr || amountStr === '0') return '0'
-  
+
   const divisor = Math.pow(10, decimals)
   const value = parseFloat(amountStr) / divisor
-  
+
   return formatNumber(value, displayDecimals)
 }
 
@@ -284,9 +294,9 @@ export const formatTokenAmount = (
  */
 export const formatGasPrice = (gasPrice: string | number): string => {
   const gasPriceStr = typeof gasPrice === 'number' ? gasPrice.toString() : gasPrice
-  
+
   if (!gasPriceStr || gasPriceStr === '0') return '0 Gwei'
-  
+
   const gwei = parseFloat(gasPriceStr) / 1e9
   return `${formatNumber(gwei, 2)} Gwei`
 }
@@ -302,11 +312,11 @@ export const formatFileSize = (
   decimals: number = 2
 ): string => {
   if (bytes === 0) return '0 Bytes'
-  
+
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  
+
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`
 }
 
@@ -323,7 +333,7 @@ export const truncateText = (
   if (!text || text.length <= maxLength) {
     return text || ''
   }
-  
+
   return text.slice(0, maxLength) + '...'
 }
 

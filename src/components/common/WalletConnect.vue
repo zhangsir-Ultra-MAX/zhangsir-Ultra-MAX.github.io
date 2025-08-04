@@ -66,55 +66,7 @@
       {{ $t('wallet.connect') }}
     </el-button>
 
-    <!-- Network Switch Dialog -->
-    <el-dialog
-      :model-value="showNetworkDialog"
-      @update:model-value="showNetworkDialog = $event"
-      :title="$t('wallet.switchNetwork')"
-      width="450px"
-      :before-close="handleNetworkDialogClose"
-    >
-      <div class="space-y-4">
-        <div class="text-center mb-4">
-          <el-icon class="text-4xl text-warning-500 mb-2">
-            <Warning />
-          </el-icon>
-          <p class="text-gray-600 dark:text-gray-400">
-            {{ $t('wallet.wrongNetwork') }}
-          </p>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">
-            {{ $t('wallet.selectNetwork') }}
-          </p>
-        </div>
-        <div class="space-y-2">
-          <div 
-            v-for="network in supportedNetworks" 
-            :key="network.chainId"
-            class="network-option"
-            @click="handleNetworkSwitch(network.chainId)"
-          >
-            <div class="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-gray-200 dark:border-gray-600">
-              <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-400">
-                  <span class="text-white text-xs font-bold">{{ network.symbol }}</span>
-                </div>
-                <div>
-                  <div class="font-medium text-gray-900 dark:text-gray-100">{{ network.name }}</div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">Chain ID: {{ network.chainId }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <div class="flex justify-end space-x-3">
-          <el-button @click="showNetworkDialog = false">
-            {{ $t('common.cancel') }}
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+
 
     <!-- Connection Error Dialog -->
     <el-dialog
@@ -143,15 +95,30 @@
 
     <!-- Network Switch Dialog -->
     <el-dialog
-      :model-value="showNetworkSwitchDialog"
-      @update:model-value="showNetworkSwitchDialog = $event"
+      :model-value="showNetworkDialog || showNetworkSwitchDialog"
+      @update:model-value="closeNetworkDialog"
       :title="$t('wallet.switchNetwork')"
-      width="450px"
+      :width="dialogWidth"
+      :before-close="closeNetworkDialog"
     >
       <div class="space-y-4">
-        <p class="text-gray-600 dark:text-gray-400 mb-4">
+        <!-- 错误网络提示 -->
+        <div v-if="showNetworkDialog" class="text-center mb-4">
+          <el-icon class="text-4xl text-warning-500 mb-2">
+            <Warning />
+          </el-icon>
+          <p class="text-gray-600 dark:text-gray-400">
+            {{ $t('wallet.wrongNetwork') }}
+          </p>
+          <p class="text-gray-600 dark:text-gray-400 mt-2">
+            {{ $t('wallet.selectNetwork') }}
+          </p>
+        </div>
+        <!-- 手动切换网络提示 -->
+        <p v-else class="text-gray-600 dark:text-gray-400 mb-4">
           {{ $t('wallet.selectNetwork') }}
         </p>
+        
         <div class="space-y-2">
           <div 
             v-for="network in supportedNetworks" 
@@ -187,7 +154,7 @@
       </div>
       <template #footer>
         <div class="flex justify-end space-x-3">
-          <el-button @click="showNetworkSwitchDialog = false">
+          <el-button @click="closeNetworkDialog">
             {{ $t('common.cancel') }}
           </el-button>
         </div>
@@ -224,6 +191,14 @@ const showNetworkDialog = ref(false)
 const showErrorDialog = ref(false)
 const showNetworkSwitchDialog = ref(false)
 const connectionError = ref('')
+
+// 响应式对话框宽度
+const dialogWidth = computed(() => {
+  if (typeof window !== 'undefined') {
+    return window.innerWidth <= 768 ? '90%' : '450px'
+  }
+  return '450px'
+})
 
 // 支持的网络列表
 const supportedNetworks = [
@@ -315,6 +290,12 @@ const handleNetworkDialogClose = () => {
   showNetworkDialog.value = false
 }
 
+// 统一的关闭网络对话框方法
+const closeNetworkDialog = () => {
+  showNetworkDialog.value = false
+  showNetworkSwitchDialog.value = false
+}
+
 // Retry connection
 const retryConnection = () => {
   showErrorDialog.value = false
@@ -327,8 +308,7 @@ const handleNetworkSwitch = async (targetChainId: number) => {
   try {
     const success = await walletStore.switchNetwork(targetChainId)
     if (success) {
-      showNetworkSwitchDialog.value = false
-      showNetworkDialog.value = false
+      closeNetworkDialog()
       ElMessage.success(t('wallet.networkSwitched'))
     }
   } catch (error: any) {

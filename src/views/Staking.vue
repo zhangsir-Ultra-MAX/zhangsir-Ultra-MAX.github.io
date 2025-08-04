@@ -44,7 +44,7 @@
                   <div class="input-group">
                     <el-input 
                       v-model="stakeAmount" 
-                      :placeholder="formatNumber(stakingStore.cinaBalance, 6) + '  available'" 
+                      :placeholder="formatNumberK(stakingStore.cinaBalance, 6) + '  available'" 
                       size="large"
                       class="amount-input" 
                       @input="handleStakeAmountChange"
@@ -118,7 +118,7 @@
                   <div class="input-group">
                     <el-input 
                       v-model="unstakeAmount" 
-                      :placeholder="formatNumber(stakingStore.stakedAmount, 6) + '  available'" 
+                      :placeholder="formatNumberK(stakingStore.stakedAmount, 6) + '  available'" 
                       size="large"
                       class="amount-input" 
                       @input="handleUnstakeAmountChange"
@@ -224,7 +224,7 @@ import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useStakingStore } from '@/stores/staking'
 import { contractService } from '@/services/contracts'
-import { formatNumber } from '@/utils/format'
+import { formatNumber, formatNumberK } from '@/utils/format'
 
 const { t } = useI18n()
 const walletStore = useWalletStore()
@@ -399,7 +399,7 @@ const handleStake = async () => {
     // Reset form and refresh data
     stakeAmount.value = ''
     await stakingStore.fetchStakingData()
-    
+    currentTransactionStep.value = 3
     ElMessage.success(t('staking.stakeSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'
@@ -436,7 +436,7 @@ const handleUnstake = async () => {
     // Reset form and refresh data
     unstakeAmount.value = ''
     await stakingStore.fetchStakingData()
-    
+    currentTransactionStep.value = 3
     ElMessage.success(t('staking.unstakeSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'

@@ -33,7 +33,7 @@
                   <div class="input-group">
                     <el-input
                       v-model="wrapAmount"
-                      :placeholder="formatNumber(sRMBBalance) + '  ' + $t('available')"
+                      :placeholder="formatNumberK(sRMBBalance) + '  ' + $t('available')"
                       size="large"
                       class="amount-input"
                       @input="handleWrapAmountChange"
@@ -120,7 +120,7 @@
                 </div>
                 <div class="preview-row exchange-rate">
                   <span>{{ $t('wrap.rate') }}</span>
-                  <span class="preview-value">1 sRMB = {{ formatNumber(wrapPreview.exchangeRate, 6) }} sWRMB</span>
+                  <span class="preview-value">1 sRMB ≈ {{ formatNumber(wrapPreview.exchangeRate, 6) }} sWRMB</span>
                 </div>
               </div>
             </div>
@@ -167,7 +167,7 @@
                   <div class="input-group">
                     <el-input
                       v-model="unwrapAmount"
-                      :placeholder="formatNumber(userMaxUnwrappableAmount) + '  ' + $t('available')"
+                      :placeholder="formatNumberK(userMaxUnwrappableAmount) + '  ' + $t('available')"
                       size="large"
                       class="amount-input"
                       @input="handleUnwrapAmountChange"
@@ -245,24 +245,16 @@
               <h4 class="preview-title">{{ $t('wrap.preview') }}</h4>
               <div class="preview-details">
                 <div class="preview-row">
-                  <span>{{ $t('wrap.desiredAmount') }}</span>
+                  <span>{{ $t('savings.youWillReceive') }}</span>
                   <span class="preview-value">{{ formatNumber(unwrapAmount) }} sRMB</span>
                 </div>
                 <div class="preview-row">
                   <span>{{ $t('wrap.fee') }} ({{ formatNumber(unwrapPreview.feePercentage) }}%)</span>
                   <span class="fee-value">{{ formatNumber(unwrapPreview.fee) }} sRMB</span>
                 </div>
-                <div class="preview-row">
-                  <span>{{ $t('wrap.actualReceived') }}</span>
-                  <span class="preview-value">{{ formatNumber(unwrapPreview.sRMBReceived) }} CNY</span>
-                </div>
-                <div class="preview-row">
-                  <span>{{ $t('wrap.required') }}</span>
-                  <span class="preview-value">{{ formatNumber(unwrapPreview.sWRMBBurned) }} sWRMB</span>
-                </div>
                 <div class="preview-row exchange-rate">
                   <span>{{ $t('wrap.rate') }}</span>
-                  <span class="preview-value">1 sWRMB = {{ formatNumber(unwrapPreview.exchangeRate, 6) }} sRMB</span>
+                  <span class="preview-value">1 sWRMB ≈ {{ formatNumber(unwrapPreview.exchangeRate, 6) }} sRMB</span>
                 </div>
               </div>
             </div>
@@ -376,7 +368,7 @@ import { formatUnits, parseUnits } from 'ethers'
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
-import { formatNumber } from '@/utils/format'
+import { formatNumber, formatNumberK } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
 
 // Type definitions
@@ -656,10 +648,34 @@ const debouncedUnwrapPreview = debounce(async (amount: string) => {
 }, 500)
 
 const handleWrapAmountChange = (value: string) => {
+  // 限制最大6位小数
+  const cleanValue = value.replace(/[^0-9.]/g, '')
+  const parts = cleanValue.split('.')
+  if (parts.length > 2) {
+    wrapAmount.value = parts[0] + '.' + parts.slice(1).join('')
+    return
+  }
+  if (parts.length === 2 && parts[1].length > 6) {
+    wrapAmount.value = parts[0] + '.' + parts[1].substring(0, 6)
+    return
+  }
+  
   debouncedWrapPreview(value)
 }
 
 const handleUnwrapAmountChange = (value: string) => {
+  // 限制最大6位小数
+  const cleanValue = value.replace(/[^0-9.]/g, '')
+  const parts = cleanValue.split('.')
+  if (parts.length > 2) {
+    unwrapAmount.value = parts[0] + '.' + parts.slice(1).join('')
+    return
+  }
+  if (parts.length === 2 && parts[1].length > 6) {
+    unwrapAmount.value = parts[0] + '.' + parts[1].substring(0, 6)
+    return
+  }
+  
   debouncedUnwrapPreview(value)
 }
 
@@ -738,10 +754,11 @@ const handleWrap = async () => {
     
     transactionStatus.value = 'loading'
     const wrapTx = await wrapManager.wrap(amountWei)
+    currentTransactionStep.value = 2
     const receipt = await wrapTx.wait()
     
     transactionHash.value = receipt.hash
-    currentTransactionStep.value = 2
+    currentTransactionStep.value = 3
     transactionStatus.value = 'success'
     
     // Reset form and refresh balances
@@ -812,10 +829,11 @@ const handleUnwrap = async () => {
     
     transactionStatus.value = 'loading'
     const unwrapTx = await wrapManager.unwrap(sRMBAmountWei)
+    currentTransactionStep.value = 2
     const receipt = await unwrapTx.wait()
     
     transactionHash.value = receipt.hash
-    currentTransactionStep.value = 2
+    currentTransactionStep.value = 3
     transactionStatus.value = 'success'
     
     // Reset form and refresh balances

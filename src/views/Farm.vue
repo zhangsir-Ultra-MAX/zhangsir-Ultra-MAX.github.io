@@ -38,7 +38,7 @@
                   <div class="input-group">
                     <div class="input-with-select">
                       <el-input v-model="depositAmount"
-                        :placeholder="formatNumber(farmStore.usdtBalance) + '  ' + $t('available')" size="large"
+                        :placeholder="formatNumberK(farmStore.usdtBalance) + '  ' + $t('available')" size="large"
                         class="amount-input" @input="handleDepositAmountChange" />
                       <TokenSelect v-model="depositToken" :tokens="availableTokens" placeholder="Select token" />
                     </div>
@@ -83,7 +83,7 @@
                   <div class="input-group">
                     <div class="input-with-select">
                       <el-input v-model="withdrawAmount"
-                        :placeholder="formatNumber(farmStore.depositedAmount) + '  ' + $t('available')" size="large"
+                        :placeholder="formatNumberK(farmStore.depositedAmount) + '  ' + $t('available')" size="large"
                         class="amount-input" @input="handleWithdrawAmountChange" />
                       <TokenSelect v-model="withdrawToken" :tokens="availableTokens" placeholder="Select token" />
                     </div>
@@ -157,7 +157,7 @@ import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import TokenSelect from '@/components/TokenSelect.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useFarmStore } from '@/stores/farm'
-import { formatNumber } from '@/utils/format'
+import { formatNumber, formatNumberK } from '@/utils/format'
 import { TOKENS } from '@/constants'
 
 // Define types
