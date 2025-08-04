@@ -17,7 +17,7 @@
         <el-button class="account-button">
           <div class="flex items-center space-x-2">
             <div class="md:hidden rounded-full flex items-center justify-center">
-              <span class="text-white text-xs font-bold">
+              <span class="text-xs font-bold">
                 {{ walletStore.shortAddress }}
               </span>
             </div>
