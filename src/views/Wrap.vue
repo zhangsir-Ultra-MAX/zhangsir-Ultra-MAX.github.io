@@ -698,14 +698,14 @@ const switchMode = () => {
 }
 
 const setWrapPercentage = (percentage: number) => {
-  const amount = (parseFloat(sRMBBalance.value) * percentage / 100).toString()
+  const amount = (parseFloat(sRMBBalance.value) * percentage / 100).toFixed(6)
   wrapAmount.value = amount
   handleWrapAmountChange(amount)
 }
 
 const setUnwrapPercentage = (percentage: number) => {
   const maxUnwrappable = parseFloat(userMaxUnwrappableAmount.value)
-  const amount = (maxUnwrappable * percentage / 100).toString()
+  const amount = (maxUnwrappable * percentage / 100).toFixed(6)
   unwrapAmount.value = amount
   handleUnwrapAmountChange(amount)
 }
