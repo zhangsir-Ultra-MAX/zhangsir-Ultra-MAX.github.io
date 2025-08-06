@@ -20,12 +20,12 @@
               <img src="../assets/logo.png" alt="" class="token-icon"> 
               <AnimatedNumber 
                 class="animated-number"
-                :value="stakingStore.totalStaked" 
+                :value="stakingStore.yourStaked" 
                 :decimals="8"
-                :auto-increment="walletStore.isConnected && parseFloat(stakingStore.totalStaked) > 0"
-                :increment-amount="parseFloat(stakingStore.stakingRewardRate)"
+                :auto-increment="walletStore.isConnected && parseFloat(stakingStore.yourStaked) > 0"
+                :increment-amount="parseFloat(stakingStore.incrementAmount)"
                 :increment-interval="1000"
-                :cache-key="`totalStaked_${walletStore.address}`"
+                :cache-key="`yourStaked_${walletStore.address}`"
                 :use-cache="false"
               />
             </div>
@@ -85,10 +85,6 @@
                       <span>{{ $t('staking.youWillReceive') }}</span>
                       <span class="preview-value">{{ formatNumber(stakePreview.shares, 2) }} stCINA</span>
                     </div>
-                    <div class="preview-row">
-                      <span>{{ $t('staking.dailyReward') }}</span>
-                      <span class="preview-value">{{ formatNumber(stakePreview.dailyReward, 2) }} CINA</span>
-                    </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('staking.exchangeRate') }}</span>
                       <span class="preview-value">1 CINA ≈ {{ formatNumber(stakePreview.exchangeRate, 6) }} stCINA</span>
@@ -144,10 +140,10 @@
                     </el-button>
                   </div>
 
-                  <!-- Early Unstake Warning -->
-                  <div v-if="showEarlyUnstakeWarning" class="warning-info early-unstake">
+                  <!-- Note: Early unstake penalty not available in current contract -->
+                  <div v-if="false" class="warning-info early-unstake">
                     <el-icon><Warning /></el-icon>
-                    <span>{{ $t('staking.earlyUnstakeWarning', { penalty: formatNumber(parseFloat(stakingStore.earlyUnstakePenalty) * 100) }) }}</span>
+                    <span>{{ $t('staking.earlyUnstakeWarning', { penalty: 0 }) }}</span>
                   </div>
                 </div>
 
@@ -157,19 +153,11 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('staking.required') }}</span>
-                      <span class="preview-value">{{ formatNumber(unstakePreview.penalty, 2) }} stCINA</span>
-                    </div>
-                    <div class="preview-row">
-                      <span>{{ $t('staking.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(unstakePreview.actualAmount, 4) }} CINA</span>
-                    </div>
-                    <div v-if="unstakePreview.penalty > 0" class="preview-row penalty">
-                      <span>{{ $t('staking.penalty') }}</span>
-                      <span class="preview-value penalty-amount">-{{ formatNumber(unstakePreview.penalty, 4) }} CINA</span>
+                      <span class="preview-value">{{ formatNumber(unstakePreview.requiredAmount, 2) }} stCINA</span>
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('staking.exchangeRate') }}</span>
-                      <span class="preview-value">1 stCINA ≈ {{ formatNumber(unstakePreview.penalty, 6) }} CINA</span>
+                      <span class="preview-value">1 stCINA ≈ {{ formatNumber(stakingStore.navCina, 6) }} CINA</span>
                     </div>
                   </div>
                 </div>
@@ -259,13 +247,8 @@ const transactionDetails = computed(() => {
   } else if (activeTab.value === 'unstake' && unstakeAmount.value) {
     details.push(
       { label: t('staking.unstakeAmount'), value: `${formatNumber(unstakeAmount.value, 6)} CINA`, highlight: true },
-      { label: t('staking.actualAmount'), value: `${formatNumber(unstakePreview.value?.actualAmount || '0', 6)} CINA` }
+      { label: t('staking.requiredAmount'), value: `${formatNumber(unstakePreview.value?.requiredAmount || '0', 6)} stCINA` }
     )
-    if (unstakePreview.value?.penalty && unstakePreview.value.penalty > 0) {
-      details.push(
-        { label: t('staking.penalty'), value: `${formatNumber(unstakePreview.value.penalty, 6)} CINA` }
-      )
-    }
   }
 
   return details
@@ -284,29 +267,22 @@ const isUnstakeValid = computed(() => {
   return amount > 0 && amount <= parseFloat(stakingStore.stakedAmount)
 })
 
-
-
 const showMinStakeWarning = computed(() => {
   const amount = parseFloat(stakeAmount.value)
   return amount > 0 && amount < parseFloat(stakingStore.minStakeAmount)
 })
 
-const showEarlyUnstakeWarning = computed(() => {
-  return stakingStore.stakingDuration < stakingStore.minStakingPeriod
-})
 
 const stakePreview = computed(() => {
   const amount = parseFloat(stakeAmount.value)
   if (!amount || amount <= 0) return null
   
-  const exchangeRate = parseFloat(stakingStore.stakeExchangeRate)
-  const shares = amount * exchangeRate
-  const dailyReward = amount * parseFloat(stakingStore.currentAPY) / 365 / 100
+  const navCina = parseFloat(stakingStore.navCina)
+  const shares = amount / navCina // ERC4626: shares = assets / NAV
   
   return {
     shares,
-    dailyReward,
-    exchangeRate
+    exchangeRate: 1/navCina
   }
 })
 
@@ -314,14 +290,11 @@ const unstakePreview = computed(() => {
   const amount = parseFloat(unstakeAmount.value)
   if (!amount || amount <= 0) return null
   
-  const isEarlyUnstake = stakingStore.stakingDuration < stakingStore.minStakingPeriod
-  const penalty = isEarlyUnstake ? amount * parseFloat(stakingStore.earlyUnstakePenalty) : 0
-  const actualAmount = amount - penalty
+  const navCina = parseFloat(stakingStore.navCina)
+  const actualAmount = amount * navCina // ERC4626: assets = shares * NAV
   
   return {
-    actualAmount,
-    penalty,
-    stakingDuration: stakingStore.stakingDuration
+    requiredAmount: actualAmount
   }
 })
 
@@ -635,46 +608,6 @@ const handleTransactionRetry = () => {
 
 .action-button {
   @apply w-full h-12 text-base font-medium;
-}
-
-.claim-section {
-  @apply space-y-6;
-}
-
-.claim-info {
-  @apply bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-lg p-6;
-}
-
-.claim-amount {
-  @apply text-center mb-4;
-}
-
-.claim-amount h3 {
-  @apply text-lg font-medium text-gray-700 dark:text-gray-300 mb-2;
-}
-
-.amount-display {
-  @apply text-3xl font-bold text-primary-600 dark:text-primary-400 flex items-center justify-center gap-2;
-}
-
-.claim-details {
-  @apply space-y-2;
-}
-
-.detail-row {
-  @apply flex justify-between items-center text-sm;
-}
-
-.detail-row span:first-child {
-  @apply text-gray-600 dark:text-gray-400;
-}
-
-.detail-row span:last-child {
-  @apply font-medium text-gray-900 dark:text-white;
-}
-
-.claim-button {
-  @apply bg-gradient-to-r from-primary-500 to-purple-500 hover:from-primary-600 hover:to-purple-600;
 }
 
 

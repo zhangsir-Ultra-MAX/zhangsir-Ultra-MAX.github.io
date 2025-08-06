@@ -85,6 +85,7 @@ const STAKING_VAULT_ABI = [
   'function totalAssets() view returns (uint256)',
   'function totalSupply() view returns (uint256)',
   'function balanceOf(address) view returns (uint256)',
+  'function maxWithdraw(address) view returns (uint256)',
   'function deposit(uint256 assets, address receiver) returns (uint256 shares)',
   'function withdraw(uint256 assets, address receiver, address owner) returns (uint256 shares)',
   'function mint(uint256 shares, address receiver) returns (uint256 assets)',
@@ -95,24 +96,12 @@ const STAKING_VAULT_ABI = [
   'function previewRedeem(uint256 shares) view returns (uint256)',
   
   // 质押相关查询方法
-  'function totalStaked() view returns (uint256)',
-  'function rewardPool() view returns (uint256)',
+  'function getNAV_CINA() view returns (uint256)',
   'function minStakeAmount() view returns (uint256)',
-  'function earlyUnstakePenalty() view returns (uint256)',
-  'function rewardRatePerSecond() view returns (uint256)',
-  'function pendingRewards(address user) view returns (uint256)',
-  
-  // 用户信息查询
-  'function stakingInfo(address) view returns (uint256 stakedAmount, uint256 stakingTime, uint256 lastClaimTime, uint256 accumulatedRewards, uint256 baseRewardRate)',
-  'function getUserStakingInfo(address user) view returns (uint256 stakedAmount, uint256 stakingTime, uint256 lastClaimTime, uint256 accumulatedRewards, uint256 pendingReward)',
-  'function getStakingStats() view returns (uint256 totalStakedAmount, uint256 rewardPoolBalance, uint256 currentRewardRate)',
-  
-  // 奖励领取
-  'function claimRewards()',
-  
-  // 紧急提取
-  'function emergencyWithdraw()',
-  
+  'function lastDayRewardAmount() view returns (uint256)',
+  'function getIncrementAmount() view returns (uint256)',
+  'function getUserIncrementAmount(address) view returns (uint256)',
+
   // 事件
   'event Staked(address indexed user, uint256 amount, uint256 shares)',
   'event Unstaked(address indexed user, uint256 amount, uint256 shares, uint256 penalty)',
