@@ -18,9 +18,9 @@
             </div>
             <div class="card-value">
               <img src="../assets/logo.png" alt="" class="token-icon">
-              <AnimatedNumber class="animated-number" :value="farmStore.totalCINAMined" :decimals="8"
-                :auto-increment="walletStore.isConnected && parseFloat(farmStore.totalCINAMined) > 0"
-                :increment-amount="parseFloat(farmStore.farmRate)" :increment-interval="1000"
+              <AnimatedNumber class="animated-number" :value="farmStore.pendingCINA" :decimals="8"
+                :auto-increment="walletStore.isConnected && parseFloat(farmStore.pendingCINA) > 0"
+                :increment-amount="parseFloat(farmStore.incrementAmount)" :increment-interval="1000"
                 :cache-key="`totalCINAMined_${walletStore.address}`" :use-cache="false" />
             </div>
           </div>
@@ -114,17 +114,12 @@
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>Liquidity</span>
-                      <span class="preview-value liquidity-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} {{
-                        withdrawToken?.symbol }}</span>
-                    </div>
-                    <div class="preview-row">
-                      <span>{{ $t('farm.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} {{
+                      <span class="preview-value liquidity-value">{{ formatNumber(withdrawPreview.liquidityAmount, 2) }} {{
                         withdrawToken?.symbol }}</span>
                     </div>
                     <div v-if="withdrawCINA" class="preview-row">
                       <span>Farm Reward</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.netAmount, 2) }} CINA</span>
+                      <span class="preview-value">{{ formatNumber(withdrawPreview.rewardAmount, 2) }} CINA</span>
                     </div>
                   </div>
                 </div>
@@ -141,6 +136,20 @@
         </el-tabs>
       </div>
     </div>
+
+    <!-- Transaction Modal -->
+    <TransactionModal
+      v-model:visible="showTransactionModal"
+      :title="transactionModalTitle"
+      :steps="transactionSteps"
+      :current-step="currentTransactionStep"
+      :status="transactionStatus"
+      :transaction-details="transactionDetails"
+      :transaction-hash="transactionHash"
+      :error-message="transactionError"
+      @close="handleTransactionModalClose"
+      @retry="handleTransactionRetry"
+    />
   </div>
 </template>
 
@@ -148,15 +157,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import {
-  Coin,
-  Warning
-} from '@element-plus/icons-vue'
+import { parseUnits } from 'ethers'
 
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import TokenSelect from '@/components/TokenSelect.vue'
+import TransactionModal from '@/components/common/TransactionModal.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useFarmStore } from '@/stores/farm'
+import { contractService } from '@/services/contracts'
 import { formatNumber, formatNumberK } from '@/utils/format'
 import { TOKENS } from '@/constants'
 
@@ -166,18 +174,6 @@ interface Token {
   name: string
   address: string
   decimals: number
-}
-
-interface DepositPreview {
-  estimatedCINA: number
-  dailyReward: number
-}
-
-interface WithdrawPreview {
-  netAmount: number
-  feeAmount: number
-  fee: number
-  remainingAmount: number
 }
 
 const { t } = useI18n()
@@ -190,17 +186,17 @@ const availableTokens = computed<Token[]>(() => {
 
   return [
     {
-      symbol: TOKENS.USDC.symbol,
-      name: TOKENS.USDC.name,
-      address: TOKENS.USDC.addresses[chainId as keyof typeof TOKENS.USDC.addresses] || TOKENS.USDC.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-      decimals: TOKENS.USDC.decimals
-    },
-    {
       symbol: TOKENS.USDT.symbol,
       name: TOKENS.USDT.name,
       address: TOKENS.USDT.addresses[chainId as keyof typeof TOKENS.USDT.addresses] || TOKENS.USDT.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
       decimals: TOKENS.USDT.decimals
-    }
+    },
+    // {
+    //   symbol: TOKENS.USDC.symbol,
+    //   name: TOKENS.USDC.name,
+    //   address: TOKENS.USDC.addresses[chainId as keyof typeof TOKENS.USDC.addresses] || TOKENS.USDC.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+    //   decimals: TOKENS.USDC.decimals
+    // }
   ]
 })
 
@@ -210,6 +206,43 @@ const withdrawAmount = ref('')
 const withdrawCINA = ref(false) // 是否同时提取CINA的开关
 const depositToken = ref<Token>()
 const withdrawToken = ref<Token>()
+
+// Transaction Modal
+const showTransactionModal = ref(false)
+const transactionModalTitle = ref('')
+const currentTransactionStep = ref(0)
+const transactionStatus = ref<'pending' | 'loading' | 'success' | 'error'>('pending')
+const transactionHash = ref('')
+const transactionError = ref('')
+
+const transactionSteps = ref([
+  { label: t('transaction.approve'), description: t('transaction.approveDescription') },
+  { label: t('transaction.confirm'), description: t('transaction.confirmDescription') },
+  { label: t('transaction.complete'), description: t('transaction.completeDescription') }
+])
+
+const transactionDetails = computed(() => {
+  const details = []
+
+  if (activeTab.value === 'deposit' && depositAmount.value) {
+    details.push(
+      { label: t('pay'), value: `-${formatNumber(depositAmount.value, 2)} USDT`, highlight: true }
+    )
+  } else if (activeTab.value === 'withdraw') {
+    if(withdrawAmount.value) {
+      details.push(
+        { label: t('receive'), value: `${formatNumber(withdrawAmount.value, 2)} USDT`, highlight: true }
+      )
+    }
+    if (withdrawCINA.value && parseFloat(farmStore.pendingCINA) > 0) {
+      details.push(
+        { label: t('receive'), value: `${formatNumber(farmStore.pendingCINA, 6)} CINA` }
+      )
+    }
+  }
+
+  return details
+})
 
 // Initialize tokens
 watch(availableTokens, (tokens) => {
@@ -261,16 +294,9 @@ const withdrawPreview = computed(() => {
   const amount = parseFloat(withdrawAmount.value)
   if (!amount || amount <= 0) return null
 
-  const fee = parseFloat(farmStore.withdrawalFee || '0.02') // 2% default fee
-  const feeAmount = amount * fee
-  const netAmount = amount - feeAmount
-  const remainingAmount = parseFloat(farmStore.depositedAmount) - amount
-
   return {
-    netAmount,
-    feeAmount,
-    fee,
-    remainingAmount
+    rewardAmount: farmStore.pendingCINA,
+    liquidityAmount: farmStore.liquidityAmount
   }
 })
 
@@ -292,24 +318,56 @@ const setMaxDeposit = () => {
 }
 
 const handleDeposit = async () => {
+  if (!isDepositValid.value || !walletStore.isConnected) return
+
+  transactionModalTitle.value = t('savings.depositTransaction')
+  showTransactionModal.value = true
+  currentTransactionStep.value = 0
+  transactionStatus.value = 'pending'
+
   try {
     const amount = parseFloat(depositAmount.value)
-    await farmStore.depositUSDT(amount)
-    ElMessage.success(t('farm.depositSuccess'))
+    const amountWei = parseUnits(amount.toString(), 6) // USDT has 6 decimals
+    
+    // Step 1: Check and approve USDT if needed
+    transactionStatus.value = 'loading'
+    
+    const usdtContract = contractService.getUSDTContract(true)
+    const farmContract = contractService.getFarmVaultContract(true)
+    
+    if (!usdtContract || !farmContract) {
+      throw new Error('Contract not available')
+    }
+    
+    const farmAddress = await farmContract.getAddress()
+    const allowance = await usdtContract.allowance(walletStore.address, farmAddress)
+    
+    // Check and approve USDT if needed
+    if (allowance < amountWei) {
+      const approveTx = await usdtContract.approve(farmAddress, amountWei)
+      await approveTx.wait()
+    }
+    
+    currentTransactionStep.value = 1
+    
+    // Step 2: Execute deposit
+    const depositTx = await farmContract.deposit(amountWei)
+    currentTransactionStep.value = 2
+    const receipt = await depositTx.wait()
+    
+    transactionHash.value = receipt.hash
+    currentTransactionStep.value = 3
+    transactionStatus.value = 'success'
+    
+    // Reset form and refresh data
     depositAmount.value = ''
-  } catch (error) {
+    await farmStore.fetchFarmData()
+    await farmStore.fetchUserFarmData()
+    ElMessage.success(t('farm.depositSuccess'))
+  } catch (error: any) {
+    transactionStatus.value = 'error'
+    transactionError.value = error.message || t('farm.depositFailed')
     console.error('Deposit failed:', error)
-    ElMessage.error(t('farm.depositFailed'))
-  }
-}
-
-const handleClaim = async () => {
-  try {
-    await farmStore.claimCINA()
-    ElMessage.success(t('farm.claimSuccess'))
-  } catch (error) {
-    console.error('Claim failed:', error)
-    ElMessage.error(t('farm.claimFailed'))
   }
 }
 
@@ -330,32 +388,72 @@ const setMaxWithdraw = () => {
 }
 
 const handleWithdraw = async () => {
+  if (!walletStore.isConnected) return
+
+  transactionModalTitle.value = t('savings.withdrawTransaction')
+  showTransactionModal.value = true
+  currentTransactionStep.value = 1
+  transactionStatus.value = 'pending'
+
   try {
     const amount = parseFloat(withdrawAmount.value)
+    transactionStatus.value = 'loading'
+    
+    const farmContract = contractService.getFarmVaultContract(true)
+    if (!farmContract) {
+      throw new Error('Farm contract not available')
+    }
 
     // 如果勾选了withdrawCINA但没有输入金额，只执行claim
     if (withdrawCINA.value && (!withdrawAmount.value || amount === 0)) {
       if (parseFloat(farmStore.pendingCINA) > 0) {
-        await farmStore.claimCINA()
+        // Execute getReward to claim CINA rewards
+        const claimTx = await farmContract.getReward()
+        currentTransactionStep.value = 2
+        const receipt = await claimTx.wait()
+        
+        transactionHash.value = receipt.hash
+        transactionStatus.value = 'success'
         ElMessage.success(t('farm.claimSuccess'))
       }
     } else {
-      // 如果有输入金额，先执行CINA提取（如果勾选了），再执行USDT提现
-      if (withdrawCINA.value && parseFloat(farmStore.pendingCINA) > 0) {
-        await farmStore.claimCINA()
-      }
-
       // 执行USDT提现
-      await farmStore.withdrawUSDT(amount)
-
+      const amountWei = parseUnits(amount.toString(), 6) // USDT has 6 decimals
+      // Execute withdraw with isClaim=false (only withdraw, don't claim rewards)
+      const withdrawTx = await farmContract.withdraw(amountWei, withdrawCINA.value?1:0)
+      currentTransactionStep.value = 2
+      const receipt = await withdrawTx.wait()
+      
+      transactionHash.value = receipt.hash
+      transactionStatus.value = 'success'
       ElMessage.success(t('farm.withdrawSuccess'))
     }
 
+    currentTransactionStep.value = 3
     withdrawAmount.value = ''
     withdrawCINA.value = false // 重置开关状态
-  } catch (error) {
+    
+    // Refresh data
+    await farmStore.fetchFarmData()
+    await farmStore.fetchUserFarmData()
+  } catch (error: any) {
+    transactionStatus.value = 'error'
+    transactionError.value = error.message || t('farm.withdrawFailed')
     console.error('Withdraw failed:', error)
-    ElMessage.error(t('farm.withdrawFailed'))
+  }
+}
+
+const handleTransactionModalClose = () => {
+  showTransactionModal.value = false
+  transactionHash.value = ''
+  transactionError.value = ''
+}
+
+const handleTransactionRetry = () => {
+  if (activeTab.value === 'deposit') {
+    handleDeposit()
+  } else {
+    handleWithdraw()
   }
 }
 

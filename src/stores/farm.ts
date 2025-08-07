@@ -3,12 +3,13 @@ import { ref, computed } from 'vue'
 import { formatUnits, parseUnits } from 'ethers'
 import { useWalletStore } from './wallet'
 import { useAppStore } from './app'
+import { contractService } from '../services/contracts'
 import BigNumber from 'bignumber.js'
 
 export const useFarmStore = defineStore('farm', () => {
   // State
-  const totalCINAMined = ref('0') // Total CINA mined from AMO
-  const totalUSDTDeposited = ref('0') // Total USDT deposited in AMO
+  const liquidityAmount = ref('0') // Total USDT deposited in AMO
+  const incrementAmount = ref('0') // Increment amount
   const usdtBalance = ref('0') // User's USDT balance
   const depositedAmount = ref('0') // User's deposited USDT amount
   const pendingCINA = ref('0') // User's pending CINA rewards
@@ -38,18 +39,6 @@ export const useFarmStore = defineStore('farm', () => {
     return new BigNumber(formatUnits(depositedAmount.value, 6)).toFixed(2)
   })
 
-  const totalCINAMinedFormatted = computed(() => {
-    return new BigNumber(totalCINAMined.value).toFixed(2)
-  })
-
-  const totalUSDTDepositedFormatted = computed(() => {
-    return new BigNumber(totalUSDTDeposited.value).toFixed(2)
-  })
-
-  const pendingCINAFormatted = computed(() => {
-    return new BigNumber(pendingCINA.value).toFixed(6)
-  })
-
   // Actions
   const fetchFarmData = async () => {
     const walletStore = useWalletStore()
@@ -60,19 +49,37 @@ export const useFarmStore = defineStore('farm', () => {
     try {
       isLoading.value = true
 
-      // Mock contract calls - in real implementation, these would be actual AMO contract calls
-      // const amoContract = await contractService.getAMOContract()
-      // if (!amoContract) throw new Error('AMO contract not available')
+      // Get Farm Vault contract
+      const farmVaultContract = contractService.getFarmVaultContract()
+      if (!farmVaultContract) throw new Error('Farm Vault contract not available')
 
-      // Mock data for demonstration
-      await new Promise(resolve => setTimeout(resolve, 500)) // Simulate network delay
+      // Fetch farm data from contract
+      const [totalSupply, rewardRate, rewardForDuration, remainingTime, earnedAmount, userBalance] = await Promise.all([
+        farmVaultContract.totalSupply(),
+        farmVaultContract.rewardRate(),
+        farmVaultContract.getRewardForDuration(),
+        farmVaultContract.getRemainingTime(),
+        farmVaultContract.earned(walletStore.address),
+        farmVaultContract.balanceOf(walletStore.address)
+      ])
 
-      // Simulate fetching farm data
-      totalCINAMined.value = '2500000.1234'
-      totalUSDTDeposited.value = '1800000.56'
-      farmAPY.value = '15.8'
-      farmRate.value = '0.000000547' // Approximate rate for 15.8% APY
-      exchangeRate.value = '1.389' // 1 USDT = 1.389 CINA
+      // Update farm data
+      liquidityAmount.value = formatUnits(totalSupply, 6) // Assuming USDT (6 decimals)
+      farmRate.value = formatUnits(rewardRate, 18) // CINA rewards per second
+      pendingCINA.value = formatUnits(earnedAmount, 18)
+      incrementAmount.value = new BigNumber(farmRate.value).multipliedBy(userBalance).dividedBy(totalSupply).toFixed(18)
+
+      // Calculate APY based on reward rate and total supply
+      if (totalSupply > 0) {
+        const annualRewards = parseFloat(farmRate.value) * 365 * 24 * 60 * 60
+        const totalSupplyFormatted = parseFloat(formatUnits(totalSupply, 6))
+        farmAPY.value = ((annualRewards / totalSupplyFormatted) * 100).toFixed(2)
+      } else {
+        farmAPY.value = '0'
+      }
+
+      // Set default values (these might come from other contracts or be configurable)
+      exchangeRate.value = '1.0' // This should be fetched from price oracle
       minDepositAmount.value = '10.0'
       depositFee.value = '0.001' // 0.1%
       withdrawalFee.value = '0.002' // 0.2%
@@ -81,6 +88,8 @@ export const useFarmStore = defineStore('farm', () => {
       if (walletStore.address) {
         await fetchUserFarmData()
       }
+
+      lastUpdateTime.value = Date.now()
     } catch (error: any) {
       console.error('Failed to fetch farm data:', error)
       // appStore.addNotification({
@@ -98,150 +107,18 @@ export const useFarmStore = defineStore('farm', () => {
     if (!walletStore.address) return
 
     try {
-      // Mock user farm data - in real implementation, these would be actual contract calls
-      usdtBalance.value = parseUnits('1500.25', 6).toString() // USDT has 6 decimals
-      depositedAmount.value = parseUnits('800.00', 6).toString()
-      pendingCINA.value = '45.678901'
-      depositTime.value = Date.now() - (3 * 24 * 60 * 60 * 1000) // 3 days ago
-      lastClaimTime.value = Date.now() - (6 * 60 * 60 * 1000) // 6 hours ago
+      const usdtCantoContract = contractService.getUSDTContract()
+      if (!usdtCantoContract) throw new Error('USDT contract not available')
 
+      const [userBalance, userDeposit] = await Promise.all([
+        usdtCantoContract.balanceOf(walletStore.address),
+        contractService.getFarmVaultContract()?.balanceOf(walletStore.address)
+      ])
 
+      usdtBalance.value = formatUnits(userBalance, 6)
+      depositedAmount.value = formatUnits(userDeposit, 6)
     } catch (error) {
       console.error('Failed to fetch user farm data:', error)
-    }
-  }
-
-  const depositUSDT = async (amount: number) => {
-    const walletStore = useWalletStore()
-    const appStore = useAppStore()
-
-    if (!walletStore.isConnected || !walletStore.signer) {
-      throw new Error('Wallet not connected')
-    }
-
-    try {
-      depositInProgress.value = true
-
-      // Mock deposit transaction - in real implementation, this would be an actual AMO contract call
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate transaction time
-
-      // Calculate fee
-      const fee = amount * parseFloat(depositFee.value)
-      const netAmount = amount - fee
-
-      // Update user balances
-      const currentUsdtBalance = parseFloat(formatUnits(usdtBalance.value, 6))
-      const currentDepositedAmount = parseFloat(formatUnits(depositedAmount.value, 6))
-      
-      usdtBalance.value = parseUnits((currentUsdtBalance - amount).toString(), 6).toString()
-      depositedAmount.value = parseUnits((currentDepositedAmount + netAmount).toString(), 6).toString()
-      totalUSDTDeposited.value = (parseFloat(totalUSDTDeposited.value) + netAmount).toString()
-
-
-
-      // Update deposit time if first deposit
-      if (currentDepositedAmount === 0) {
-        depositTime.value = Date.now()
-      }
-
-    } catch (error: any) {
-      console.error('Deposit failed:', error)
-      throw error
-    } finally {
-      depositInProgress.value = false
-    }
-  }
-
-  const claimCINA = async () => {
-    const walletStore = useWalletStore()
-    const appStore = useAppStore()
-
-    if (!walletStore.isConnected || !walletStore.signer) {
-      throw new Error('Wallet not connected')
-    }
-
-    try {
-      claimInProgress.value = true
-
-      // Mock claim transaction
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      const claimAmount = parseFloat(pendingCINA.value)
-      
-      // Update balances
-      pendingCINA.value = '0'
-      lastClaimTime.value = Date.now()
-      totalCINAMined.value = (parseFloat(totalCINAMined.value) + claimAmount).toString()
-
-
-
-    } catch (error: any) {
-      console.error('Claim failed:', error)
-      throw error
-    } finally {
-      claimInProgress.value = false
-    }
-  }
-
-  const withdrawUSDT = async (amount: number) => {
-    const walletStore = useWalletStore()
-    const appStore = useAppStore()
-
-    if (!walletStore.isConnected || !walletStore.signer) {
-      throw new Error('Wallet not connected')
-    }
-
-    if (amount <= 0) {
-      throw new Error('Invalid withdrawal amount')
-    }
-
-    const currentDeposited = parseFloat(depositedAmount.value)
-    if (amount > currentDeposited) {
-      throw new Error('Insufficient deposited amount')
-    }
-
-    try {
-      withdrawInProgress.value = true
-
-      // Mock withdrawal transaction
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      // Calculate withdrawal fee
-      const fee = amount * parseFloat(withdrawalFee.value)
-      const netAmount = amount - fee
-
-      // Update balances
-      depositedAmount.value = (currentDeposited - amount).toString()
-      usdtBalance.value = (parseFloat(usdtBalance.value) + netAmount).toString()
-
-      // Refresh data
-      await fetchUserFarmData()
-
-    } catch (error: any) {
-      console.error('Withdrawal failed:', error)
-      throw error
-    } finally {
-      withdrawInProgress.value = false
-    }
-  }
-
-  const previewDeposit = async (amount: string) => {
-    if (!amount || amount === '0') return { netAmount: '0', fee: '0', expectedCINA: '0' }
-
-    try {
-      const depositAmount = parseFloat(amount)
-      const fee = depositAmount * parseFloat(depositFee.value)
-      const netAmount = depositAmount - fee
-      const expectedCINA = netAmount * parseFloat(exchangeRate.value)
-
-      return {
-        netAmount: netAmount.toFixed(2),
-        fee: fee.toFixed(4),
-        expectedCINA: expectedCINA.toFixed(6)
-      }
-    } catch (error) {
-      console.error('Failed to preview deposit:', error)
-      return { netAmount: '0', fee: '0', expectedCINA: '0' }
     }
   }
 
@@ -269,8 +146,8 @@ export const useFarmStore = defineStore('farm', () => {
 
   return {
     // State
-    totalCINAMined,
-    totalUSDTDeposited,
+    liquidityAmount,
+    incrementAmount,
     usdtBalance,
     depositedAmount,
     pendingCINA,
@@ -291,17 +168,10 @@ export const useFarmStore = defineStore('farm', () => {
     // Getters
     usdtBalanceFormatted,
     depositedAmountFormatted,
-    totalCINAMinedFormatted,
-    totalUSDTDepositedFormatted,
-    pendingCINAFormatted,
 
     // Actions
     fetchFarmData,
     fetchUserFarmData,
-    depositUSDT,
-    claimCINA,
-    withdrawUSDT,
-    previewDeposit,
     startAutoRefresh,
     stopAutoRefresh,
 

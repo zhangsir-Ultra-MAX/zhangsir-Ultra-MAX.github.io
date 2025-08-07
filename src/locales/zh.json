@@ -1,5 +1,7 @@
 {
   "available": "可用",
+  "pay": "支付",
+  "receive": "接收",
   "common": {
     "appName": "WRMB Dapp",
     "loading": "加载中...",
@@ -167,7 +169,10 @@
     "currentExchangeRate": "当前汇率",
     "externalShares": "外部份额",
     "externalSharesDescription": "已被提取的外部份额",
-    "fee": "手续费"
+    "fee": "手续费",
+    "highFeeWarning": "当前提取手续费较高，为",
+    "confirmHighFeeWithdraw": "您确定要继续提取吗？",
+    "highFeeTitle": "高手续费警告"
   },
   "wrap": {
     "title": "包装与解包",
@@ -598,13 +603,13 @@
     "stakingTime": "质押时间",
     "rewardRate": "奖励率",
     "availableRewards": "可用奖励",
-    "unstakeSuccess": "解除质押成功",
     "estimatedShares": "预估份额",
     "stakeTransaction": "质押交易",
     "unstakeTransaction": "解除质押交易",
     "stakeAmount": "质押数量",
     "unstakeAmount": "解除质押数量",
     "actualAmount": "实际数量",
-    "required": "预计需要"
+    "required": "预计需要",
+    "requiredAmount": "所需数量"
   }
 }

@@ -9,6 +9,7 @@ const getContractAddresses = (chainId: number) => {
     WRAP_MANAGER: CONTRACTS.WRAP_MANAGER[chainId as keyof typeof CONTRACTS.WRAP_MANAGER] || '',
     BOND_POOL: CONTRACTS.BOND_POOL[chainId as keyof typeof CONTRACTS.BOND_POOL] || '',
     STAKING_VAULT: CONTRACTS.STAKING_VAULT[chainId as keyof typeof CONTRACTS.STAKING_VAULT] || '',
+    FARM_VAULT: CONTRACTS.FARM_VAULT[chainId as keyof typeof CONTRACTS.FARM_VAULT] || '',
     WRMB: TOKENS.WRMB.addresses[chainId as keyof typeof TOKENS.WRMB.addresses] || '',
     SRMB: TOKENS.sRMB.addresses[chainId as keyof typeof TOKENS.sRMB.addresses] || '',
     CINA: TOKENS.CINA.addresses[chainId as keyof typeof TOKENS.CINA.addresses] || '',
@@ -110,21 +111,17 @@ const STAKING_VAULT_ABI = [
 ]
 
 const FARM_VAULT_ABI = [
-  'function totalCINAMined() view returns (uint256)',
-  'function totalUSDTDeposited() view returns (uint256)',
-  'function usdtBalance(address) view returns (uint256)',
-  'function depositedAmount(address) view returns (uint256)',
-  'function pendingCINA(address) view returns (uint256)',
-  'function farmAPY() view returns (uint256)',
-  'function farmRate() view returns (uint256)',
-  'function exchangeRate() view returns (uint256)',
-  'function minDepositAmount() view returns (uint256)',
-  'function depositFee() view returns (uint256)',
-  'function withdrawalFee() view returns (uint256)',
-  'function depositUSDT(uint256) returns (bool)',
-  'function claimCINA() returns (uint256)',
-  'event USDTDeposited(address indexed user, uint256 amount)',
-  'event CINAClaimed(address indexed user, uint256 amount)'
+  'function totalSupply() external view returns (uint256)',
+  'function balanceOf(address account) external view returns (uint256)',
+  'function earned(address account) external view returns (uint256)',
+  'function getRewardForDuration() external view returns (uint256)',
+  'function lastTimeRewardApplicable() external view returns (uint256)',
+  'function getRemainingTime() external view returns (uint256)',
+  'function rewardRate() external view returns (uint256)',
+  
+  'function deposit(uint256 amount) external',
+  'function withdraw(uint256 amount, bool isClaim) external',
+  'function getReward() external',
 ]
 
 const ERC20_ABI = [
@@ -230,6 +227,13 @@ class ContractService {
     const walletStore = useWalletStore()
     const addresses = getContractAddresses(walletStore.chainId)
     return this.getContract(addresses.STAKING_VAULT, STAKING_VAULT_ABI, withSigner)
+  }
+
+  // Farm Vault Contract
+  getFarmVaultContract(withSigner = false): Contract | null {
+    const walletStore = useWalletStore()
+    const addresses = getContractAddresses(walletStore.chainId)
+    return this.getContract(addresses.FARM_VAULT, FARM_VAULT_ABI, withSigner)
   }
   
   // Generic ERC20 contract

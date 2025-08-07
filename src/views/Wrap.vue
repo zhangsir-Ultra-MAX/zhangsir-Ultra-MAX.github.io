@@ -454,15 +454,13 @@ const transactionDetails = computed(() => {
   
   if (mode.value === 'wrap' && wrapAmount.value) {
     details.push(
-      { label: t('wrap.inputAmount'), value: `${formatNumber(wrapAmount.value, 2)} sRMB`, highlight: true },
-      { label: t('wrap.outputAmount'), value: `${formatNumber(wrapPreview.value?.outputAmount || '0', 6)} sWRMB` },
-      { label: t('wrap.fee'), value: `${formatNumber(wrapPreview.value?.fee || '0', 2)} sRMB` }
+      { label: t('pay'), value: `-${formatNumber(wrapAmount.value, 2)} sRMB`, highlight: true },
+      { label: t('receive'), value: `${formatNumber(wrapPreview.value?.outputAmount || '0', 6)} sWRMB` },
     )
   } else if (mode.value === 'unwrap' && unwrapAmount.value) {
     details.push(
-      { label: t('wrap.inputAmount'), value: `${formatNumber(unwrapPreview.value?.sWRMBBurned || '0', 6)} sWRMB`, highlight: true },
-      { label: t('wrap.outputAmount'), value: `${formatNumber(unwrapPreview.value?.sRMBReceived || '0', 2)} sRMB` },
-      { label: t('wrap.fee'), value: `${formatNumber(unwrapPreview.value?.fee || '0', 1)} sRMB` }
+      { label: t('pay'), value: `-${formatNumber(unwrapPreview.value?.sWRMBBurned || '0', 6)} sWRMB`, highlight: true },
+      { label: t('receive'), value: `${formatNumber(unwrapPreview.value?.sRMBReceived || '0', 2)} sRMB` },
     )
   }
   

@@ -13,21 +13,15 @@
             <div class="card-header">
               <h3 class="card-title">{{ $t('staking.yourStaked') }}</h3>
               <div class="card-subtitle">
-                {{ $t('staking.apy') }}  {{ formatNumber(stakingStore.currentAPY) }}%
+                {{ $t('staking.apy') }} {{ formatNumber(stakingStore.currentAPY) }}%
               </div>
             </div>
             <div class="card-value">
-              <img src="../assets/logo.png" alt="" class="token-icon"> 
-              <AnimatedNumber 
-                class="animated-number"
-                :value="stakingStore.yourStaked" 
-                :decimals="8"
+              <img src="../assets/logo.png" alt="" class="token-icon">
+              <AnimatedNumber class="animated-number" :value="stakingStore.yourStaked" :decimals="8"
                 :auto-increment="walletStore.isConnected && parseFloat(stakingStore.yourStaked) > 0"
-                :increment-amount="parseFloat(stakingStore.incrementAmount)"
-                :increment-interval="1000"
-                :cache-key="`yourStaked_${walletStore.address}`"
-                :use-cache="false"
-              />
+                :increment-amount="parseFloat(stakingStore.incrementAmount)" :increment-interval="1000"
+                :cache-key="`yourStaked_${walletStore.address}`" :use-cache="false" />
             </div>
           </div>
         </div>
@@ -42,27 +36,19 @@
               <div class="action-form">
                 <div class="input-section">
                   <div class="input-group">
-                    <el-input 
-                      v-model="stakeAmount" 
-                      :placeholder="formatNumberK(stakingStore.cinaBalance, 6) + '  available'" 
-                      size="large"
-                      class="amount-input" 
-                      @input="handleStakeAmountChange"
-                    >
+                    <el-input v-model="stakeAmount"
+                      :placeholder="formatNumberK(stakingStore.cinaBalance, 6) + '  available'" size="large"
+                      class="amount-input" @input="handleStakeAmountChange">
                       <template #suffix>
                         <span class="input-suffix">CINA</span>
                       </template>
                     </el-input>
                   </div>
-                  
+
                   <!-- Quick Amount Buttons -->
                   <div class="quick-amounts">
-                    <el-button 
-                      v-for="percentage in [25, 50, 75]" 
-                      :key="percentage" 
-                      size="small"
-                      @click="setStakePercentage(percentage)"
-                    >
+                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                      @click="setStakePercentage(percentage)">
                       {{ percentage }}%
                     </el-button>
                     <el-button @click="setMaxStake" class="max-button" size="small">
@@ -72,34 +58,33 @@
 
                   <!-- Minimum Stake Warning -->
                   <div v-if="showMinStakeWarning" class="warning-info">
-                    <el-icon><Warning /></el-icon>
-                    <span>{{ $t('staking.minStakeWarning', { amount: formatNumber(stakingStore.minStakeAmount) }) }}</span>
+                    <el-icon>
+                      <Warning />
+                    </el-icon>
+                    <span>{{ $t('staking.minStakeWarning', { amount: formatNumber(stakingStore.minStakeAmount) })
+                      }}</span>
                   </div>
                 </div>
 
                 <!-- Staking Preview -->
-                <div v-if="stakePreview" class="preview-section">
+                <div v-if="stakePreviewData" class="preview-section">
                   <h4 class="preview-title">{{ $t('staking.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('staking.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(stakePreview.shares, 2) }} stCINA</span>
+                      <span class="preview-value">{{ formatNumber(stakePreviewData.shares, 2) }} stCINA</span>
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('staking.exchangeRate') }}</span>
-                      <span class="preview-value">1 CINA ≈ {{ formatNumber(stakePreview.exchangeRate, 6) }} stCINA</span>
+                      <span class="preview-value">1 CINA ≈ {{ formatNumber((1 / parseFloat(stakePreviewData.shares)), 6)
+                        }} stCINA</span>
                     </div>
                   </div>
                 </div>
 
-                <el-button 
-                  type="primary" 
-                  size="large" 
-                  :loading="transactionStatus === 'loading' && activeTab === 'stake'"
-                  :disabled="!isStakeValid" 
-                  @click="handleStake" 
-                  class="action-button"
-                >
+                <el-button type="primary" size="large"
+                  :loading="transactionStatus === 'loading' && activeTab === 'stake'" :disabled="!isStakeValid"
+                  @click="handleStake" class="action-button">
                   {{ $t('staking.stakeCINA') }}
                 </el-button>
               </div>
@@ -112,27 +97,19 @@
               <div class="action-form">
                 <div class="input-section">
                   <div class="input-group">
-                    <el-input 
-                      v-model="unstakeAmount" 
-                      :placeholder="formatNumberK(stakingStore.stakedAmount, 6) + '  available'" 
-                      size="large"
-                      class="amount-input" 
-                      @input="handleUnstakeAmountChange"
-                    >
+                    <el-input v-model="unstakeAmount"
+                      :placeholder="formatNumberK(stakingStore.stakedAmount, 6) + '  available'" size="large"
+                      class="amount-input" @input="handleUnstakeAmountChange">
                       <template #suffix>
                         <span class="input-suffix">CINA</span>
                       </template>
                     </el-input>
                   </div>
-                  
+
                   <!-- Quick Amount Buttons -->
                   <div class="quick-amounts">
-                    <el-button 
-                      v-for="percentage in [25, 50, 75]" 
-                      :key="percentage" 
-                      size="small"
-                      @click="setUnstakePercentage(percentage)"
-                    >
+                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                      @click="setUnstakePercentage(percentage)">
                       {{ percentage }}%
                     </el-button>
                     <el-button @click="setMaxUnstake" class="max-button" size="small">
@@ -142,18 +119,20 @@
 
                   <!-- Note: Early unstake penalty not available in current contract -->
                   <div v-if="false" class="warning-info early-unstake">
-                    <el-icon><Warning /></el-icon>
+                    <el-icon>
+                      <Warning />
+                    </el-icon>
                     <span>{{ $t('staking.earlyUnstakeWarning', { penalty: 0 }) }}</span>
                   </div>
                 </div>
 
                 <!-- Unstaking Preview -->
-                <div v-if="unstakePreview" class="preview-section">
+                <div v-if="unstakePreviewData" class="preview-section">
                   <h4 class="preview-title">{{ $t('staking.preview') }}</h4>
                   <div class="preview-details">
                     <div class="preview-row">
                       <span>{{ $t('staking.required') }}</span>
-                      <span class="preview-value">{{ formatNumber(unstakePreview.requiredAmount, 2) }} stCINA</span>
+                      <span class="preview-value">{{ formatNumber(unstakePreviewData.shares, 2) }} stCINA</span>
                     </div>
                     <div class="preview-row exchange-rate">
                       <span>{{ $t('staking.exchangeRate') }}</span>
@@ -162,14 +141,9 @@
                   </div>
                 </div>
 
-                <el-button 
-                  type="primary" 
-                  size="large" 
-                  :loading="transactionStatus === 'loading' && activeTab === 'unstake'"
-                  :disabled="!isUnstakeValid" 
-                  @click="handleUnstake" 
-                  class="action-button"
-                >
+                <el-button type="primary" size="large"
+                  :loading="transactionStatus === 'loading' && activeTab === 'unstake'" :disabled="!isUnstakeValid"
+                  @click="handleUnstake" class="action-button">
                   {{ $t('staking.unstakeCINA') }}
                 </el-button>
               </div>
@@ -183,18 +157,10 @@
     </div>
 
     <!-- Transaction Modal -->
-    <TransactionModal
-      v-model:visible="showTransactionModal"
-      :title="transactionModalTitle"
-      :steps="transactionSteps"
-      :current-step="currentTransactionStep"
-      :status="transactionStatus"
-      :transaction-details="transactionDetails"
-      :transaction-hash="transactionHash"
-      :error-message="transactionError"
-      @close="handleTransactionModalClose"
-      @retry="handleTransactionRetry"
-    />
+    <TransactionModal v-model:visible="showTransactionModal" :title="transactionModalTitle" :steps="transactionSteps"
+      :current-step="currentTransactionStep" :status="transactionStatus" :transaction-details="transactionDetails"
+      :transaction-hash="transactionHash" :error-message="transactionError" @close="handleTransactionModalClose"
+      @retry="handleTransactionRetry" />
   </div>
 </template>
 
@@ -213,6 +179,7 @@ import { useWalletStore } from '@/stores/wallet'
 import { useStakingStore } from '@/stores/staking'
 import { contractService } from '@/services/contracts'
 import { formatNumber, formatNumberK } from '@/utils/format'
+import { debounce } from '@/utils/debounce'
 
 const { t } = useI18n()
 const walletStore = useWalletStore()
@@ -221,6 +188,13 @@ const stakingStore = useStakingStore()
 const activeTab = ref('stake')
 const stakeAmount = ref('')
 const unstakeAmount = ref('')
+const stakePreviewData = ref({
+  shares: '',
+  fee: '0'
+})
+const unstakePreviewData = ref({
+  shares: ''
+})
 
 // Transaction Modal
 const showTransactionModal = ref(false)
@@ -241,13 +215,13 @@ const transactionDetails = computed(() => {
 
   if (activeTab.value === 'stake' && stakeAmount.value) {
     details.push(
-      { label: t('staking.stakeAmount'), value: `${formatNumber(stakeAmount.value, 6)} CINA`, highlight: true },
-      { label: t('staking.estimatedShares'), value: `${formatNumber(stakePreview.value?.shares || '0', 6)} stCINA` }
+      { label: t('pay'), value: `-${formatNumber(stakeAmount.value, 6)} CINA`, highlight: true },
+      { label: t('receive'), value: `${formatNumber(stakePreviewData.value?.shares || '0', 6)} stCINA` }
     )
   } else if (activeTab.value === 'unstake' && unstakeAmount.value) {
     details.push(
-      { label: t('staking.unstakeAmount'), value: `${formatNumber(unstakeAmount.value, 6)} CINA`, highlight: true },
-      { label: t('staking.requiredAmount'), value: `${formatNumber(unstakePreview.value?.requiredAmount || '0', 6)} stCINA` }
+      { label: t('pay'), value: `-${formatNumber(unstakePreviewData.value?.shares || '0', 6)} stCINA` },
+      { label: t('receive'), value: `${formatNumber(unstakeAmount.value, 6)} CINA`, highlight: true },
     )
   }
 
@@ -257,9 +231,9 @@ const transactionDetails = computed(() => {
 // Computed properties
 const isStakeValid = computed(() => {
   const amount = parseFloat(stakeAmount.value)
-  return amount > 0 && 
-         amount <= parseFloat(stakingStore.cinaBalance) && 
-         amount >= parseFloat(stakingStore.minStakeAmount)
+  return amount > 0 &&
+    amount <= parseFloat(stakingStore.cinaBalance) &&
+    amount >= parseFloat(stakingStore.minStakeAmount)
 })
 
 const isUnstakeValid = computed(() => {
@@ -276,57 +250,94 @@ const showMinStakeWarning = computed(() => {
 const stakePreview = computed(() => {
   const amount = parseFloat(stakeAmount.value)
   if (!amount || amount <= 0) return null
-  
+
   const navCina = parseFloat(stakingStore.navCina)
   const shares = amount / navCina // ERC4626: shares = assets / NAV
-  
+
   return {
     shares,
-    exchangeRate: 1/navCina
+    exchangeRate: 1 / navCina
   }
 })
 
 const unstakePreview = computed(() => {
   const amount = parseFloat(unstakeAmount.value)
   if (!amount || amount <= 0) return null
-  
+
   const navCina = parseFloat(stakingStore.navCina)
   const actualAmount = amount * navCina // ERC4626: assets = shares * NAV
-  
+
   return {
     requiredAmount: actualAmount
   }
 })
 
+// Debounced preview functions
+const debouncedStakePreview = debounce(async (amount: string) => {
+  if (amount && parseFloat(amount) > 0) {
+    try {
+      stakePreviewData.value = await stakingStore.previewDeposit(amount)
+    } catch (error) {
+      console.error('Failed to preview stake:', error)
+    }
+  } else {
+    stakePreviewData.value = { shares: '', fee: '0' }
+  }
+}, 500)
+
+const debouncedUnstakePreview = debounce(async (amount: string) => {
+  if (amount && parseFloat(amount) > 0) {
+    try {
+      unstakePreviewData.value = await stakingStore.previewWithdraw(amount)
+    } catch (error) {
+      console.error('Failed to preview unstake:', error)
+    }
+  } else {
+    unstakePreviewData.value = { shares: '' }
+  }
+}, 500)
+
 // Methods
 const handleStakeAmountChange = (value: string) => {
   const cleanValue = value.replace(/[^0-9.]/g, '')
   stakeAmount.value = cleanValue
+  debouncedStakePreview(cleanValue)
 }
 
 const handleUnstakeAmountChange = (value: string) => {
   const cleanValue = value.replace(/[^0-9.]/g, '')
   unstakeAmount.value = cleanValue
+  debouncedUnstakePreview(cleanValue)
 }
 
 const setStakePercentage = (percentage: number) => {
   const balance = parseFloat(stakingStore.cinaBalance)
-  const amount = (balance * percentage / 100).toFixed(6)
+  let amount = '0.0'
+  if (balance > 0) {
+    amount = (balance * percentage / 100).toFixed(6)
+  }
   stakeAmount.value = amount
+  debouncedStakePreview(amount)
 }
 
 const setMaxStake = () => {
   stakeAmount.value = stakingStore.cinaBalance
+  debouncedStakePreview(stakingStore.cinaBalance)
 }
 
 const setUnstakePercentage = (percentage: number) => {
   const balance = parseFloat(stakingStore.stakedAmount)
-  const amount = (balance * percentage / 100).toFixed(6)
+  let amount = '0.0'
+  if (balance > 0) {
+    amount = (balance * percentage / 100).toFixed(6)
+  }
   unstakeAmount.value = amount
+  debouncedUnstakePreview(amount)
 }
 
 const setMaxUnstake = () => {
   unstakeAmount.value = stakingStore.stakedAmount
+  debouncedUnstakePreview(stakingStore.stakedAmount)
 }
 
 const handleStake = async () => {
@@ -338,37 +349,36 @@ const handleStake = async () => {
   transactionStatus.value = 'pending'
 
   try {
-    const amount = parseFloat(stakeAmount.value)
-    const amountWei = parseUnits(amount.toString(), 18)
-    
+    const amountWei = parseUnits(stakeAmount.value, 18)
+
     // Step 1: Check and approve CINA if needed
     const stakingContract = contractService.getStakingVaultContract(true)
     const cinaContract = contractService.getCINAContract(true)
-    
+
     if (!stakingContract || !cinaContract) {
       throw new Error('Contract not available')
     }
-    
+
     const stakingAddress = await stakingContract.getAddress()
     const allowance = await cinaContract.allowance(walletStore.address, stakingAddress)
-    
+
     if (allowance < amountWei) {
       transactionStatus.value = 'loading'
       const approveTx = await cinaContract.approve(stakingAddress, amountWei)
       await approveTx.wait()
     }
-    
+
     currentTransactionStep.value = 1
-    
+
     // Step 2: Execute staking
     transactionStatus.value = 'loading'
     const depositTx = await stakingContract.deposit(amountWei, walletStore.address)
     const receipt = await depositTx.wait()
-    
+
     transactionHash.value = receipt.hash
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
-    
+
     // Reset form and refresh data
     stakeAmount.value = ''
     await stakingStore.fetchStakingData()
@@ -390,22 +400,31 @@ const handleUnstake = async () => {
   transactionStatus.value = 'loading'
 
   try {
-    const amount = parseFloat(unstakeAmount.value)
-    const amountWei = parseUnits(amount.toString(), 18)
-    
+    const amountWei = parseUnits(unstakeAmount.value, 18)
+
     // Execute unstaking
     const stakingContract = contractService.getStakingVaultContract(true)
     if (!stakingContract) {
       throw new Error('Contract not available')
     }
 
-    const withdrawTx = await stakingContract.withdraw(amountWei, walletStore.address, walletStore.address)
-    const receipt = await withdrawTx.wait()
-    
-    transactionHash.value = receipt.hash
+    if (unstakeAmount.value == stakingStore.stakedAmount) {
+      const withdrawTx = await stakingContract.redeem(
+        parseUnits(stakingStore.stCINABalance, 18),
+        walletStore.address,
+        walletStore.address
+      )
+      const receipt = await withdrawTx.wait()
+      transactionHash.value = receipt.hash
+    } else {
+      const withdrawTx = await stakingContract.withdraw(amountWei, walletStore.address, walletStore.address)
+      const receipt = await withdrawTx.wait()
+      transactionHash.value = receipt.hash
+    }
+
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
-    
+
     // Reset form and refresh data
     unstakeAmount.value = ''
     await stakingStore.fetchStakingData()
@@ -422,6 +441,7 @@ const handleUnstake = async () => {
 onMounted(async () => {
   if (walletStore.isConnected) {
     await stakingStore.fetchStakingData()
+    await stakingStore.startAutoRefresh()
   }
 })
 
@@ -636,7 +656,7 @@ const handleTransactionRetry = () => {
   .staking-content {
     @apply px-4 py-6;
   }
-  
+
   .overview-grid {
     @apply grid-cols-1 gap-4;
   }

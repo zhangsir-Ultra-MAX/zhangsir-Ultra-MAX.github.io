@@ -1,5 +1,7 @@
 {
   "available": "available",
+  "pay": "Pay",
+  "receive": "Receive",
   "common": {
     "appName": "WRMB Dapp",
     "loading": "Loading...",
@@ -167,7 +169,10 @@
     "currentExchangeRate": "Rate",
     "externalShares": "External Shares",
     "externalSharesDescription": "External share withdrawn",
-    "fee": "Fee"
+    "fee": "Fee",
+    "highFeeWarning": "Current withdrawal fee is high at",
+    "confirmHighFeeWithdraw": "Are you sure you want to continue with the withdrawal?",
+    "highFeeTitle": "High Fee Warning"
   },
   "wrap": {
     "title": "Wrap & Unwrap",
@@ -598,13 +603,13 @@
     "stakingTime": "Staking Time",
     "rewardRate": "Reward Rate",
     "availableRewards": "Available Rewards",
-    "unstakeSuccess": "Unstake successful",
     "estimatedShares": "Estimated Shares",
     "stakeTransaction": "Stake Transaction",
     "unstakeTransaction": "Unstake Transaction",
     "stakeAmount": "Stake Amount",
     "unstakeAmount": "Unstake Amount",
     "actualAmount": "Actual Amount",
-    "required": "Required"
+    "required": "Required",
+    "requiredAmount": "Required Amount"
   }
 }

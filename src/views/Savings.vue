@@ -182,7 +182,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Wallet,
 } from '@element-plus/icons-vue'
@@ -232,13 +232,14 @@ const transactionDetails = computed(() => {
 
   if (activeTab.value === 'deposit' && depositAmount.value) {
     details.push(
-      { label: t('savings.depositAmount'), value: `${formatNumber(depositAmount.value, 6)} WRMB`, highlight: true },
-      { label: t('savings.estimatedShares'), value: `${formatNumber(depositPreview.value?.shares || '0', 6)} sWRMB` }
+      { label: t('pay'), value: `-${formatNumber(depositAmount.value, 6)} WRMB`, highlight: true },
+      { label: t('receive'), value: `${formatNumber(depositPreview.value?.shares || '0', 6)} sWRMB` }
     )
   } else if (activeTab.value === 'withdraw' && withdrawAmount.value) {
     details.push(
-      { label: t('savings.withdrawAmount'), value: `${formatNumber(withdrawAmount.value, 6)} WRMB`, highlight: true },
-      { label: t('savings.sharesRequired'), value: `${formatNumber(withdrawPreview.value?.shares || '0', 6)} sWRMB` }
+      { label: t('pay'), value: `-${formatNumber(withdrawPreview.value?.shares || '0', 6)} sWRMB` },
+      { label: t('receive'), value: `${formatNumber(withdrawAmount.value, 6)} WRMB`, highlight: true },
+      { label: t('savings.fee'), value: `${formatNumber(withdrawPreview.value?.assets, 6)} WRMB` }
     )
   }
 
@@ -389,6 +390,25 @@ const handleDeposit = async () => {
 
 const handleWithdraw = async () => {
   if (!isWithdrawValid.value || !walletStore.isConnected) return
+
+  // 检查手续费是否超过10%，需要二次确认
+  const feePercentage = parseFloat(withdrawPreview.value.fee) * 100
+  if (feePercentage > 10) {
+    const confirmed = await ElMessageBox.confirm(
+      `${t('savings.highFeeWarning')} ${formatNumber(feePercentage.toString(), 2)}%。${t('savings.confirmHighFeeWithdraw')}`,
+      t('savings.highFeeTitle'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+        dangerouslyUseHTMLString: false
+      }
+    ).catch(() => false)
+    
+    if (!confirmed) {
+      return
+    }
+  }
 
   transactionModalTitle.value = t('savings.withdrawTransaction')
   showTransactionModal.value = true

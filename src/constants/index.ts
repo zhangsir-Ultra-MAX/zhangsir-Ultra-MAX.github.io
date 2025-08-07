@@ -207,6 +207,12 @@ export const CONTRACTS = {
     [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_STAKING_CINA_VAULT_ADDRESS || '',
     [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_STAKING_CINA_VAULT_ADDRESS || ''
   },
+  FARM_VAULT: {
+    [NETWORKS.ETHEREUM.chainId]: import.meta.env.VITE_MAINNET_FARM_VAULT_ADDRESS || '',
+    [NETWORKS.GOERLI.chainId]: import.meta.env.VITE_GOERLI_FARM_VAULT_ADDRESS || '',
+    [NETWORKS.SEPOLIA.chainId]: import.meta.env.VITE_SEPOLIA_FARM_VAULT_ADDRESS || '',
+    [NETWORKS.LOCAL.chainId]: import.meta.env.VITE_LOCALHOST_FARM_VAULT_ADDRESS || ''
+  },
 } as const
 
 // Transaction settings
