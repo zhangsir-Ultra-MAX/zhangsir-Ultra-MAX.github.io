@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { formatUnits, parseUnits } from 'ethers'
+import { formatUnits } from 'ethers'
 import { useWalletStore } from './wallet'
-import { useAppStore } from './app'
 import { contractService } from '../services/contracts'
 import BigNumber from 'bignumber.js'
 
@@ -42,7 +41,6 @@ export const useFarmStore = defineStore('farm', () => {
   // Actions
   const fetchFarmData = async () => {
     const walletStore = useWalletStore()
-    const appStore = useAppStore()
 
     if (!walletStore.isConnected) return
 
@@ -68,7 +66,7 @@ export const useFarmStore = defineStore('farm', () => {
       farmRate.value = formatUnits(rewardRate, 18) // CINA rewards per second
       pendingCINA.value = formatUnits(earnedAmount, 18)
       incrementAmount.value = new BigNumber(farmRate.value).multipliedBy(userBalance).dividedBy(totalSupply).toFixed(18)
-      console.log(pendingCINA.value, incrementAmount.value);
+
       // Calculate APY based on reward rate and total supply
       if (totalSupply > 0) {
         const annualRewards = parseFloat(farmRate.value) * 365 * 24 * 60 * 60
@@ -77,12 +75,6 @@ export const useFarmStore = defineStore('farm', () => {
       } else {
         farmAPY.value = '0'
       }
-
-      // Set default values (these might come from other contracts or be configurable)
-      exchangeRate.value = '1.0' // This should be fetched from price oracle
-      minDepositAmount.value = '10.0'
-      depositFee.value = '0.001' // 0.1%
-      withdrawalFee.value = '0.002' // 0.2%
 
       // Fetch user-specific data if connected
       if (walletStore.address) {

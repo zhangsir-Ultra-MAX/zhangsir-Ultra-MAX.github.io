@@ -38,9 +38,9 @@
                   <div class="input-section">
                     <div class="input-group">
                       <div class="input-with-select">
-                        <el-input v-model="depositAmount"
+                        <FormattedInput v-model="depositAmount"
                           :placeholder="formatNumberK(farmStore.usdtBalance) + '  ' + $t('available')" size="large"
-                          class="amount-input" @input="handleDepositAmountChange" />
+                          class="amount-input" :decimals="6" :use-abbreviation="true" />
                         <TokenSelect v-model="depositToken" :tokens="availableTokens" placeholder="Select token" />
                       </div>
                     </div>
@@ -83,9 +83,9 @@
                   <div class="input-section">
                     <div class="input-group">
                       <div class="input-with-select">
-                        <el-input v-model="withdrawAmount"
+                        <FormattedInput v-model="withdrawAmount"
                           :placeholder="formatNumberK(farmStore.depositedAmount) + '  ' + $t('available')" size="large"
-                          class="amount-input" @input="handleWithdrawAmountChange" />
+                          class="amount-input" :decimals="6" :use-abbreviation="true" />
                         <TokenSelect v-model="withdrawToken" :tokens="availableTokens" placeholder="Select token" />
                       </div>
                     </div>
@@ -158,6 +158,7 @@ import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import TokenSelect from '@/components/TokenSelect.vue'
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import PullToRefresh from '@/components/common/PullToRefresh.vue'
+import FormattedInput from '@/components/common/FormattedInput.vue'
 import { usePullToRefresh } from '@/composables/usePullToRefresh'
 import { useWalletStore } from '@/stores/wallet'
 import { useFarmStore } from '@/stores/farm'
@@ -312,13 +313,6 @@ const withdrawPreview = computed(() => {
   }
 })
 
-// Methods
-const handleDepositAmountChange = (value: string) => {
-  // Remove non-numeric characters except decimal point
-  const cleanValue = value.replace(/[^0-9.]/g, '')
-  depositAmount.value = cleanValue
-}
-
 const setDepositPercentage = (percentage: number) => {
   const balance = parseFloat(farmStore.usdtBalance)
   const amount = (balance * percentage / 100).toFixed(6)
@@ -381,12 +375,6 @@ const handleDeposit = async () => {
     transactionError.value = error.message || t('farm.depositFailed')
     console.error('Deposit failed:', error)
   }
-}
-
-const handleWithdrawAmountChange = (value: string) => {
-  // Remove non-numeric characters except decimal point
-  const cleanValue = value.replace(/[^0-9.]/g, '')
-  withdrawAmount.value = cleanValue
 }
 
 const setWithdrawPercentage = (percentage: number) => {

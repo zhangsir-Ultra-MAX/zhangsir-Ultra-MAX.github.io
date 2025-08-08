@@ -38,13 +38,14 @@
                 <div class="action-form">
                   <div class="input-section">
                     <div class="input-group">
-                      <el-input v-model="depositAmount"
+                      <FormattedInput v-model="depositAmount"
                         :placeholder="formatNumberK(savingsStore.wrmbBalance) + '  ' + $t('available')" size="large"
-                        class="amount-input" @input="handleDepositAmountChange">
+                        class="amount-input" :decimals="6" :use-abbreviation="true" :max-decimals="18"
+                        @input-change="handleDepositAmountChange">
                         <template #suffix>
                           <span class="input-suffix">WRMB</span>
                         </template>
-                      </el-input>
+                      </FormattedInput>
                     </div>
 
                     <!-- Quick Amount Buttons -->
@@ -90,13 +91,14 @@
                 <div class="action-form">
                   <div class="input-section">
                     <div class="input-group">
-                      <el-input v-model="withdrawAmount"
+                      <FormattedInput v-model="withdrawAmount"
                         :placeholder="formatNumberK(savingsStore.userAssetValue) + '  ' + $t('available')" size="large"
-                        class="amount-input" @input="handleWithdrawAmountChange">
+                        class="amount-input" :decimals="6" :use-abbreviation="true" :max-decimals="18"
+                        @input-change="handleWithdrawAmountChange">
                         <template #suffix>
                           <span class="input-suffix">WRMB</span>
                         </template>
-                      </el-input>
+                      </FormattedInput>
                     </div>
 
                     <!-- Quick Amount Buttons -->
@@ -191,10 +193,11 @@ import { parseUnits } from 'ethers'
 import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
+import FormattedInput from '@/components/common/FormattedInput.vue'
 import { useSavingsStore } from '@/stores/savings'
 import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
-import { formatNumber, formatNumberK } from '@/utils/format'
+import { formatNumber, formatNumberK, calculatePercentageAmount } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
 import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
@@ -334,13 +337,13 @@ const setMaxWithdraw = () => {
 }
 
 const setDepositPercentage = (percentage: number) => {
-  const amount = (parseFloat(savingsStore.wrmbBalance) * percentage / 100).toString()
+  const amount = calculatePercentageAmount(savingsStore.wrmbBalance, percentage)
   depositAmount.value = amount
   handleDepositAmountChange(amount)
 }
 
 const setWithdrawPercentage = (percentage: number) => {
-  const amount = (parseFloat(savingsStore.userAssetValue) * percentage / 100).toString()
+  const amount = calculatePercentageAmount(savingsStore.userAssetValue, percentage)
   withdrawAmount.value = amount
   handleWithdrawAmountChange(amount)
 }

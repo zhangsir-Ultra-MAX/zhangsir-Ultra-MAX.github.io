@@ -1,3 +1,5 @@
+import BigNumber from 'bignumber.js'
+
 /**
  * Utility functions for formatting numbers, dates, and other data
  */
@@ -33,6 +35,9 @@ export const formatNumber = (
   // 如果启用简写功能
   if (minAbbreviated > 0) {
     const absNum = Math.abs(num)
+    if (absNum >= 1e12 && minAbbreviated >= 1) {
+      return (num / 1e12).toFixed(2) + 'T'
+    }
     if (absNum >= 1e9 && minAbbreviated >= 1) {
       return (num / 1e9).toFixed(2) + 'B'
     }
@@ -92,7 +97,7 @@ export const formatCurrency = (
 }
 
 /**
- * Format a large number with K, M, B suffixes
+ * Format a large number with K, M, B, T suffixes
  * @param value - The number to format
  * @param decimals - Number of decimal places (default: 1)
  * @returns Formatted number string with suffix
@@ -108,7 +113,9 @@ export const formatLargeNumber = (
   const absNum = Math.abs(num)
   const sign = num < 0 ? '-' : ''
 
-  if (absNum >= 1e9) {
+  if (absNum >= 1e12) {
+    return sign + (absNum / 1e12).toFixed(decimals) + 'T'
+  } else if (absNum >= 1e9) {
     return sign + (absNum / 1e9).toFixed(decimals) + 'B'
   } else if (absNum >= 1e6) {
     return sign + (absNum / 1e6).toFixed(decimals) + 'M'
@@ -357,5 +364,31 @@ export const formatDuration = (seconds: number): string => {
     const days = Math.floor(seconds / 86400)
     const remainingHours = Math.floor((seconds % 86400) / 3600)
     return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`
+  }
+}
+
+/**
+ * Calculate percentage of a balance with high precision (supports 18 decimal places)
+ * Uses ethers.js utilities for precise calculations to avoid floating point precision issues
+ * @param balance - The total balance as string
+ * @param percentage - The percentage (0-100)
+ * @param decimals - Number of decimal places to return (default: 6)
+ * @returns Calculated amount as string
+ */
+export const calculatePercentageAmount = (
+  balance: string,
+  percentage: number,
+  decimals: number = 18
+): string => {
+  if (!balance || balance === '0' || percentage === 0) {
+    return '0'
+  }
+
+  try {
+    const bigAmout = new BigNumber(balance)
+    return bigAmout.multipliedBy(percentage).dividedBy(100).toFixed(decimals);
+  } catch (error) {
+    console.error('Error calculating percentage amount:', error)
+    return '0'
   }
 }

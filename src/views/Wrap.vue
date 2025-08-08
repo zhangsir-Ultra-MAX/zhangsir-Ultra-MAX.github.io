@@ -28,12 +28,14 @@
 
                   <div class="input-section">
                     <div class="input-group">
-                      <el-input v-model="wrapAmount" :placeholder="formatNumberK(sRMBBalance) + '  ' + $t('available')"
-                        size="large" class="amount-input" @input="handleWrapAmountChange">
+                      <FormattedInput v-model="wrapAmount"
+                        :placeholder="formatNumberK(sRMBBalance) + '  ' + $t('available')" size="large"
+                        class="amount-input" :decimals="6" :use-abbreviation="true" :max-decimals="6"
+                        @input-change="handleWrapAmountChange">
                         <template #suffix>
                           <span class="input-suffix">sRMB</span>
                         </template>
-                      </el-input>
+                      </FormattedInput>
                     </div>
 
                     <!-- Validation Error Message -->
@@ -71,12 +73,13 @@
                   </div>
 
                   <div class="input-group">
-                    <el-input :value="wrapPreview?.outputAmount || '0'" :placeholder="$t('wrap.estimatedAmount')"
-                      size="large" class="amount-input" readonly>
+                    <FormattedInput :model-value="wrapPreview?.outputAmount || '0'"
+                      :placeholder="$t('wrap.estimatedAmount')" size="large" class="amount-input" readonly :decimals="6"
+                      :use-abbreviation="true" :max-decimals="18">
                       <template #suffix>
                         <span class="input-suffix">sWRMB</span>
                       </template>
-                    </el-input>
+                    </FormattedInput>
                   </div>
                 </div>
               </div>
@@ -131,17 +134,21 @@
                 <div class="token-input">
                   <div class="input-header">
                     <span class="input-label">{{ $t('wrap.desiredAmount') }}</span>
+                    <span class="balance-info">
+                      {{ $t('wrap.balance') }}: {{ formatNumberK(userUnwrappableAmount) }} sRMB
+                    </span>
                   </div>
 
                   <div class="input-section">
                     <div class="input-group">
-                      <el-input v-model="unwrapAmount"
+                      <FormattedInput v-model="unwrapAmount"
                         :placeholder="formatNumberK(userMaxUnwrappableAmount) + '  ' + $t('available')" size="large"
-                        class="amount-input" @input="handleUnwrapAmountChange">
+                        class="amount-input" :decimals="6" :use-abbreviation="true" :max-decimals="6"
+                        @input-change="handleUnwrapAmountChange">
                         <template #suffix>
                           <span class="input-suffix">sRMB</span>
                         </template>
-                      </el-input>
+                      </FormattedInput>
                     </div>
 
                     <!-- Validation Error Message -->
@@ -179,12 +186,13 @@
                   </div>
 
                   <div class="input-group">
-                    <el-input :value="unwrapPreview?.sWRMBBurned || '0'" :placeholder="$t('wrap.estimatedBurn')"
-                      size="large" class="amount-input" readonly>
+                    <FormattedInput :model-value="unwrapPreview?.sWRMBBurned || '0'"
+                      :placeholder="$t('wrap.estimatedBurn')" size="large" class="amount-input" readonly :decimals="6"
+                      :use-abbreviation="true" :max-decimals="18">
                       <template #suffix>
                         <span class="input-suffix">sWRMB</span>
                       </template>
-                    </el-input>
+                    </FormattedInput>
                   </div>
                 </div>
               </div>
@@ -301,9 +309,10 @@ import { formatUnits, parseUnits } from 'ethers'
 
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import PullToRefresh from '@/components/common/PullToRefresh.vue'
+import FormattedInput from '@/components/common/FormattedInput.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
-import { formatNumber, formatNumberK } from '@/utils/format'
+import { formatNumber, formatNumberK, calculatePercentageAmount } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
 import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
@@ -655,14 +664,13 @@ const switchMode = () => {
 }
 
 const setWrapPercentage = (percentage: number) => {
-  const amount = (parseFloat(sRMBBalance.value) * percentage / 100).toFixed(6)
+  const amount = calculatePercentageAmount(sRMBBalance.value, percentage)
   wrapAmount.value = amount
   handleWrapAmountChange(amount)
 }
 
 const setUnwrapPercentage = (percentage: number) => {
-  const maxUnwrappable = parseFloat(userMaxUnwrappableAmount.value)
-  const amount = (maxUnwrappable * percentage / 100).toFixed(6)
+  const amount = calculatePercentageAmount(userMaxUnwrappableAmount.value, percentage)
   unwrapAmount.value = amount
   handleUnwrapAmountChange(amount)
 }

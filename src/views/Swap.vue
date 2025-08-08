@@ -50,10 +50,12 @@
                                     <div class="input-group">
                                         <div class="amount-input">
                                             <div class="input-with-select">
-                                                <el-input type="number" v-model="fromAmount"
+                                                <FormattedInput v-model="fromAmount"
                                                     :placeholder="formatNumberK(fromTokenBalance) + '  ' + $t('available')"
-                                                    @input="handleFromAmountChange" size="large"
-                                                    :disabled="isSwapping || isLoadingQuote" />
+                                                    size="large" :decimals="6" :use-abbreviation="true"
+                                                    :max-decimals="fromToken?.decimals"
+                                                    :disabled="isSwapping || isLoadingQuote"
+                                                    @input-change="handleFromAmountChange" />
                                                 <TokenSelect v-model="fromToken" :tokens="availableTokens"
                                                     placeholder="Select token" :disabled="isSwapping" />
                                             </div>
@@ -91,10 +93,12 @@
                                     <div class="input-group">
                                         <div class="amount-input">
                                             <div class="input-with-select">
-                                                <el-input type="number" v-model="toAmount"
+                                                <FormattedInput v-model="toAmount"
                                                     :placeholder="formatNumberK(toTokenBalance) + '  ' + $t('available')"
-                                                    @input="handleToAmountChange" size="large"
-                                                    :disabled="isSwapping || isLoadingQuote" />
+                                                    size="large" :decimals="6" :use-abbreviation="true"
+                                                    :max-decimals="toToken?.decimals"
+                                                    :disabled="isSwapping || isLoadingQuote"
+                                                    @input-change="handleToAmountChange" />
                                                 <TokenSelect v-model="toToken" :tokens="availableTokens"
                                                     placeholder="Select token" :disabled="isSwapping" />
                                             </div>
@@ -114,7 +118,7 @@
                                     <span class="status-indicator">
                                         <span v-if="isV4Supported" class="status-supported">{{
                                             $t('swap.uniswapV4Available')
-                                            }}</span>
+                                        }}</span>
                                         <span v-else class="status-unsupported">
                                             {{ $t('swap.v4NotSupported') }}
                                             <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
@@ -132,7 +136,7 @@
                                     <span>{{ $t('swap.poolStatus') }}</span>
                                     <span class="status-indicator">
                                         <span v-if="poolExists" class="status-supported">{{ $t('swap.poolAvailable')
-                                            }}</span>
+                                        }}</span>
                                         <span v-else class="status-warning">
                                             {{ $t('swap.poolNotExists') }}
                                             <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
@@ -166,7 +170,7 @@
                                             fromToken.symbol }} ≈ {{
                                             formatNumber(exchangeRate, 6) }} {{ toToken.symbol }}</span>
                                     <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </div>
                         </div>
@@ -194,7 +198,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
-import { formatNumber, formatNumberK } from '@/utils/format'
+import { formatNumber, formatNumberK, calculatePercentageAmount } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
 import { Sort, InfoFilled, Setting } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -203,6 +207,7 @@ import { uniswapV4Service, type SwapParams, type QuoteResult } from '@/services/
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import TokenSelect from '@/components/TokenSelect.vue'
+import FormattedInput from '@/components/common/FormattedInput.vue'
 import { ethers, parseUnits } from 'ethers'
 import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
@@ -579,7 +584,7 @@ const debouncedGetReverseQuote = debounce(() => {
 const setDepositPercentage = (percentage: number) => {
     isForwardSwap.value = true
     if (parseFloat(fromTokenBalance.value) > 0) {
-        fromAmount.value = (parseFloat(fromTokenBalance.value) * percentage / 100).toString()
+        fromAmount.value = calculatePercentageAmount(fromTokenBalance.value, percentage, fromToken.value?.decimals)
         handleFromAmountChange()
     }
 }

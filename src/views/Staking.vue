@@ -38,13 +38,14 @@
                 <div class="action-form">
                   <div class="input-section">
                     <div class="input-group">
-                      <el-input v-model="stakeAmount"
+                      <FormattedInput v-model="stakeAmount"
                         :placeholder="formatNumberK(stakingStore.cinaBalance, 6) + '  available'" size="large"
-                        class="amount-input" @input="handleStakeAmountChange">
+                        class="amount-input" :decimals="6" :use-abbreviation="true" :max-decimals="18"
+                        @input-change="handleStakeAmountChange">
                         <template #suffix>
                           <span class="input-suffix">CINA</span>
                         </template>
-                      </el-input>
+                      </FormattedInput>
                     </div>
 
                     <!-- Quick Amount Buttons -->
@@ -100,13 +101,14 @@
                 <div class="action-form">
                   <div class="input-section">
                     <div class="input-group">
-                      <el-input v-model="unstakeAmount"
+                      <FormattedInput v-model="unstakeAmount"
                         :placeholder="formatNumberK(stakingStore.stakedAmount, 6) + '  available'" size="large"
-                        class="amount-input" @input="handleUnstakeAmountChange">
+                        class="amount-input" :decimals="6" :use-abbreviation="true" :max-decimals="18"
+                        @input-change="handleUnstakeAmountChange">
                         <template #suffix>
                           <span class="input-suffix">CINA</span>
                         </template>
-                      </el-input>
+                      </FormattedInput>
                     </div>
 
                     <!-- Quick Amount Buttons -->
@@ -178,10 +180,11 @@ import { parseUnits } from 'ethers'
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import PullToRefresh from '@/components/common/PullToRefresh.vue'
+import FormattedInput from '@/components/common/FormattedInput.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useStakingStore } from '@/stores/staking'
 import { contractService } from '@/services/contracts'
-import { formatNumber, formatNumberK } from '@/utils/format'
+import { formatNumber, formatNumberK, calculatePercentageAmount } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
 import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
@@ -295,11 +298,7 @@ const handleUnstakeAmountChange = (value: string) => {
 }
 
 const setStakePercentage = (percentage: number) => {
-  const balance = parseFloat(stakingStore.cinaBalance)
-  let amount = '0.0'
-  if (balance > 0) {
-    amount = (balance * percentage / 100).toFixed(6)
-  }
+  const amount = calculatePercentageAmount(stakingStore.cinaBalance, percentage)
   stakeAmount.value = amount
   debouncedStakePreview(amount)
 }
@@ -310,11 +309,7 @@ const setMaxStake = () => {
 }
 
 const setUnstakePercentage = (percentage: number) => {
-  const balance = parseFloat(stakingStore.stakedAmount)
-  let amount = '0.0'
-  if (balance > 0) {
-    amount = (balance * percentage / 100).toFixed(6)
-  }
+  const amount = calculatePercentageAmount(stakingStore.stakedAmount, percentage)
   unstakeAmount.value = amount
   debouncedUnstakePreview(amount)
 }
