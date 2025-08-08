@@ -183,6 +183,9 @@
                 <div class="token-input">
                   <div class="input-header">
                     <span class="input-label">{{ $t('wrap.requiredBurn') }}</span>
+                    <span class="balance-info">
+                      {{ $t('wrap.balance') }}: {{ formatNumberK(sWRMBBalance) }} sWRMB
+                    </span>
                   </div>
 
                   <div class="input-group">
@@ -195,10 +198,18 @@
                     </FormattedInput>
                   </div>
                 </div>
+
+                <!-- balance Error Message -->
+                <div v-if="unwrapSWRMBBalanceError" class="validation-error">
+                  <el-icon class="error-icon">
+                    <WarningFilled />
+                  </el-icon>
+                  <span class="error-text">{{ unwrapSWRMBBalanceError }}</span>
+                </div>
               </div>
 
               <!-- Preview -->
-              <div v-if="unwrapPreview" class="preview-section">
+              <div v-if="unwrapPreview && !unwrapValidationError && !unwrapSWRMBBalanceError" class="preview-section">
                 <h4 class="preview-title">{{ $t('wrap.preview') }}</h4>
                 <div class="preview-details">
                   <div class="preview-row">
@@ -492,10 +503,10 @@ const unwrapValidationError = computed(() => {
   if (!unwrapAmount.value) return ''
 
   const amount = parseFloat(unwrapAmount.value)
-  if (!amount || amount <= 0) return t('wrap.invalidAmount')
+  if (!amount || amount <= 0) return ''
 
   // Check if user has enough wrapped amount to unwrap
-  const unwrappableAmount = parseFloat(userMaxUnwrappableAmount.value)
+  const unwrappableAmount = parseFloat(userUnwrappableAmount.value)
   if (amount > unwrappableAmount) return t('wrap.insufficientUnwrappableAmount')
 
   // Check min/max amounts if config is loaded
@@ -505,6 +516,18 @@ const unwrapValidationError = computed(() => {
     if (minAmount > 0 && amount < minAmount) return t('wrap.belowMinUnwrapAmount', { min: formatNumber(minAmount) })
     if (maxAmount > 0 && amount > maxAmount) return t('wrap.aboveMaxUnwrapAmount', { max: formatNumber(maxAmount) })
   }
+
+  return ''
+})
+
+const unwrapSWRMBBalanceError = computed(() => {
+  if (!unwrapAmount.value) return ''
+
+  const amount = parseFloat(unwrapPreview.value?.sWRMBBurned || '0')
+  if (!amount || amount <= 0 || parseFloat(userUnwrappableAmount.value) <= 0) return ''
+
+  const unwrappableAmount = parseFloat(sWRMBBalance.value)
+  if (amount > unwrappableAmount && parseFloat(unwrapAmount.value) <= parseFloat(userUnwrappableAmount.value)) return 'sWRMB ' + t('wrap.insufficientBalance')
 
   return ''
 })
@@ -614,34 +637,10 @@ const debouncedUnwrapPreview = debounce(async (amount: string) => {
 }, 500)
 
 const handleWrapAmountChange = (value: string) => {
-  // 限制最大6位小数
-  const cleanValue = value.replace(/[^0-9.]/g, '')
-  const parts = cleanValue.split('.')
-  if (parts.length > 2) {
-    wrapAmount.value = parts[0] + '.' + parts.slice(1).join('')
-    return
-  }
-  if (parts.length === 2 && parts[1].length > 6) {
-    wrapAmount.value = parts[0] + '.' + parts[1].substring(0, 6)
-    return
-  }
-
   debouncedWrapPreview(value)
 }
 
 const handleUnwrapAmountChange = (value: string) => {
-  // 限制最大6位小数
-  const cleanValue = value.replace(/[^0-9.]/g, '')
-  const parts = cleanValue.split('.')
-  if (parts.length > 2) {
-    unwrapAmount.value = parts[0] + '.' + parts.slice(1).join('')
-    return
-  }
-  if (parts.length === 2 && parts[1].length > 6) {
-    unwrapAmount.value = parts[0] + '.' + parts[1].substring(0, 6)
-    return
-  }
-
   debouncedUnwrapPreview(value)
 }
 

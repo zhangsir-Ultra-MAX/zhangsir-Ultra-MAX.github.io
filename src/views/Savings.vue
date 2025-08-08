@@ -250,9 +250,9 @@ const transactionDetails = computed(() => {
       { label: t('pay'), value: `-${formatNumber(withdrawPreview.value?.shares || '0', 6)} sWRMB`, type: 'debit' },
       { label: t('receive'), value: `+${formatNumber(withdrawPreview.value?.assets || '0', 6)} WRMB`, highlight: true, type: 'credit' },
     )
-    if (parseFloat(withdrawPreviewFee.value) > 0) {
-      details.push({ label: t('savings.fee'), value: `-${formatNumber(withdrawPreviewFee.value, 6)} WRMB`, type: 'debit' })
-    }
+    // if (parseFloat(withdrawPreviewFee.value) > 0) {
+    //   details.push({ label: t('savings.fee'), value: `-${formatNumber(withdrawPreviewFee.value, 6)} WRMB`, type: 'debit' })
+    // }
   }
 
   return details

@@ -57,7 +57,8 @@
                                                     :disabled="isSwapping || isLoadingQuote"
                                                     @input-change="handleFromAmountChange" />
                                                 <TokenSelect v-model="fromToken" :tokens="availableTokens"
-                                                    placeholder="Select token" :disabled="isSwapping" />
+                                                    placeholder="Select token" :disabled="isSwapping"
+                                                    @token-change="fromTokenChange" />
                                             </div>
                                         </div>
                                     </div>
@@ -100,7 +101,8 @@
                                                     :disabled="isSwapping || isLoadingQuote"
                                                     @input-change="handleToAmountChange" />
                                                 <TokenSelect v-model="toToken" :tokens="availableTokens"
-                                                    placeholder="Select token" :disabled="isSwapping" />
+                                                    placeholder="Select token" :disabled="isSwapping"
+                                                    @token-change="toTokenChange" />
                                             </div>
                                         </div>
                                     </div>
@@ -261,12 +263,12 @@ const availableTokens = computed<Token[]>(() => {
             address: TOKENS.USDC.addresses[chainId as keyof typeof TOKENS.USDC.addresses] || TOKENS.USDC.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
             decimals: TOKENS.USDC.decimals
         },
-        // {
-        //     symbol: TOKENS.USDT.symbol,
-        //     name: TOKENS.USDT.name,
-        //     address: TOKENS.USDT.addresses[chainId as keyof typeof TOKENS.USDT.addresses] || TOKENS.USDT.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-        //     decimals: TOKENS.USDT.decimals
-        // }
+        {
+            symbol: TOKENS.USDT.symbol,
+            name: TOKENS.USDT.name,
+            address: TOKENS.USDT.addresses[chainId as keyof typeof TOKENS.USDT.addresses] || TOKENS.USDT.addresses[11155111] || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+            decimals: TOKENS.USDT.decimals
+        }
     ]
 })
 
@@ -286,60 +288,45 @@ watch(availableTokens, (tokens) => {
     }
 }, { immediate: true })
 
-// Watch for same token selection and auto-swap
-watch(fromToken, (newFromToken, oldFromToken) => {
-    if (newFromToken && toToken.value && newFromToken.symbol === toToken.value.symbol && oldFromToken && !isTokenSwapping.value) {
-        // 设置标志位防止循环触发
-        isTokenSwapping.value = true
-
-        // 代币相同时，交换代币并对调数值
-        toToken.value = oldFromToken
-        // 对调输入框数值
-        const tempAmount = fromAmount.value
-        fromAmount.value = toAmount.value
-        toAmount.value = tempAmount
-
-        // 取消当前请求并重新获取报价
-        cancelCurrentQuoteRequest()
-        currentQuote.value = null
-
-        // fromToken切换时使用正向计算
-        if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
-            isForwardSwap.value = true
-            debouncedGetQuote()
-        }
-
-        // 重置标志位
-        isTokenSwapping.value = false
+const fromTokenChange = (value: Token, oldValue: Token | undefined) => {
+    if (value.symbol === toToken.value?.symbol && oldValue != undefined) {
+        toToken.value = oldValue;
+        changeFromToAmount();
     }
-})
 
-watch(toToken, (newToToken, oldToToken) => {
-    if (newToToken && fromToken.value && newToToken.symbol === fromToken.value.symbol && oldToToken && !isTokenSwapping.value) {
-        // 设置标志位防止循环触发
-        isTokenSwapping.value = true
-        // 代币相同时，交换代币并对调数值
-        fromToken.value = oldToToken
+    // 取消当前请求并重新获取报价
+    cancelCurrentQuoteRequest()
+    currentQuote.value = null
 
-        // 对调输入框数值
-        const tempAmount = fromAmount.value
-        fromAmount.value = toAmount.value
-        toAmount.value = tempAmount
-
-        // 取消当前请求并重新获取报价
-        cancelCurrentQuoteRequest()
-        currentQuote.value = null
-
-        // toToken切换时使用反向计算
-        if (toAmount.value && parseFloat(toAmount.value) > 0) {
-            isForwardSwap.value = false
-            debouncedGetReverseQuote()
-        }
-
-        // 重置标志位
-        isTokenSwapping.value = false
+    // fromToken切换时使用正向计算
+    if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
+        isForwardSwap.value = true
+        debouncedGetQuote()
     }
-})
+}
+
+const changeFromToAmount = () => {
+    const tempAmount = fromAmount.value
+    fromAmount.value = toAmount.value
+    toAmount.value = tempAmount
+}
+
+const toTokenChange = (value: Token, oldValue: Token | undefined) => {
+    if (value.symbol == fromToken.value?.symbol && oldValue != undefined) {
+        fromToken.value = oldValue
+        changeFromToAmount();
+    }
+
+    // 取消当前请求并重新获取报价
+    cancelCurrentQuoteRequest()
+    currentQuote.value = null
+
+    // toToken切换时使用反向计算
+    if (toAmount.value && parseFloat(toAmount.value) > 0) {
+        isForwardSwap.value = false
+        debouncedGetReverseQuote()
+    }
+}
 
 watch(() => walletStore.chainId, (newChainId) => {
     if (newChainId) {
