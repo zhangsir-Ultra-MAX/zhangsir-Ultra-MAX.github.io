@@ -1,167 +1,169 @@
 <template>
-  <div class="staking">
-    <div class="staking-content">
-      <!-- Staking Overview -->
-      <div class="staking-overview">
-        <h2 class="section-title">
-          {{ $t('staking.overview') }}
-        </h2>
+  <PullToRefresh :is-pulling="isPulling" :is-refreshing="isRefreshing" :pull-distance="pullDistance"
+    :can-refresh="canRefresh">
+    <div class="staking">
+      <div class="staking-content">
+        <!-- Staking Overview -->
+        <div class="staking-overview">
+          <h2 class="section-title">
+            {{ $t('staking.overview') }}
+          </h2>
 
-        <div class="overview-grid">
-          <!-- Your Staked -->
-          <div class="overview-card">
-            <div class="card-header">
-              <h3 class="card-title">{{ $t('staking.yourStaked') }}</h3>
-              <div class="card-subtitle">
-                {{ $t('staking.apy') }} {{ formatNumber(stakingStore.currentAPY) }}%
+          <div class="overview-grid">
+            <!-- Your Staked -->
+            <div class="overview-card">
+              <div class="card-header">
+                <h3 class="card-title">{{ $t('staking.yourStaked') }}</h3>
+                <div class="card-subtitle">
+                  {{ $t('staking.apy') }} {{ formatNumber(stakingStore.currentAPY) }}%
+                </div>
               </div>
-            </div>
-            <div class="card-value">
-              <img src="../assets/logo.png" alt="" class="token-icon">
-              <AnimatedNumber class="animated-number" :value="stakingStore.yourStaked" :decimals="8"
-                :auto-increment="walletStore.isConnected && parseFloat(stakingStore.yourStaked) > 0"
-                :increment-amount="parseFloat(stakingStore.incrementAmount)" :increment-interval="1000"
-                :cache-key="`yourStaked_${walletStore.address}`" :use-cache="false" />
+              <div class="card-value">
+                <img src="../assets/logo.png" alt="" class="token-icon">
+                <AnimatedNumber class="animated-number" :value="stakingStore.yourStaked" :decimals="8"
+                  :auto-increment="walletStore.isConnected && parseFloat(stakingStore.yourStaked) > 0"
+                  :increment-amount="parseFloat(stakingStore.incrementAmount)" :increment-interval="1000"
+                  :cache-key="`yourStaked_${walletStore.address}`" :use-cache="false" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Staking Actions -->
-      <div class="action-section">
-        <el-tabs v-model="activeTab" class="staking-tabs">
-          <!-- Stake CINA Tab -->
-          <el-tab-pane :label="$t('staking.stakeCINA')" name="stake">
-            <div class="tab-content">
-              <div class="action-form">
-                <div class="input-section">
-                  <div class="input-group">
-                    <el-input v-model="stakeAmount"
-                      :placeholder="formatNumberK(stakingStore.cinaBalance, 6) + '  available'" size="large"
-                      class="amount-input" @input="handleStakeAmountChange">
-                      <template #suffix>
-                        <span class="input-suffix">CINA</span>
-                      </template>
-                    </el-input>
-                  </div>
+        <!-- Staking Actions -->
+        <div class="action-section">
+          <el-tabs v-model="activeTab" class="staking-tabs">
+            <!-- Stake CINA Tab -->
+            <el-tab-pane :label="$t('staking.stakeCINA')" name="stake">
+              <div class="tab-content">
+                <div class="action-form">
+                  <div class="input-section">
+                    <div class="input-group">
+                      <el-input v-model="stakeAmount"
+                        :placeholder="formatNumberK(stakingStore.cinaBalance, 6) + '  available'" size="large"
+                        class="amount-input" @input="handleStakeAmountChange">
+                        <template #suffix>
+                          <span class="input-suffix">CINA</span>
+                        </template>
+                      </el-input>
+                    </div>
 
-                  <!-- Quick Amount Buttons -->
-                  <div class="quick-amounts">
-                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                      @click="setStakePercentage(percentage)">
-                      {{ percentage }}%
-                    </el-button>
-                    <el-button @click="setMaxStake" class="max-button" size="small">
-                      {{ $t('common.max') }}
-                    </el-button>
-                  </div>
+                    <!-- Quick Amount Buttons -->
+                    <div class="quick-amounts">
+                      <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                        @click="setStakePercentage(percentage)">
+                        {{ percentage }}%
+                      </el-button>
+                      <el-button @click="setMaxStake" class="max-button" size="small">
+                        {{ $t('common.max') }}
+                      </el-button>
+                    </div>
 
-                  <!-- Minimum Stake Warning -->
-                  <div v-if="showMinStakeWarning" class="warning-info">
-                    <el-icon>
-                      <Warning />
-                    </el-icon>
-                    <span>{{ $t('staking.minStakeWarning', { amount: formatNumber(stakingStore.minStakeAmount) })
+                    <!-- Minimum Stake Warning -->
+                    <div v-if="showMinStakeWarning" class="warning-info">
+                      <el-icon>
+                        <Warning />
+                      </el-icon>
+                      <span>{{ $t('staking.minStakeWarning', { amount: formatNumber(stakingStore.minStakeAmount) })
                       }}</span>
-                  </div>
-                </div>
-
-                <!-- Staking Preview -->
-                <div v-if="stakePreviewData" class="preview-section">
-                  <h4 class="preview-title">{{ $t('staking.preview') }}</h4>
-                  <div class="preview-details">
-                    <div class="preview-row">
-                      <span>{{ $t('staking.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(stakePreviewData.shares, 2) }} stCINA</span>
                     </div>
-                    <div class="preview-row exchange-rate">
-                      <span>{{ $t('staking.exchangeRate') }}</span>
-                      <span class="preview-value">1 CINA ≈ {{ formatNumber((1 / parseFloat(stakePreviewData.shares)), 6)
+                  </div>
+
+                  <!-- Staking Preview -->
+                  <div v-if="stakePreviewData" class="preview-section">
+                    <h4 class="preview-title">{{ $t('staking.preview') }}</h4>
+                    <div class="preview-details">
+                      <div class="preview-row">
+                        <span>{{ $t('staking.youWillReceive') }}</span>
+                        <span class="preview-value">{{ formatNumber(stakePreviewData.shares, 2) }} stCINA</span>
+                      </div>
+                      <div class="preview-row exchange-rate">
+                        <span>{{ $t('staking.exchangeRate') }}</span>
+                        <span class="preview-value">1 CINA ≈ {{ formatNumber((1 / parseFloat(stakingStore.navCina)),
+                          6)
                         }} stCINA</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <el-button type="primary" size="large"
-                  :loading="transactionStatus === 'loading' && activeTab === 'stake'" :disabled="!isStakeValid"
-                  @click="handleStake" class="action-button">
-                  {{ $t('staking.stakeCINA') }}
-                </el-button>
+                  <el-button type="primary" size="large"
+                    :loading="transactionStatus === 'loading' && activeTab === 'stake'" :disabled="!isStakeValid"
+                    @click="handleStake" class="action-button">
+                    {{ $t('staking.stakeCINA') }}
+                  </el-button>
+                </div>
               </div>
-            </div>
-          </el-tab-pane>
+            </el-tab-pane>
 
-          <!-- Unstake CINA Tab -->
-          <el-tab-pane :label="$t('staking.unstakeCINA')" name="unstake">
-            <div class="tab-content">
-              <div class="action-form">
-                <div class="input-section">
-                  <div class="input-group">
-                    <el-input v-model="unstakeAmount"
-                      :placeholder="formatNumberK(stakingStore.stakedAmount, 6) + '  available'" size="large"
-                      class="amount-input" @input="handleUnstakeAmountChange">
-                      <template #suffix>
-                        <span class="input-suffix">CINA</span>
-                      </template>
-                    </el-input>
-                  </div>
-
-                  <!-- Quick Amount Buttons -->
-                  <div class="quick-amounts">
-                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                      @click="setUnstakePercentage(percentage)">
-                      {{ percentage }}%
-                    </el-button>
-                    <el-button @click="setMaxUnstake" class="max-button" size="small">
-                      {{ $t('common.max') }}
-                    </el-button>
-                  </div>
-
-                  <!-- Note: Early unstake penalty not available in current contract -->
-                  <div v-if="false" class="warning-info early-unstake">
-                    <el-icon>
-                      <Warning />
-                    </el-icon>
-                    <span>{{ $t('staking.earlyUnstakeWarning', { penalty: 0 }) }}</span>
-                  </div>
-                </div>
-
-                <!-- Unstaking Preview -->
-                <div v-if="unstakePreviewData" class="preview-section">
-                  <h4 class="preview-title">{{ $t('staking.preview') }}</h4>
-                  <div class="preview-details">
-                    <div class="preview-row">
-                      <span>{{ $t('staking.required') }}</span>
-                      <span class="preview-value">{{ formatNumber(unstakePreviewData.shares, 2) }} stCINA</span>
+            <!-- Unstake CINA Tab -->
+            <el-tab-pane :label="$t('staking.unstakeCINA')" name="unstake">
+              <div class="tab-content">
+                <div class="action-form">
+                  <div class="input-section">
+                    <div class="input-group">
+                      <el-input v-model="unstakeAmount"
+                        :placeholder="formatNumberK(stakingStore.stakedAmount, 6) + '  available'" size="large"
+                        class="amount-input" @input="handleUnstakeAmountChange">
+                        <template #suffix>
+                          <span class="input-suffix">CINA</span>
+                        </template>
+                      </el-input>
                     </div>
-                    <div class="preview-row exchange-rate">
-                      <span>{{ $t('staking.exchangeRate') }}</span>
-                      <span class="preview-value">1 stCINA ≈ {{ formatNumber(stakingStore.navCina, 6) }} CINA</span>
+
+                    <!-- Quick Amount Buttons -->
+                    <div class="quick-amounts">
+                      <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                        @click="setUnstakePercentage(percentage)">
+                        {{ percentage }}%
+                      </el-button>
+                      <el-button @click="setMaxUnstake" class="max-button" size="small">
+                        {{ $t('common.max') }}
+                      </el-button>
+                    </div>
+
+                    <!-- Note: Early unstake penalty not available in current contract -->
+                    <div v-if="false" class="warning-info early-unstake">
+                      <el-icon>
+                        <Warning />
+                      </el-icon>
+                      <span>{{ $t('staking.earlyUnstakeWarning', { penalty: 0 }) }}</span>
                     </div>
                   </div>
-                </div>
 
-                <el-button type="primary" size="large"
-                  :loading="transactionStatus === 'loading' && activeTab === 'unstake'" :disabled="!isUnstakeValid"
-                  @click="handleUnstake" class="action-button">
-                  {{ $t('staking.unstakeCINA') }}
-                </el-button>
+                  <!-- Unstaking Preview -->
+                  <div v-if="unstakePreviewData" class="preview-section">
+                    <h4 class="preview-title">{{ $t('staking.preview') }}</h4>
+                    <div class="preview-details">
+                      <div class="preview-row">
+                        <span>{{ $t('staking.required') }}</span>
+                        <span class="preview-value">{{ formatNumber(unstakePreviewData.shares, 2) }} stCINA</span>
+                      </div>
+                      <div class="preview-row exchange-rate">
+                        <span>{{ $t('staking.exchangeRate') }}</span>
+                        <span class="preview-value">1 stCINA ≈ {{ formatNumber(stakingStore.navCina, 6) }} CINA</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <el-button type="primary" size="large"
+                    :loading="transactionStatus === 'loading' && activeTab === 'unstake'" :disabled="!isUnstakeValid"
+                    @click="handleUnstake" class="action-button">
+                    {{ $t('staking.unstakeCINA') }}
+                  </el-button>
+                </div>
               </div>
-            </div>
-          </el-tab-pane>
+            </el-tab-pane>
 
-        </el-tabs>
+          </el-tabs>
+        </div>
       </div>
 
-
+      <!-- Transaction Modal -->
+      <TransactionModal v-model:visible="showTransactionModal" :title="transactionModalTitle" :steps="transactionSteps"
+        :current-step="currentTransactionStep" :status="transactionStatus" :transaction-details="transactionDetails"
+        :transaction-hash="transactionHash" :error-message="transactionError" @close="handleTransactionModalClose"
+        @retry="handleTransactionRetry" />
     </div>
-
-    <!-- Transaction Modal -->
-    <TransactionModal v-model:visible="showTransactionModal" :title="transactionModalTitle" :steps="transactionSteps"
-      :current-step="currentTransactionStep" :status="transactionStatus" :transaction-details="transactionDetails"
-      :transaction-hash="transactionHash" :error-message="transactionError" @close="handleTransactionModalClose"
-      @retry="handleTransactionRetry" />
-  </div>
+  </PullToRefresh>
 </template>
 
 <script setup lang="ts">
@@ -175,11 +177,13 @@ import { parseUnits } from 'ethers'
 
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useStakingStore } from '@/stores/staking'
 import { contractService } from '@/services/contracts'
 import { formatNumber, formatNumberK } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 const { t } = useI18n()
 const walletStore = useWalletStore()
@@ -211,17 +215,22 @@ const transactionSteps = ref([
 ])
 
 const transactionDetails = computed(() => {
-  const details = []
+  const details: {
+    label: string
+    value: string
+    highlight?: boolean
+    type?: 'debit' | 'credit'
+  }[] = []
 
   if (activeTab.value === 'stake' && stakeAmount.value) {
     details.push(
-      { label: t('pay'), value: `-${formatNumber(stakeAmount.value, 6)} CINA`, highlight: true },
-      { label: t('receive'), value: `${formatNumber(stakePreviewData.value?.shares || '0', 6)} stCINA` }
+      { label: t('pay'), value: `-${formatNumber(stakeAmount.value, 6)} CINA`, highlight: true, type: 'debit' },
+      { label: t('receive'), value: `+${formatNumber(stakePreviewData.value?.shares || '0', 6)} stCINA`, type: 'credit' }
     )
   } else if (activeTab.value === 'unstake' && unstakeAmount.value) {
     details.push(
-      { label: t('pay'), value: `-${formatNumber(unstakePreviewData.value?.shares || '0', 6)} stCINA` },
-      { label: t('receive'), value: `${formatNumber(unstakeAmount.value, 6)} CINA`, highlight: true },
+      { label: t('pay'), value: `-${formatNumber(unstakePreviewData.value?.shares || '0', 6)} stCINA`, type: 'debit' },
+      { label: t('receive'), value: `+${formatNumber(unstakeAmount.value, 6)} CINA`, highlight: true, type: 'credit' },
     )
   }
 
@@ -246,37 +255,12 @@ const showMinStakeWarning = computed(() => {
   return amount > 0 && amount < parseFloat(stakingStore.minStakeAmount)
 })
 
-
-const stakePreview = computed(() => {
-  const amount = parseFloat(stakeAmount.value)
-  if (!amount || amount <= 0) return null
-
-  const navCina = parseFloat(stakingStore.navCina)
-  const shares = amount / navCina // ERC4626: shares = assets / NAV
-
-  return {
-    shares,
-    exchangeRate: 1 / navCina
-  }
-})
-
-const unstakePreview = computed(() => {
-  const amount = parseFloat(unstakeAmount.value)
-  if (!amount || amount <= 0) return null
-
-  const navCina = parseFloat(stakingStore.navCina)
-  const actualAmount = amount * navCina // ERC4626: assets = shares * NAV
-
-  return {
-    requiredAmount: actualAmount
-  }
-})
-
 // Debounced preview functions
 const debouncedStakePreview = debounce(async (amount: string) => {
   if (amount && parseFloat(amount) > 0) {
     try {
       stakePreviewData.value = await stakingStore.previewDeposit(amount)
+      console.log(stakePreviewData.value);
     } catch (error) {
       console.error('Failed to preview stake:', error)
     }
@@ -436,6 +420,18 @@ const handleUnstake = async () => {
     console.error('Unstake failed:', error)
   }
 }
+
+// Pull to refresh functionality
+const refreshData = async () => {
+  if (walletStore.isConnected) {
+    await stakingStore.fetchStakingData()
+  }
+}
+
+const { isRefreshing, pullDistance, isPulling, canRefresh } = usePullToRefresh({
+  onRefresh: refreshData,
+  enabled: true
+})
 
 // Lifecycle
 onMounted(async () => {

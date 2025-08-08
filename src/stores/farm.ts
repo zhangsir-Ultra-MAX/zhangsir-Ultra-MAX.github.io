@@ -68,7 +68,7 @@ export const useFarmStore = defineStore('farm', () => {
       farmRate.value = formatUnits(rewardRate, 18) // CINA rewards per second
       pendingCINA.value = formatUnits(earnedAmount, 18)
       incrementAmount.value = new BigNumber(farmRate.value).multipliedBy(userBalance).dividedBy(totalSupply).toFixed(18)
-
+      console.log(pendingCINA.value, incrementAmount.value);
       // Calculate APY based on reward rate and total supply
       if (totalSupply > 0) {
         const annualRewards = parseFloat(farmRate.value) * 365 * 24 * 60 * 60

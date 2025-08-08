@@ -1,5 +1,11 @@
 <template>
-  <div class="bonds">
+  <PullToRefresh
+    :is-pulling="isPulling"
+    :is-refreshing="isRefreshing"
+    :pull-distance="pullDistance"
+    :can-refresh="canRefresh"
+  >
+    <div class="bonds">
     <div class="bonds-content">
       <!-- Pool Overview -->
       <div class="pool-overview">
@@ -152,19 +158,19 @@
               <div class="preview-details">
                 <div class="preview-row">
                   <span>{{ $t('bonds.principalAmount') }}</span>
-                  <span class="preview-value">${{ formatNumber(subscriptionPreview.principal) }}</span>
+                  <span class="preview-value">${{ formatNumber(subscriptionPreview?.principal || '0') }}</span>
                 </div>
                 <div class="preview-row">
                   <span>{{ $t('bonds.wrmbReceived') }}</span>
-                  <span class="preview-value">{{ formatNumber(subscriptionPreview.wrmbAmount) }} WRMB</span>
+                  <span class="preview-value">{{ formatNumber(subscriptionPreview?.wrmbAmount || '0') }} WRMB</span>
                 </div>
                 <div class="preview-row">
                   <span>{{ $t('bonds.maturityDate') }}</span>
-                  <span class="preview-value">{{ formatDate(subscriptionPreview.maturityDate) }}</span>
+                  <span class="preview-value">{{ formatDate(subscriptionPreview?.maturityDate || 0) }}</span>
                 </div>
                 <div class="preview-row">
                   <span>{{ $t('bonds.expectedReturn') }}</span>
-                  <span class="preview-value highlight">{{ formatNumber(subscriptionPreview.expectedReturn) }} WRMB</span>
+                  <span class="preview-value highlight">{{ formatNumber(subscriptionPreview?.expectedReturn || '0') }} WRMB</span>
                 </div>
               </div>
             </div>
@@ -307,8 +313,8 @@
       :error-message="transactionError"
       @close="handleTransactionModalClose"
       @retry="handleTransactionRetry"
-    />
-  </div>
+    /></div>
+  </PullToRefresh>
 </template>
 
 <script setup lang="ts">
@@ -323,12 +329,14 @@ import {
   DataAnalysis
 } from '@element-plus/icons-vue'
 
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { formatNumber, formatDate } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
 import { contractService } from '@/services/contracts'
 import { parseUnits, formatUnits } from 'ethers'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 interface BondInfo {
   bondId: number
@@ -341,12 +349,26 @@ interface BondInfo {
   isMatured: boolean
 }
 
+interface BondPreview {
+  principal: string
+  wrmbAmount: string
+  maturityDate: number
+  expectedReturn: string
+}
+
+interface GasInfo {
+  gasPrice: string
+  gasLimit: string
+  estimatedFee: string
+  maxFee: string
+}
+
 const { t } = useI18n()
 const walletStore = useWalletStore()
 
 const loading = ref(false)
 const subscriptionAmount = ref('')
-const subscriptionPreview = ref(null)
+const subscriptionPreview = ref<BondPreview | null>(null)
 const subscriptionInProgress = ref(false)
 const bondsFilter = ref('all')
 const redeemInProgress = ref<Record<number, boolean>>({})
@@ -379,7 +401,7 @@ const currentTransactionStep = ref(0)
 const transactionStatus = ref<'pending' | 'loading' | 'success' | 'error'>('pending')
 const transactionHash = ref('')
 const transactionError = ref('')
-const gasInfo = ref(null)
+const gasInfo = ref<GasInfo | undefined>(undefined)
 
 const transactionSteps = ref([
   { label: t('transaction.approve'), description: t('transaction.approveDescription') },
@@ -393,8 +415,8 @@ const transactionDetails = computed(() => {
   if (subscriptionAmount.value && subscriptionPreview.value) {
     details.push(
       { label: t('bonds.subscriptionAmount'), value: `$${subscriptionAmount.value}`, highlight: true },
-      { label: t('bonds.wrmbReceived'), value: `${subscriptionPreview.value.wrmbAmount} WRMB` },
-      { label: t('bonds.expectedReturn'), value: `$${subscriptionPreview.value.expectedReturn} WRMB` }
+      { label: t('bonds.wrmbReceived'), value: `${subscriptionPreview.value?.wrmbAmount || '0'} WRMB` },
+      { label: t('bonds.expectedReturn'), value: `$${subscriptionPreview.value?.expectedReturn || '0'} WRMB` }
     )
   }
   
@@ -534,7 +556,7 @@ const checkApprovalNeeded = async (amount: string) => {
 }
 
 // Generate subscription preview
-const generateSubscriptionPreview = async (amount: string) => {
+const generateSubscriptionPreview = async (amount: string): Promise<BondPreview | null> => {
   const principal = parseFloat(amount)
   if (!principal || principal <= 0) return null
   
@@ -828,6 +850,12 @@ watch(
     }
   }
 )
+
+// Pull to refresh functionality
+const { isRefreshing, pullDistance, isPulling, canRefresh } = usePullToRefresh({
+  onRefresh: refreshData,
+  enabled: true
+})
 
 onMounted(async () => {
   await refreshData()

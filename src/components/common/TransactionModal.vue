@@ -55,7 +55,11 @@
           <div class="space-y-3">
             <div v-for="detail in transactionDetails" :key="detail.label" class="detail-row">
               <span class="detail-label">{{ detail.label }}</span>
-              <span class="detail-value" :class="detail.highlight ? 'text-primary-600 dark:text-primary-400 font-semibold' : ''">
+              <span class="detail-value" :class="[
+                detail.highlight ? 'text-primary-600 dark:text-primary-400 font-semibold' : '',
+                detail.type === 'debit' ? 'circle-bg-red' : '',
+                detail.type === 'credit' ? 'circle-bg-green' : ''
+              ]">
                 {{ detail.value }}
               </span>
             </div>
@@ -236,6 +240,7 @@ interface TransactionDetail {
   label: string
   value: string
   highlight?: boolean
+  type?: 'debit' | 'credit'
 }
 
 interface GasInfo {
@@ -420,6 +425,14 @@ watch(
   @apply text-sm font-medium text-gray-900 dark:text-white text-right;
   max-width: 60%;
   word-break: break-word;
+}
+
+.circle-bg-green {
+  @apply bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-1 rounded-full;
+}
+
+.circle-bg-red {
+  @apply bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-3 py-1 rounded-full;
 }
 
 .status-message {

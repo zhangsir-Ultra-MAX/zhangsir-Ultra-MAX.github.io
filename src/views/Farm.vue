@@ -1,155 +1,150 @@
 <template>
   <div class="farm">
-    <div class="farm-content">
-      <!-- Farm Overview -->
-      <div class="farm-overview">
-        <h2 class="section-title">
-          {{ $t('farm.overview') }}
-        </h2>
+    <PullToRefresh :is-pulling="isPulling" :is-refreshing="isRefreshing" :pull-distance="pullDistance"
+      :can-refresh="canRefresh">
+      <div class="farm-content">
+        <!-- Farm Overview -->
+        <div class="farm-overview">
+          <h2 class="section-title">
+            {{ $t('farm.overview') }}
+          </h2>
 
-        <div class="overview-grid">
-          <!-- Your CINA Mined -->
-          <div class="overview-card">
-            <div class="card-header">
-              <h3 class="card-title">{{ $t('farm.yourMined') }}</h3>
-              <div class="card-subtitle">
-                {{ $t('farm.apy') }} {{ formatNumber(farmStore.farmAPY) }}%
+          <div class="overview-grid">
+            <!-- Your CINA Mined -->
+            <div class="overview-card">
+              <div class="card-header">
+                <h3 class="card-title">{{ $t('farm.yourMined') }}</h3>
+                <div class="card-subtitle">
+                  {{ $t('farm.apy') }} {{ formatNumber(farmStore.farmAPY) }}%
+                </div>
               </div>
-            </div>
-            <div class="card-value">
-              <img src="../assets/logo.png" alt="" class="token-icon">
-              <AnimatedNumber class="animated-number" :value="farmStore.pendingCINA" :decimals="8"
-                :auto-increment="walletStore.isConnected && parseFloat(farmStore.pendingCINA) > 0"
-                :increment-amount="parseFloat(farmStore.incrementAmount)" :increment-interval="1000"
-                :cache-key="`totalCINAMined_${walletStore.address}`" :use-cache="false" />
+              <div class="card-value">
+                <img src="../assets/logo.png" alt="" class="token-icon">
+                <AnimatedNumber class="animated-number" :value="farmStore.pendingCINA" :decimals="8"
+                  :auto-increment="walletStore.isConnected" :increment-amount="parseFloat(farmStore.incrementAmount)"
+                  :increment-interval="1000" :cache-key="`totalCINAMined_${walletStore.address}`" :use-cache="false" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Farm Actions -->
-      <div class="action-section">
-        <el-tabs v-model="activeTab" class="farm-tabs">
-          <!-- Deposit Token Tab -->
-          <el-tab-pane :label="$t('farm.deposit')" name="deposit">
-            <div class="tab-content">
-              <div class="action-form">
-                <div class="input-section">
-                  <div class="input-group">
-                    <div class="input-with-select">
-                      <el-input v-model="depositAmount"
-                        :placeholder="formatNumberK(farmStore.usdtBalance) + '  ' + $t('available')" size="large"
-                        class="amount-input" @input="handleDepositAmountChange" />
-                      <TokenSelect v-model="depositToken" :tokens="availableTokens" placeholder="Select token" />
+        <!-- Farm Actions -->
+        <div class="action-section">
+          <el-tabs v-model="activeTab" class="farm-tabs">
+            <!-- Deposit Token Tab -->
+            <el-tab-pane :label="$t('farm.deposit')" name="deposit">
+              <div class="tab-content">
+                <div class="action-form">
+                  <div class="input-section">
+                    <div class="input-group">
+                      <div class="input-with-select">
+                        <el-input v-model="depositAmount"
+                          :placeholder="formatNumberK(farmStore.usdtBalance) + '  ' + $t('available')" size="large"
+                          class="amount-input" @input="handleDepositAmountChange" />
+                        <TokenSelect v-model="depositToken" :tokens="availableTokens" placeholder="Select token" />
+                      </div>
+                    </div>
+
+                    <!-- Quick Amount Buttons -->
+                    <div class="quick-amounts">
+                      <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                        @click="setDepositPercentage(percentage)">
+                        {{ percentage }}%
+                      </el-button>
+                      <el-button @click="setMaxDeposit" class="max-button" size="small">
+                        {{ $t('common.max') }}
+                      </el-button>
                     </div>
                   </div>
 
-                  <!-- Quick Amount Buttons -->
-                  <div class="quick-amounts">
-                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                      @click="setDepositPercentage(percentage)">
-                      {{ percentage }}%
-                    </el-button>
-                    <el-button @click="setMaxDeposit" class="max-button" size="small">
-                      {{ $t('common.max') }}
-                    </el-button>
-                  </div>
-                </div>
-
-                <!-- Farm Preview -->
-                <div v-if="depositPreview" class="preview-section">
-                  <h4 class="preview-title">{{ $t('farm.preview') }}</h4>
-                  <div class="preview-details">
-                    <div class="preview-row">
-                      <span>{{ $t('farm.dailyReward') }}</span>
-                      <span class="preview-value">{{ formatNumber(depositPreview.dailyReward, 2) }} CINA</span>
+                  <!-- Farm Preview -->
+                  <div v-if="depositPreview" class="preview-section">
+                    <h4 class="preview-title">{{ $t('farm.preview') }}</h4>
+                    <div class="preview-details">
+                      <div class="preview-row">
+                        <span>{{ $t('farm.dailyReward') }}</span>
+                        <span class="preview-value">{{ formatNumber(depositPreview.dailyReward, 2) }} CINA</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <el-button type="primary" size="large" :loading="farmStore.depositInProgress"
-                  :disabled="!isDepositValid" @click="handleDeposit" class="action-button">
-                  {{ $t('farm.deposit') }}
-                </el-button>
+                  <el-button type="primary" size="large" :loading="farmStore.depositInProgress"
+                    :disabled="!isDepositValid" @click="handleDeposit" class="action-button">
+                    {{ $t('farm.deposit') }}
+                  </el-button>
+                </div>
               </div>
-            </div>
-          </el-tab-pane>
+            </el-tab-pane>
 
-          <!-- Withdraw Token Tab -->
-          <el-tab-pane :label="$t('farm.withdraw')" name="withdraw">
-            <div class="tab-content">
-              <div class="action-form">
-                <div class="input-section">
-                  <div class="input-group">
-                    <div class="input-with-select">
-                      <el-input v-model="withdrawAmount"
-                        :placeholder="formatNumberK(farmStore.depositedAmount) + '  ' + $t('available')" size="large"
-                        class="amount-input" @input="handleWithdrawAmountChange" />
-                      <TokenSelect v-model="withdrawToken" :tokens="availableTokens" placeholder="Select token" />
+            <!-- Withdraw Token Tab -->
+            <el-tab-pane :label="$t('farm.withdraw')" name="withdraw">
+              <div class="tab-content">
+                <div class="action-form">
+                  <div class="input-section">
+                    <div class="input-group">
+                      <div class="input-with-select">
+                        <el-input v-model="withdrawAmount"
+                          :placeholder="formatNumberK(farmStore.depositedAmount) + '  ' + $t('available')" size="large"
+                          class="amount-input" @input="handleWithdrawAmountChange" />
+                        <TokenSelect v-model="withdrawToken" :tokens="availableTokens" placeholder="Select token" />
+                      </div>
+                    </div>
+
+                    <!-- Quick Amount Buttons -->
+                    <div class="quick-amounts">
+                      <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                        @click="setWithdrawPercentage(percentage)">
+                        {{ percentage }}%
+                      </el-button>
+                      <el-button @click="setMaxWithdraw" class="max-button" size="small">
+                        {{ $t('common.max') }}
+                      </el-button>
+                    </div>
+
+                    <!-- Claim CINA -->
+                    <div class="input-group">
+                      <el-checkbox v-model="withdrawCINA" class="withdraw-cina-checkbox" @change="handleWithdrawCINAChange">
+                        {{ $t('farm.withdrawCINA') }}
+                      </el-checkbox>
                     </div>
                   </div>
 
-                  <!-- Quick Amount Buttons -->
-                  <div class="quick-amounts">
-                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                      @click="setWithdrawPercentage(percentage)">
-                      {{ percentage }}%
-                    </el-button>
-                    <el-button @click="setMaxWithdraw" class="max-button" size="small">
-                      {{ $t('common.max') }}
-                    </el-button>
+                  <!-- Withdraw Preview -->
+                  <div v-if="withdrawPreview || withdrawCINA" class="preview-section">
+                    <h4 class="preview-title">{{ $t('farm.preview') }}</h4>
+                    <div class="preview-details">
+                      <div v-if="withdrawPreview" class="preview-row">
+                        <span>Liquidity</span>
+                        <span class="preview-value liquidity-value">{{ formatNumber(withdrawPreview.liquidityAmount, 2)
+                        }} {{
+                            withdrawToken?.symbol }}</span>
+                      </div>
+                      <div v-if="withdrawCINA" class="preview-row">
+                        <span>Farm Reward</span>
+                        <span class="preview-value">{{ formatNumber(farmStore.pendingCINA, 2) }} CINA</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- Claim CINA -->
-                  <div class="input-group">
-                    <el-checkbox v-model="withdrawCINA" class="withdraw-cina-checkbox">
-                      {{ $t('farm.withdrawCINA') }}
-                    </el-checkbox>
-                  </div>
+                  <el-button type="primary" size="large"
+                    :loading="farmStore.withdrawInProgress || farmStore.claimInProgress" :disabled="!isWithdrawValid"
+                    @click="handleWithdraw" class="action-button">
+                    {{ withdrawCINA && (!withdrawAmount || parseFloat(withdrawAmount) === 0) ? $t('farm.claim') :
+                      $t('farm.withdraw') }}
+                  </el-button>
                 </div>
-
-                <!-- Withdraw Preview -->
-                <div v-if="withdrawPreview" class="preview-section">
-                  <h4 class="preview-title">{{ $t('farm.preview') }}</h4>
-                  <div class="preview-details">
-                    <div class="preview-row">
-                      <span>Liquidity</span>
-                      <span class="preview-value liquidity-value">{{ formatNumber(withdrawPreview.liquidityAmount, 2) }} {{
-                        withdrawToken?.symbol }}</span>
-                    </div>
-                    <div v-if="withdrawCINA" class="preview-row">
-                      <span>Farm Reward</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.rewardAmount, 2) }} CINA</span>
-                    </div>
-                  </div>
-                </div>
-
-                <el-button type="primary" size="large"
-                  :loading="farmStore.withdrawInProgress || farmStore.claimInProgress" :disabled="!isWithdrawValid"
-                  @click="handleWithdraw" class="action-button">
-                  {{ withdrawCINA && (!withdrawAmount || parseFloat(withdrawAmount) === 0) ? $t('farm.claim') :
-                    $t('farm.withdraw') }}
-                </el-button>
               </div>
-            </div>
-          </el-tab-pane>
-        </el-tabs>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
       </div>
-    </div>
+    </PullToRefresh>
 
     <!-- Transaction Modal -->
-    <TransactionModal
-      v-model:visible="showTransactionModal"
-      :title="transactionModalTitle"
-      :steps="transactionSteps"
-      :current-step="currentTransactionStep"
-      :status="transactionStatus"
-      :transaction-details="transactionDetails"
-      :transaction-hash="transactionHash"
-      :error-message="transactionError"
-      @close="handleTransactionModalClose"
-      @retry="handleTransactionRetry"
-    />
+    <TransactionModal v-model:visible="showTransactionModal" :title="transactionModalTitle" :steps="transactionSteps"
+      :current-step="currentTransactionStep" :status="transactionStatus" :transaction-details="transactionDetails"
+      :transaction-hash="transactionHash" :error-message="transactionError" @close="handleTransactionModalClose"
+      @retry="handleTransactionRetry" />
   </div>
 </template>
 
@@ -162,6 +157,8 @@ import { parseUnits } from 'ethers'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import TokenSelect from '@/components/TokenSelect.vue'
 import TransactionModal from '@/components/common/TransactionModal.vue'
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 import { useWalletStore } from '@/stores/wallet'
 import { useFarmStore } from '@/stores/farm'
 import { contractService } from '@/services/contracts'
@@ -179,6 +176,16 @@ interface Token {
 const { t } = useI18n()
 const walletStore = useWalletStore()
 const farmStore = useFarmStore()
+
+// Pull to refresh functionality
+const { isRefreshing, pullDistance, isPulling, canRefresh, ...touchHandlers } = usePullToRefresh({
+  onRefresh: async (): Promise<void> => {
+    if (walletStore.isConnected) {
+      await farmStore.fetchFarmData()
+      await farmStore.fetchUserFarmData()
+    }
+  }
+})
 
 // Available tokens for farm
 const availableTokens = computed<Token[]>(() => {
@@ -222,21 +229,26 @@ const transactionSteps = ref([
 ])
 
 const transactionDetails = computed(() => {
-  const details = []
+  const details: {
+    label: string
+    value: string
+    highlight?: boolean
+    type?: 'debit' | 'credit'
+  }[] = []
 
   if (activeTab.value === 'deposit' && depositAmount.value) {
     details.push(
-      { label: t('pay'), value: `-${formatNumber(depositAmount.value, 2)} USDT`, highlight: true }
+      { label: t('pay'), value: `-${formatNumber(depositAmount.value, 2)} USDT`, highlight: true, type: 'debit' }
     )
   } else if (activeTab.value === 'withdraw') {
-    if(withdrawAmount.value) {
+    if (withdrawAmount.value) {
       details.push(
-        { label: t('receive'), value: `${formatNumber(withdrawAmount.value, 2)} USDT`, highlight: true }
+        { label: t('receive'), value: `+${formatNumber(withdrawAmount.value, 2)} USDT`, highlight: true, type: 'credit' }
       )
     }
     if (withdrawCINA.value && parseFloat(farmStore.pendingCINA) > 0) {
       details.push(
-        { label: t('receive'), value: `${formatNumber(farmStore.pendingCINA, 6)} CINA` }
+        { label: t('receive'), value: `+${formatNumber(farmStore.pendingCINA, 6)} CINA`, type: 'credit' }
       )
     }
   }
@@ -328,37 +340,37 @@ const handleDeposit = async () => {
   try {
     const amount = parseFloat(depositAmount.value)
     const amountWei = parseUnits(amount.toString(), 6) // USDT has 6 decimals
-    
+
     // Step 1: Check and approve USDT if needed
     transactionStatus.value = 'loading'
-    
+
     const usdtContract = contractService.getUSDTContract(true)
     const farmContract = contractService.getFarmVaultContract(true)
-    
+
     if (!usdtContract || !farmContract) {
       throw new Error('Contract not available')
     }
-    
+
     const farmAddress = await farmContract.getAddress()
     const allowance = await usdtContract.allowance(walletStore.address, farmAddress)
-    
+
     // Check and approve USDT if needed
     if (allowance < amountWei) {
       const approveTx = await usdtContract.approve(farmAddress, amountWei)
       await approveTx.wait()
     }
-    
+
     currentTransactionStep.value = 1
-    
+
     // Step 2: Execute deposit
     const depositTx = await farmContract.deposit(amountWei)
     currentTransactionStep.value = 2
     const receipt = await depositTx.wait()
-    
+
     transactionHash.value = receipt.hash
     currentTransactionStep.value = 3
     transactionStatus.value = 'success'
-    
+
     // Reset form and refresh data
     depositAmount.value = ''
     await farmStore.fetchFarmData()
@@ -398,7 +410,7 @@ const handleWithdraw = async () => {
   try {
     const amount = parseFloat(withdrawAmount.value)
     transactionStatus.value = 'loading'
-    
+
     const farmContract = contractService.getFarmVaultContract(true)
     if (!farmContract) {
       throw new Error('Farm contract not available')
@@ -411,7 +423,7 @@ const handleWithdraw = async () => {
         const claimTx = await farmContract.getReward()
         currentTransactionStep.value = 2
         const receipt = await claimTx.wait()
-        
+
         transactionHash.value = receipt.hash
         transactionStatus.value = 'success'
         ElMessage.success(t('farm.claimSuccess'))
@@ -420,10 +432,10 @@ const handleWithdraw = async () => {
       // 执行USDT提现
       const amountWei = parseUnits(amount.toString(), 6) // USDT has 6 decimals
       // Execute withdraw with isClaim=false (only withdraw, don't claim rewards)
-      const withdrawTx = await farmContract.withdraw(amountWei, withdrawCINA.value?1:0)
+      const withdrawTx = await farmContract.withdraw(amountWei, withdrawCINA.value ? 1 : 0)
       currentTransactionStep.value = 2
       const receipt = await withdrawTx.wait()
-      
+
       transactionHash.value = receipt.hash
       transactionStatus.value = 'success'
       ElMessage.success(t('farm.withdrawSuccess'))
@@ -432,7 +444,7 @@ const handleWithdraw = async () => {
     currentTransactionStep.value = 3
     withdrawAmount.value = ''
     withdrawCINA.value = false // 重置开关状态
-    
+
     // Refresh data
     await farmStore.fetchFarmData()
     await farmStore.fetchUserFarmData()
@@ -454,6 +466,12 @@ const handleTransactionRetry = () => {
     handleDeposit()
   } else {
     handleWithdraw()
+  }
+}
+
+const handleWithdrawCINAChange = async () => {
+  if (walletStore.isConnected){
+    await farmStore.fetchFarmData()
   }
 }
 

@@ -1,7 +1,9 @@
 <template>
-  <div class="dashboard">
-    <!-- Wallet Connection Prompt -->
-    <!-- <div v-if="!walletStore.isConnected" class="connection-prompt">
+  <PullToRefresh :is-pulling="isPulling" :is-refreshing="isRefreshing" :pull-distance="pullDistance"
+    :can-refresh="canRefresh" @refresh="onRefresh">
+    <div class="dashboard">
+      <!-- Wallet Connection Prompt -->
+      <!-- <div v-if="!walletStore.isConnected" class="connection-prompt">
       <div class="prompt-card">
         <el-icon class="text-6xl text-primary-500 mb-4">
           <Wallet />
@@ -16,308 +18,279 @@
       </div>
     </div> -->
 
-    <!-- Dashboard Content -->
-    <div class="dashboard-content">
-      <!-- Portfolio Overview -->
-      <div class="portfolio-section">
-        <h2 class="section-title">
-          {{ $t('dashboard.portfolio') }}
-        </h2>
-        
-        <div class="stats-grid">
-          <!-- Total Value -->
-          <router-link to="/wrap" class="stat-card primary">
-            <div class="stat-header">
-              <h3 class="stat-title">{{ $t('dashboard.totalValue') }}</h3>
-              <el-icon class="stat-icon">
-                <TrendCharts />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">
-                {{ formatNumber(totalSRMBValue) }}
-              </div>
-              <div class="stat-change" :class="portfolioChange >= 0 ? 'positive' : 'negative'">
-                <el-icon>
-                  <ArrowUp v-if="portfolioChange >= 0" />
-                  <ArrowDown v-else />
+      <!-- Dashboard Content -->
+      <div class="dashboard-content">
+        <!-- Portfolio Overview -->
+        <div class="portfolio-section">
+          <h2 class="section-title">
+            {{ $t('dashboard.portfolio') }}
+          </h2>
+
+          <div class="stats-grid">
+            <!-- Total Value -->
+            <router-link to="/wrap" class="stat-card primary">
+              <div class="stat-header">
+                <h3 class="stat-title">{{ $t('dashboard.totalValue') }}</h3>
+                <el-icon class="stat-icon">
+                  <TrendCharts />
                 </el-icon>
-                {{ Math.abs(portfolioChange).toFixed(2) }}%
               </div>
-            </div>
-          </router-link>
-
-          <!-- Savings Balance -->
-          <router-link to="/savings" class="stat-card">
-            <div class="stat-header">
-              <h3 class="stat-title">WRMB {{ $t('dashboard.savingsLiquidity') }}</h3>
-              <el-icon class="stat-icon">
-                <Wallet />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">
-                {{ formatNumber(savingsStore.totalAssets) }}
-              </div>
-              <div class="stat-subtitle">
-                ≈ ${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}
-              </div>
-            </div>
-          </router-link>
-
-          <!-- Current APY -->
-          <router-link to="/savings" class="stat-card">
-            <div class="stat-header">
-              <h3 class="stat-title">{{ $t('dashboard.currentAPY') }}</h3>
-              <el-icon class="stat-icon">
-                <DataAnalysis />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">
-                {{ formatNumber(savingsStore.dynamicAPY) }}%
-              </div>
-              <div class="stat-subtitle">
-                {{ $t('dashboard.annualReturn') }}
-                <span class="text-sm text-green-600 dark:text-green-400">+{{ formatNumber(savingsStore.dynamicWRMB) }} WRMB</span>
-              </div>
-            </div>
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Asset Allocation -->
-      <div class="allocation-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            {{ $t('portfolio.assetAllocation') }}
-          </h2>
-          <div class="view-toggle">
-            <el-radio-group v-model="allocationView" size="small">
-              <el-radio-button label="chart">{{ $t('portfolio.chart') }}</el-radio-button>
-              <el-radio-button label="table">{{ $t('portfolio.table') }}</el-radio-button>
-            </el-radio-group>
-          </div>
-        </div>
-        
-        <div class="allocation-content">
-          <div v-if="allocationView === 'chart'" class="chart-container">
-            <div class="chart-wrapper">
-              <!-- Pie Chart Placeholder -->
-              <div class="pie-chart">
-                <svg viewBox="0 0 200 200" class="w-full h-full">
-                  <circle
-                    v-for="(segment, index) in chartSegments"
-                    :key="index"
-                    cx="100"
-                    cy="100"
-                    r="80"
-                    fill="none"
-                    :stroke="segment.color"
-                    stroke-width="20"
-                    :stroke-dasharray="`${segment.length} ${314 - segment.length}`"
-                    :stroke-dashoffset="segment.offset"
-                    class="transition-all duration-500"
-                  />
-                </svg>
-                <div class="chart-center">
-                  <div class="center-value">${{ formatNumber(portfolioStats.totalValue) }}</div>
-                  <div class="center-label">{{ $t('portfolio.totalValue') }}</div>
+              <div class="stat-content">
+                <div class="stat-value">
+                  {{ formatNumber(totalSRMBValue) }}
+                </div>
+                <div class="stat-change" :class="portfolioChange >= 0 ? 'positive' : 'negative'">
+                  <el-icon>
+                    <ArrowUp v-if="portfolioChange >= 0" />
+                    <ArrowDown v-else />
+                  </el-icon>
+                  {{ Math.abs(portfolioChange).toFixed(2) }}%
                 </div>
               </div>
+            </router-link>
+
+            <!-- Savings Balance -->
+            <router-link to="/savings" class="stat-card">
+              <div class="stat-header">
+                <h3 class="stat-title">WRMB {{ $t('dashboard.savingsLiquidity') }}</h3>
+                <el-icon class="stat-icon">
+                  <Wallet />
+                </el-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">
+                  {{ formatNumber(savingsStore.totalAssets) }}
+                </div>
+                <div class="stat-subtitle">
+                  ≈ ${{ formatNumber(parseFloat(savingsStore.totalAssets) * 0.14) }}
+                </div>
+              </div>
+            </router-link>
+
+            <!-- Current APY -->
+            <router-link to="/savings" class="stat-card">
+              <div class="stat-header">
+                <h3 class="stat-title">{{ $t('dashboard.currentAPY') }}</h3>
+                <el-icon class="stat-icon">
+                  <DataAnalysis />
+                </el-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">
+                  {{ formatNumber(savingsStore.dynamicAPY) }}%
+                </div>
+                <div class="stat-subtitle">
+                  {{ $t('dashboard.annualReturn') }}
+                  <span class="text-sm text-green-600 dark:text-green-400">+{{ formatNumber(savingsStore.dynamicWRMB) }}
+                    WRMB</span>
+                </div>
+              </div>
+            </router-link>
+          </div>
+        </div>
+
+        <!-- Asset Allocation -->
+        <div class="allocation-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              {{ $t('portfolio.assetAllocation') }}
+            </h2>
+            <div class="view-toggle">
+              <el-radio-group v-model="allocationView" size="small">
+                <el-radio-button label="chart">{{ $t('portfolio.chart') }}</el-radio-button>
+                <el-radio-button label="table">{{ $t('portfolio.table') }}</el-radio-button>
+              </el-radio-group>
             </div>
-            
-            <div class="chart-legend">
-              <div
-                v-for="asset in assetAllocation"
-                :key="asset.symbol"
-                class="legend-item"
-              >
-                <div class="legend-color" :style="{ backgroundColor: asset.color }"></div>
-                <div class="legend-info">
-                  <div class="legend-name">{{ asset.name }}</div>
-                  <div class="legend-details">
-                    <span class="legend-value">${{ formatNumber(asset.value) }}</span>
-                    <span class="legend-percentage">({{ formatNumber(asset.percentage) }}%)</span>
+          </div>
+
+          <div class="allocation-content">
+            <div v-if="allocationView === 'chart'" class="chart-container">
+              <div class="chart-wrapper">
+                <!-- Pie Chart Placeholder -->
+                <div class="pie-chart">
+                  <svg viewBox="0 0 200 200" class="w-full h-full">
+                    <circle v-for="(segment, index) in chartSegments" :key="index" cx="100" cy="100" r="80" fill="none"
+                      :stroke="segment.color" stroke-width="20"
+                      :stroke-dasharray="`${segment.length} ${314 - segment.length}`"
+                      :stroke-dashoffset="segment.offset" class="transition-all duration-500" />
+                  </svg>
+                  <div class="chart-center">
+                    <div class="center-value">${{ formatNumber(portfolioStats.totalValue) }}</div>
+                    <div class="center-label">{{ $t('portfolio.totalValue') }}</div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          <div v-else class="allocation-table">
-            <el-table :data="assetAllocation" style="width: 100%">
-              <el-table-column prop="name" :label="$t('portfolio.asset')" min-width="120">
-                <template #default="{ row }">
-                  <div class="asset-cell">
-                    <div class="asset-color" :style="{ backgroundColor: row.color }"></div>
-                    <div class="asset-info">
-                      <div class="asset-name">{{ row.name }}</div>
-                      <div class="asset-symbol">{{ row.symbol }}</div>
+
+              <div class="chart-legend">
+                <div v-for="asset in assetAllocation" :key="asset.symbol" class="legend-item">
+                  <div class="legend-color" :style="{ backgroundColor: asset.color }"></div>
+                  <div class="legend-info">
+                    <div class="legend-name">{{ asset.name }}</div>
+                    <div class="legend-details">
+                      <span class="legend-value">${{ formatNumber(asset.value) }}</span>
+                      <span class="legend-percentage">({{ formatNumber(asset.percentage) }}%)</span>
                     </div>
                   </div>
-                </template>
-              </el-table-column>
-              
-              <el-table-column prop="balance" :label="$t('portfolio.balance')" min-width="120">
-                <template #default="{ row }">
-                  {{ formatNumber(row.balance) }} {{ row.symbol }}
-                </template>
-              </el-table-column>
-              
-              <el-table-column prop="value" :label="$t('portfolio.value')" min-width="120">
-                <template #default="{ row }">
-                  ${{ formatNumber(row.value) }}
-                </template>
-              </el-table-column>
-              
-              <el-table-column prop="percentage" :label="$t('portfolio.allocation')" min-width="100">
-                <template #default="{ row }">
-                  <div class="percentage-cell">
-                    <div class="percentage-bar">
-                      <div 
-                        class="percentage-fill"
-                        :style="{ width: `${row.percentage}%`, backgroundColor: row.color }"
-                      ></div>
-                    </div>
-                    <span class="percentage-text">{{ formatNumber(row.percentage) }}%</span>
-                  </div>
-                </template>
-              </el-table-column>
-              
-              <el-table-column prop="change24h" :label="$t('portfolio.change24h')" min-width="100">
-                <template #default="{ row }">
-                  <div class="change-cell" :class="{ positive: row.change24h >= 0, negative: row.change24h < 0 }">
-                    <el-icon>
-                      <component :is="row.change24h >= 0 ? 'ArrowUp' : 'ArrowDown'" />
-                    </el-icon>
-                    {{ formatNumber(Math.abs(row.change24h)) }}%
-                  </div>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Performance Chart -->
-      <div class="performance-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            {{ $t('portfolio.performance') }}
-          </h2>
-          <div class="time-range">
-            <el-radio-group v-model="performanceRange" size="small">
-              <el-radio-button label="7d">7D</el-radio-button>
-              <el-radio-button label="30d">30D</el-radio-button>
-              <el-radio-button label="90d">90D</el-radio-button>
-              <el-radio-button label="1y">1Y</el-radio-button>
-            </el-radio-group>
-          </div>
-        </div>
-        
-        <div class="performance-chart">
-          <!-- Line Chart Placeholder -->
-          <div class="chart-placeholder">
-            <svg viewBox="0 0 800 300" class="w-full h-full">
-              <!-- Grid lines -->
-              <defs>
-                <pattern id="grid" width="80" height="30" patternUnits="userSpaceOnUse">
-                  <path d="M 80 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.5"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-              
-              <!-- Performance line -->
-              <polyline
-                :points="performancePoints"
-                fill="none"
-                stroke="#6366f1"
-                stroke-width="3"
-                class="transition-all duration-500"
-              />
-              
-              <!-- Data points -->
-              <circle
-                v-for="(point, index) in performanceData"
-                :key="index"
-                :cx="point.x"
-                :cy="point.y"
-                r="4"
-                fill="#6366f1"
-                class="transition-all duration-300 hover:r-6"
-              />
-            </svg>
-          </div>
-          
-          <div class="chart-stats">
-            <div class="stat-item">
-              <span class="stat-label">{{ $t('portfolio.highestValue') }}</span>
-              <span class="stat-value">${{ formatNumber(performanceStats.highest) }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">{{ $t('portfolio.lowestValue') }}</span>
-              <span class="stat-value">${{ formatNumber(performanceStats.lowest) }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">{{ $t('portfolio.volatility') }}</span>
-              <span class="stat-value">{{ formatNumber(performanceStats.volatility) }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Activity -->
-      <div class="activity-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            {{ $t('dashboard.recentActivity') }}
-          </h2>
-          <router-link to="/portfolio" class="view-all-link">
-            {{ $t('dashboard.viewAll') }}
-            <el-icon class="ml-1">
-              <ArrowRight />
-            </el-icon>
-          </router-link>
-        </div>
-        
-        <div class="activity-list">
-          <div v-if="recentActivities.length === 0" class="empty-state">
-            <el-icon class="text-4xl text-gray-400 mb-2">
-              <Document />
-            </el-icon>
-            <p class="text-gray-500 dark:text-gray-400">
-              {{ $t('dashboard.noActivity') }}
-            </p>
-          </div>
-          
-          <div
-            v-for="activity in recentActivities.slice(0, 5)"
-            :key="activity.id"
-            class="activity-item"
-          >
-            <div class="activity-icon" :class="activity.type">
-              <el-icon>
-                <component :is="getActivityIcon(activity.type)" />
-              </el-icon>
-            </div>
-            <div class="activity-content">
-              <div class="activity-title">{{ activity.title }}</div>
-              <div class="activity-description">{{ activity.description }}</div>
-            </div>
-            <div class="activity-meta">
-              <div class="activity-amount" :class="activity.type">
-                {{ activity.amount }}
+                </div>
               </div>
-              <div class="activity-time">
-                {{ formatTimeAgo(activity.timestamp) }}
+            </div>
+
+            <div v-else class="allocation-table">
+              <el-table :data="assetAllocation" style="width: 100%">
+                <el-table-column prop="name" :label="$t('portfolio.asset')" min-width="120">
+                  <template #default="{ row }">
+                    <div class="asset-cell">
+                      <div class="asset-color" :style="{ backgroundColor: row.color }"></div>
+                      <div class="asset-info">
+                        <div class="asset-name">{{ row.name }}</div>
+                        <div class="asset-symbol">{{ row.symbol }}</div>
+                      </div>
+                    </div>
+                  </template>
+                </el-table-column>
+
+                <el-table-column prop="balance" :label="$t('portfolio.balance')" min-width="120">
+                  <template #default="{ row }">
+                    {{ formatNumber(row.balance) }} {{ row.symbol }}
+                  </template>
+                </el-table-column>
+
+                <el-table-column prop="value" :label="$t('portfolio.value')" min-width="120">
+                  <template #default="{ row }">
+                    ${{ formatNumber(row.value) }}
+                  </template>
+                </el-table-column>
+
+                <el-table-column prop="percentage" :label="$t('portfolio.allocation')" min-width="100">
+                  <template #default="{ row }">
+                    <div class="percentage-cell">
+                      <div class="percentage-bar">
+                        <div class="percentage-fill"
+                          :style="{ width: `${row.percentage}%`, backgroundColor: row.color }"></div>
+                      </div>
+                      <span class="percentage-text">{{ formatNumber(row.percentage) }}%</span>
+                    </div>
+                  </template>
+                </el-table-column>
+
+                <el-table-column prop="change24h" :label="$t('portfolio.change24h')" min-width="100">
+                  <template #default="{ row }">
+                    <div class="change-cell" :class="{ positive: row.change24h >= 0, negative: row.change24h < 0 }">
+                      <el-icon>
+                        <component :is="row.change24h >= 0 ? 'ArrowUp' : 'ArrowDown'" />
+                      </el-icon>
+                      {{ formatNumber(Math.abs(row.change24h)) }}%
+                    </div>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Chart -->
+        <div class="performance-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              {{ $t('portfolio.performance') }}
+            </h2>
+            <div class="time-range">
+              <el-radio-group v-model="performanceRange" size="small">
+                <el-radio-button label="7d">7D</el-radio-button>
+                <el-radio-button label="30d">30D</el-radio-button>
+                <el-radio-button label="90d">90D</el-radio-button>
+                <el-radio-button label="1y">1Y</el-radio-button>
+              </el-radio-group>
+            </div>
+          </div>
+
+          <div class="performance-chart">
+            <!-- Line Chart Placeholder -->
+            <div class="chart-placeholder">
+              <svg viewBox="0 0 800 300" class="w-full h-full">
+                <!-- Grid lines -->
+                <defs>
+                  <pattern id="grid" width="80" height="30" patternUnits="userSpaceOnUse">
+                    <path d="M 80 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.5" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+
+                <!-- Performance line -->
+                <polyline :points="performancePoints" fill="none" stroke="#6366f1" stroke-width="3"
+                  class="transition-all duration-500" />
+
+                <!-- Data points -->
+                <circle v-for="(point, index) in performanceData" :key="index" :cx="point.x" :cy="point.y" r="4"
+                  fill="#6366f1" class="transition-all duration-300 hover:r-6" />
+              </svg>
+            </div>
+
+            <div class="chart-stats">
+              <div class="stat-item">
+                <span class="stat-label">{{ $t('portfolio.highestValue') }}</span>
+                <span class="stat-value">${{ formatNumber(performanceStats.highest) }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">{{ $t('portfolio.lowestValue') }}</span>
+                <span class="stat-value">${{ formatNumber(performanceStats.lowest) }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">{{ $t('portfolio.volatility') }}</span>
+                <span class="stat-value">{{ formatNumber(performanceStats.volatility) }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="activity-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              {{ $t('dashboard.recentActivity') }}
+            </h2>
+            <router-link to="/portfolio" class="view-all-link">
+              {{ $t('dashboard.viewAll') }}
+              <el-icon class="ml-1">
+                <ArrowRight />
+              </el-icon>
+            </router-link>
+          </div>
+
+          <div class="activity-list">
+            <div v-if="recentActivities.length === 0" class="empty-state">
+              <el-icon class="text-4xl text-gray-400 mb-2">
+                <Document />
+              </el-icon>
+              <p class="text-gray-500 dark:text-gray-400">
+                {{ $t('dashboard.noActivity') }}
+              </p>
+            </div>
+
+            <div v-for="activity in recentActivities.slice(0, 5)" :key="activity.id" class="activity-item">
+              <div class="activity-icon" :class="activity.type">
+                <el-icon>
+                  <component :is="getActivityIcon(activity.type)" />
+                </el-icon>
+              </div>
+              <div class="activity-content">
+                <div class="activity-title">{{ activity.title }}</div>
+                <div class="activity-description">{{ activity.description }}</div>
+              </div>
+              <div class="activity-meta">
+                <div class="activity-amount" :class="activity.type">
+                  {{ activity.amount }}
+                </div>
+                <div class="activity-time">
+                  {{ formatTimeAgo(activity.timestamp) }}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </PullToRefresh>
 </template>
 
 <script setup lang="ts">
@@ -335,12 +308,14 @@ import {
   Refresh
 } from '@element-plus/icons-vue'
 
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import WalletConnect from '@/components/common/WalletConnect.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { useSavingsStore } from '@/stores/savings'
 import { formatNumber, formatTimeAgo } from '@/utils/format'
 import { contractService } from '@/services/contracts'
 import { formatUnits } from 'ethers'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 interface AssetAllocation {
   name: string
@@ -356,7 +331,7 @@ const { t } = useI18n()
 const walletStore = useWalletStore()
 const savingsStore = useSavingsStore()
 
-const refreshing = ref(false)
+// const refreshing = ref(false) // Now handled by usePullToRefresh
 const allocationView = ref('chart')
 const performanceRange = ref('30d')
 
@@ -480,8 +455,7 @@ const getActivityIcon = (type: string) => {
   }
 }
 
-const refreshData = async () => {
-  refreshing.value = true
+const onRefresh = async (): Promise<void> => {
   try {
     await Promise.all([
       savingsStore.fetchVaultData(),
@@ -489,14 +463,20 @@ const refreshData = async () => {
     ])
 
     const wrapManager = contractService.getWrapManagerContract()
-    if (!wrapManager) return null
+    if (!wrapManager) return
     const sRMBTVL = await wrapManager.getSRMBLiquidity();
     totalSRMBValue.value = formatUnits(sRMBTVL.toString(), 18).toString()
   } catch (error) {
     console.error('Failed to refresh data:', error)
-  } finally {
-    refreshing.value = false
   }
+}
+
+const { isRefreshing, isPulling, pullDistance, canRefresh } = usePullToRefresh({
+  onRefresh
+})
+
+const refreshData = async () => {
+  await onRefresh()
 }
 
 onMounted(async () => {
@@ -938,23 +918,23 @@ watch(
   .dashboard-header {
     @apply px-4 py-6;
   }
-  
+
   .header-content {
     @apply flex-col items-start space-y-4;
   }
-  
+
   .dashboard-content {
     @apply px-4 py-6;
   }
-  
+
   .stats-grid {
     @apply grid-cols-1 gap-4;
   }
-  
+
   .actions-grid {
     @apply grid-cols-1 gap-4;
   }
-  
+
   .activity-item {
     @apply p-4;
   }

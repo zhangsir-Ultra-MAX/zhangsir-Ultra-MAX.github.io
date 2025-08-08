@@ -1,147 +1,151 @@
 <template>
-    <div class="swap">
-        <div class="swap-content">
-            <!-- Swap Overview -->
-            <div class="swap-overview">
-                <h2 class="section-title">
-                    {{ $t('swap.title') }}
-                </h2>
-            </div>
+    <PullToRefresh :is-pulling="isPulling" :is-refreshing="isRefreshing" :pull-distance="pullDistance"
+        :can-refresh="canRefresh">
+        <div class="swap">
+            <div class="swap-content">
+                <!-- Swap Overview -->
+                <div class="swap-overview">
+                    <h2 class="section-title">
+                        {{ $t('swap.title') }}
+                    </h2>
+                </div>
 
-            <!-- Swap Interface -->
-            <div class="swap-interface">
-                <div class="interface-card">
-                    <!-- Settings Icon -->
-                    <el-popover placement="bottom-end" :width="300" trigger="click">
-                        <template #reference>
-                            <div class="settings-icon">
-                                <el-icon class="settings-btn">
-                                    <Setting />
-                                </el-icon>
-                            </div>
-                        </template>
-                        <div class="settings-content">
-                            <h4 class="settings-title">{{ $t('swap.settings') }}</h4>
-                            <div class="detail-item">
-                                <span>{{ $t('swap.slippage') }}</span>
-                                <div class="slippage-selector">
-                                    <button v-for="value in slippageOptions" :key="value"
-                                        :class="{ active: slippage === value }" @click="slippage = value">
-                                        {{ value }}%
-                                    </button>
-                                    <div class="custom-slippage">
-                                        <input type="number" v-model="customSlippage" @input="handleCustomSlippage"
-                                            placeholder="Custom" />
-                                        <span>%</span>
-                                    </div>
+                <!-- Swap Interface -->
+                <div class="swap-interface">
+                    <div class="interface-card">
+                        <!-- Settings Icon -->
+                        <el-popover placement="bottom-end" :width="300" trigger="click">
+                            <template #reference>
+                                <div class="settings-icon">
+                                    <el-icon class="settings-btn">
+                                        <Setting />
+                                    </el-icon>
                                 </div>
-                            </div>
-                        </div>
-                    </el-popover>
-                    <!-- Token Selection -->
-                    <div class="token-selection">
-                        <div class="token-input-container">
-                            <div class="token-input-header">
-                                <span class="input-label">{{ $t('swap.sell') }}</span>
-                            </div>
-                            <div class="input-section">
-                                <div class="input-group">
-                                    <div class="amount-input">
-                                        <div class="input-with-select">
-                                            <el-input type="number" v-model="fromAmount"
-                                                :placeholder="formatNumberK(fromTokenBalance) + '  ' + $t('available')"
-                                                @input="handleFromAmountChange" size="large" 
-                                                :disabled="isSwapping || isLoadingQuote" />
-                                            <TokenSelect v-model="fromToken" :tokens="availableTokens"
-                                                placeholder="Select token" :disabled="isSwapping" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Quick Amount Buttons -->
-                                <div class="quick-amounts">
-                                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                                        @click="setDepositPercentage(percentage)" :disabled="isSwapping">
-                                        {{ percentage }}%
-                                    </el-button>
-                                    <el-button @click="setMaxFromAmount" class="max-button" size="small" :disabled="isSwapping">
-                                        {{ $t('common.max') }}
-                                    </el-button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Swap Direction Button -->
-                        <div class="swap-direction">
-                            <el-button circle @click="swapTokens" class="swap-direction-btn" :disabled="isSwapping || isLoadingQuote">
-                                <el-icon class="swap-icon" :style="{ transform: `rotate(${swapIconRotation}deg)` }">
-                                    <Sort />
-                                </el-icon>
-                            </el-button>
-                        </div>
-
-                        <div class="token-input-container">
-                            <div class="token-input-header">
-                                <span class="input-label">{{ $t('swap.buy') }}</span>
-                            </div>
-                            <div class="input-section">
-                                <div class="input-group">
-                                    <div class="amount-input">
-                                        <div class="input-with-select">
-                                            <el-input type="number" v-model="toAmount"
-                                                :placeholder="formatNumberK(toTokenBalance) + '  ' + $t('available')"
-                                                @input="handleToAmountChange" size="large" 
-                                                :disabled="isSwapping || isLoadingQuote" />
-                                            <TokenSelect v-model="toToken" :tokens="availableTokens"
-                                                placeholder="Select token" :disabled="isSwapping" />
+                            </template>
+                            <div class="settings-content">
+                                <h4 class="settings-title">{{ $t('swap.settings') }}</h4>
+                                <div class="detail-item">
+                                    <span>{{ $t('swap.slippage') }}</span>
+                                    <div class="slippage-selector">
+                                        <button v-for="value in slippageOptions" :key="value"
+                                            :class="{ active: slippage === value }" @click="slippage = value">
+                                            {{ value }}%
+                                        </button>
+                                        <div class="custom-slippage">
+                                            <input type="number" v-model="customSlippage" @input="handleCustomSlippage"
+                                                placeholder="Custom" />
+                                            <span>%</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </el-popover>
+                        <!-- Token Selection -->
+                        <div class="token-selection">
+                            <div class="token-input-container">
+                                <div class="token-input-header">
+                                    <span class="input-label">{{ $t('swap.sell') }}</span>
+                                </div>
+                                <div class="input-section">
+                                    <div class="input-group">
+                                        <div class="amount-input">
+                                            <div class="input-with-select">
+                                                <el-input type="number" v-model="fromAmount"
+                                                    :placeholder="formatNumberK(fromTokenBalance) + '  ' + $t('available')"
+                                                    @input="handleFromAmountChange" size="large"
+                                                    :disabled="isSwapping || isLoadingQuote" />
+                                                <TokenSelect v-model="fromToken" :tokens="availableTokens"
+                                                    placeholder="Select token" :disabled="isSwapping" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Quick Amount Buttons -->
+                                    <div class="quick-amounts">
+                                        <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                                            @click="setDepositPercentage(percentage)" :disabled="isSwapping">
+                                            {{ percentage }}%
+                                        </el-button>
+                                        <el-button @click="setMaxFromAmount" class="max-button" size="small"
+                                            :disabled="isSwapping">
+                                            {{ $t('common.max') }}
+                                        </el-button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Swap Direction Button -->
+                            <div class="swap-direction">
+                                <el-button circle @click="swapTokens" class="swap-direction-btn"
+                                    :disabled="isSwapping || isLoadingQuote">
+                                    <el-icon class="swap-icon" :style="{ transform: `rotate(${swapIconRotation}deg)` }">
+                                        <Sort />
+                                    </el-icon>
+                                </el-button>
+                            </div>
+
+                            <div class="token-input-container">
+                                <div class="token-input-header">
+                                    <span class="input-label">{{ $t('swap.buy') }}</span>
+                                </div>
+                                <div class="input-section">
+                                    <div class="input-group">
+                                        <div class="amount-input">
+                                            <div class="input-with-select">
+                                                <el-input type="number" v-model="toAmount"
+                                                    :placeholder="formatNumberK(toTokenBalance) + '  ' + $t('available')"
+                                                    @input="handleToAmountChange" size="large"
+                                                    :disabled="isSwapping || isLoadingQuote" />
+                                                <TokenSelect v-model="toToken" :tokens="availableTokens"
+                                                    placeholder="Select token" :disabled="isSwapping" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Swap Preview -->
-                    <div class="swap-details">
-                        <h4 class="details-title">{{ $t('swap.details') }}</h4>
-                        <div class="details-content">
-                            <!-- Uniswap V4 Status -->
-                            <div class="detail-row" v-if="walletStore.isConnected">
-                                <span>{{ $t('swap.protocolStatus') }}</span>
-                                <span class="status-indicator">
-                                    <span v-if="isV4Supported" class="status-supported">{{
-                                        $t('swap.uniswapV4Available')
-                                    }}</span>
-                                    <span v-else class="status-unsupported">
-                                        {{ $t('swap.v4NotSupported') }}
-                                        <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
-                                            <el-icon class="info-icon">
-                                                <InfoFilled />
-                                            </el-icon>
-                                        </el-tooltip>
+                        <!-- Swap Preview -->
+                        <div class="swap-details">
+                            <h4 class="details-title">{{ $t('swap.details') }}</h4>
+                            <div class="details-content">
+                                <!-- Uniswap V4 Status -->
+                                <div class="detail-row" v-if="walletStore.isConnected">
+                                    <span>{{ $t('swap.protocolStatus') }}</span>
+                                    <span class="status-indicator">
+                                        <span v-if="isV4Supported" class="status-supported">{{
+                                            $t('swap.uniswapV4Available')
+                                            }}</span>
+                                        <span v-else class="status-unsupported">
+                                            {{ $t('swap.v4NotSupported') }}
+                                            <el-tooltip :content="$t('swap.switchToSupportedNetwork')" placement="top">
+                                                <el-icon class="info-icon">
+                                                    <InfoFilled />
+                                                </el-icon>
+                                            </el-tooltip>
+                                        </span>
                                     </span>
-                                </span>
-                            </div>
+                                </div>
 
-                            <!-- Pool Status -->
-                            <div class="detail-row"
-                                v-if="isV4Supported && fromToken && toToken && fromToken.symbol !== toToken.symbol">
-                                <span>{{ $t('swap.poolStatus') }}</span>
-                                <span class="status-indicator">
-                                    <span v-if="poolExists" class="status-supported">{{ $t('swap.poolAvailable')
-                                    }}</span>
-                                    <span v-else class="status-warning">
-                                        {{ $t('swap.poolNotExists') }}
-                                        <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
-                                            <el-icon class="info-icon">
-                                                <InfoFilled />
-                                            </el-icon>
-                                        </el-tooltip>
+                                <!-- Pool Status -->
+                                <div class="detail-row"
+                                    v-if="isV4Supported && fromToken && toToken && fromToken.symbol !== toToken.symbol">
+                                    <span>{{ $t('swap.poolStatus') }}</span>
+                                    <span class="status-indicator">
+                                        <span v-if="poolExists" class="status-supported">{{ $t('swap.poolAvailable')
+                                            }}</span>
+                                        <span v-else class="status-warning">
+                                            {{ $t('swap.poolNotExists') }}
+                                            <el-tooltip :content="$t('swap.poolNotExistsTooltip')" placement="top">
+                                                <el-icon class="info-icon">
+                                                    <InfoFilled />
+                                                </el-icon>
+                                            </el-tooltip>
+                                        </span>
                                     </span>
-                                </span>
-                            </div>
+                                </div>
 
-                            <!-- Price Impact -->
-                            <!-- <div class="detail-row" v-if="currentQuote && poolExists">
+                                <!-- Price Impact -->
+                                <!-- <div class="detail-row" v-if="currentQuote && poolExists">
                                 <span>{{ $t('swap.priceImpact') }}</span>
                                 <span class="detail-value" :class="{
                                     'price-impact-low': parseFloat(priceImpact) < 1,
@@ -150,29 +154,30 @@
                                 }">{{ formatNumber(parseFloat(priceImpact)) }}%</span>
                             </div> -->
 
-                            <!-- <div class="detail-row">
+                                <!-- <div class="detail-row">
                                 <span>{{ $t('swap.fee') }}</span>
                                 <span class="detail-value fee-value">{{ formatNumber(swapFee) }}%</span>
                             </div> -->
 
-                            <div class="detail-row exchange-rate">
-                                <span>{{ $t('swap.rate') }}</span>
-                                <span v-if="exchangeRate > 0 && fromToken && toToken"
-                                    class="detail-value rate-value">1 {{
-                                        fromToken.symbol }} ≈ {{
-                                        formatNumber(exchangeRate, 6) }} {{ toToken.symbol }}</span>
-                                <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
-                                }}</span>
+                                <div class="detail-row exchange-rate">
+                                    <span>{{ $t('swap.rate') }}</span>
+                                    <span v-if="exchangeRate > 0 && fromToken && toToken"
+                                        class="detail-value rate-value">1 {{
+                                            fromToken.symbol }} ≈ {{
+                                            formatNumber(exchangeRate, 6) }} {{ toToken.symbol }}</span>
+                                    <span v-else class="detail-value no-rate-text">{{ $t('swap.enterAmountForRate')
+                                        }}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Action Button -->
-                    <div class="action-container">
-                        <el-button class="action-button" type="primary" size="large" :disabled="!canSwap"
-                            @click="executeSwap">
-                            {{ getSwapButtonText() }}
-                        </el-button>
+                        <!-- Action Button -->
+                        <div class="action-container">
+                            <el-button class="action-button" type="primary" size="large" :disabled="!canSwap"
+                                @click="executeSwap">
+                                {{ getSwapButtonText() }}
+                            </el-button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -183,7 +188,7 @@
             :steps="transactionSteps" :current-step="currentTransactionStep" :status="transactionStatus"
             :transaction-details="transactionDetails" :gas-info="gasInfo" :transaction-hash="transactionHash"
             :error-message="transactionError" @close="handleTransactionModalClose" @retry="retryTransaction" />
-    </div>
+    </PullToRefresh>
 </template>
 
 <script setup lang="ts">
@@ -196,12 +201,31 @@ import { ElMessage } from 'element-plus'
 import { TOKENS } from '@/constants'
 import { uniswapV4Service, type SwapParams, type QuoteResult } from '@/services/uniswapV4'
 import TransactionModal from '@/components/common/TransactionModal.vue'
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import TokenSelect from '@/components/TokenSelect.vue'
 import { ethers, parseUnits } from 'ethers'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 // Stores and composables
 const walletStore = useWalletStore()
 const { t } = useI18n()
+
+// Pull to refresh
+const { isRefreshing, pullDistance, isPulling, canRefresh } = usePullToRefresh({
+    onRefresh: async (): Promise<void> => {
+        try {
+            if (walletStore.isConnected) {
+                await Promise.all([
+                    updateTokenBalances(),
+                    checkUniswapV4Support(),
+                    checkPoolInfo()
+                ])
+            }
+        } catch (error) {
+            console.error('Failed to refresh swap data:', error)
+        }
+    }
+})
 
 // Swap icon rotation state
 const swapIconRotation = ref(0)
@@ -262,24 +286,24 @@ watch(fromToken, (newFromToken, oldFromToken) => {
     if (newFromToken && toToken.value && newFromToken.symbol === toToken.value.symbol && oldFromToken && !isTokenSwapping.value) {
         // 设置标志位防止循环触发
         isTokenSwapping.value = true
-        
+
         // 代币相同时，交换代币并对调数值
         toToken.value = oldFromToken
         // 对调输入框数值
         const tempAmount = fromAmount.value
         fromAmount.value = toAmount.value
         toAmount.value = tempAmount
-        
+
         // 取消当前请求并重新获取报价
         cancelCurrentQuoteRequest()
         currentQuote.value = null
-        
+
         // fromToken切换时使用正向计算
         if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
             isForwardSwap.value = true
             debouncedGetQuote()
         }
-        
+
         // 重置标志位
         isTokenSwapping.value = false
     }
@@ -291,22 +315,22 @@ watch(toToken, (newToToken, oldToToken) => {
         isTokenSwapping.value = true
         // 代币相同时，交换代币并对调数值
         fromToken.value = oldToToken
-        
+
         // 对调输入框数值
         const tempAmount = fromAmount.value
         fromAmount.value = toAmount.value
         toAmount.value = tempAmount
-        
+
         // 取消当前请求并重新获取报价
         cancelCurrentQuoteRequest()
         currentQuote.value = null
-        
+
         // toToken切换时使用反向计算
         if (toAmount.value && parseFloat(toAmount.value) > 0) {
             isForwardSwap.value = false
             debouncedGetReverseQuote()
         }
-        
+
         // 重置标志位
         isTokenSwapping.value = false
     }
@@ -397,18 +421,29 @@ const transactionSteps = computed(() => [
 ])
 
 // Transaction details
-const transactionDetails = computed(() => [
-    {
-        label: t('swap.sell'),
-        value: `-${formatNumber(fromAmount.value, 6)} ${fromToken.value?.symbol || ''}`,
-        highlight: true
-    },
-    {
-        label: t('swap.buy'),
-        value: `${formatNumber(toAmount.value, 6)} ${toToken.value?.symbol || ''}`,
-        highlight: true
-    },
-])
+const transactionDetails = computed(() => {
+    const details: {
+        label: string
+        value: string
+        highlight?: boolean
+        type?: 'debit' | 'credit'
+    }[] =
+        [
+            {
+                label: t('swap.sell'),
+                value: `-${formatNumber(fromAmount.value, 6)} ${fromToken.value?.symbol || ''}`,
+                highlight: true,
+                type: 'debit'
+            },
+            {
+                label: t('swap.buy'),
+                value: `+${formatNumber(toAmount.value, 6)} ${toToken.value?.symbol || ''}`,
+                highlight: true,
+                type: 'credit'
+            },
+        ]
+    return details
+})
 
 function updateExchangeRate() {
     if (currentQuote.value && fromAmount.value && parseFloat(fromAmount.value) > 0) {
@@ -568,10 +603,10 @@ function swapTokens() {
     if (isSwapping.value || isLoadingQuote.value) {
         return
     }
-    
+
     // 取消当前的报价请求
     cancelCurrentQuoteRequest()
-    
+
     const temp = fromToken.value
     fromToken.value = toToken.value
     toToken.value = temp
@@ -588,7 +623,7 @@ function swapTokens() {
 
     // Rotate icon by 180 degrees each time
     swapIconRotation.value += 180
-    
+
     // 重新获取报价
     if (fromAmount.value && parseFloat(fromAmount.value) > 0) {
         isForwardSwap.value = true
@@ -660,10 +695,10 @@ async function getUniswapV4Quote() {
 
     // 取消之前的请求
     cancelCurrentQuoteRequest()
-    
+
     // 生成新的请求ID
     const requestId = ++quoteRequestId.value
-    
+
     // 创建新的AbortController
     currentQuoteController.value = new AbortController()
     const controller = currentQuoteController.value
@@ -681,7 +716,7 @@ async function getUniswapV4Quote() {
         }
 
         const quote = await uniswapV4Service.getQuote(swapParams)
-        
+
         // 检查请求是否已被取消或过期
         if (controller.signal.aborted || shouldIgnoreQuoteRequest(requestId)) {
             return
@@ -705,7 +740,7 @@ async function getUniswapV4Quote() {
         if (controller.signal.aborted || shouldIgnoreQuoteRequest(requestId)) {
             return
         }
-        
+
         currentQuote.value = null
         toAmount.value = ''
         poolExists.value = false
@@ -718,7 +753,7 @@ async function getUniswapV4Quote() {
             isLoadingQuote.value = false
             isUserInputting.value = false
         }
-        
+
         // 清理controller
         if (currentQuoteController.value === controller) {
             currentQuoteController.value = null
@@ -739,10 +774,10 @@ async function getReverseUniswapV4Quote() {
 
     // 取消之前的请求
     cancelCurrentQuoteRequest()
-    
+
     // 生成新的请求ID
     const requestId = ++quoteRequestId.value
-    
+
     // 创建新的AbortController
     currentQuoteController.value = new AbortController()
     const controller = currentQuoteController.value
@@ -761,7 +796,7 @@ async function getReverseUniswapV4Quote() {
         }
 
         const quote = await uniswapV4Service.getQuote(swapParams)
-        
+
         // 检查请求是否已被取消或过期
         if (controller.signal.aborted || shouldIgnoreQuoteRequest(requestId)) {
             return
@@ -786,7 +821,7 @@ async function getReverseUniswapV4Quote() {
         if (controller.signal.aborted || shouldIgnoreQuoteRequest(requestId)) {
             return
         }
-        
+
         currentQuote.value = null
         fromAmount.value = ''
         poolExists.value = false
@@ -799,7 +834,7 @@ async function getReverseUniswapV4Quote() {
             isLoadingQuote.value = false
             isUserInputting.value = false
         }
-        
+
         // 清理controller
         if (currentQuoteController.value === controller) {
             currentQuoteController.value = null
@@ -812,7 +847,7 @@ async function executeUniswapV4Swap() {
 
     // 取消所有正在进行的报价请求
     cancelCurrentQuoteRequest()
-    
+
     // 设置交易状态，防止其他操作干扰
     isSwapping.value = true
     isUserInputting.value = false
@@ -1213,7 +1248,7 @@ onMounted(async () => {
 onUnmounted(() => {
     // 取消所有正在进行的请求
     cancelCurrentQuoteRequest()
-    
+
     // 重置状态
     isSwapping.value = false
     isLoadingQuote.value = false

@@ -80,7 +80,7 @@ export const useSavingsStore = defineStore('savings', () => {
       totalMMFSupply.value = formatUnits(mmfTotalSupply.toString(), 18)
       userAssetValue.value = formatUnits(maxWithdraw.toString(), 18)
       userIncrementAmount.value = formatUnits(incrementAmount.toString(), 18)
-      console.log(userAssetValue.value, userIncrementAmount.value);
+
       currentNAV.value = formatUnits(nav, 18)
       apy.value = new BigNumber(formatUnits(currentAPY.lastIncrease, 16)).multipliedBy(365).toString()
       const sWRMB_external_shares = new BigNumber(totalSupply.value).gt(0) ? totalSupply.value : '1'

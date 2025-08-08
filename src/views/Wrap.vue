@@ -1,362 +1,296 @@
 <template>
-  <div class="wrap">
-    <div class="wrap-content">
-      <!-- Balance Overview -->
-      <div class="balance-overview">
-        <h2 class="section-title">
-          {{ $t('wrap.title') }}
-        </h2>
-      </div>
+  <PullToRefresh :is-pulling="isPulling" :is-refreshing="isRefreshing" :pull-distance="pullDistance"
+    :can-refresh="canRefresh">
+    <div class="wrap">
+      <div class="wrap-content">
+        <!-- Balance Overview -->
+        <div class="balance-overview">
+          <h2 class="section-title">
+            {{ $t('wrap.title') }}
+          </h2>
+        </div>
 
-      <!-- Wrap Interface -->
-      <div class="wrap-interface">
-        <div class="interface-card">
-          <!-- Mode Toggle -->
-          <div class="mode-toggle">
-            <el-segmented
-              v-model="mode"
-              :options="modeOptions"
-              size="large"
-              @change="handleModeChange"
-            />
-          </div>
+        <!-- Wrap Interface -->
+        <div class="wrap-interface">
+          <div class="interface-card">
+            <!-- Mode Toggle -->
+            <div class="mode-toggle">
+              <el-segmented v-model="mode" :options="modeOptions" size="large" @change="handleModeChange" />
+            </div>
 
-          <!-- Wrap Form -->
-          <div v-if="mode === 'wrap'" class="wrap-form">
-            <div class="form-section">
-              <div class="token-input">
-                <div class="input-header">
-                  <span class="input-label">{{ $t('wrap.from') }}</span>
+            <!-- Wrap Form -->
+            <div v-if="mode === 'wrap'" class="wrap-form">
+              <div class="form-section">
+                <div class="token-input">
+                  <div class="input-header">
+                    <span class="input-label">{{ $t('wrap.from') }}</span>
+                  </div>
+
+                  <div class="input-section">
+                    <div class="input-group">
+                      <el-input v-model="wrapAmount" :placeholder="formatNumberK(sRMBBalance) + '  ' + $t('available')"
+                        size="large" class="amount-input" @input="handleWrapAmountChange">
+                        <template #suffix>
+                          <span class="input-suffix">sRMB</span>
+                        </template>
+                      </el-input>
+                    </div>
+
+                    <!-- Validation Error Message -->
+                    <div v-if="wrapValidationError" class="validation-error">
+                      <el-icon class="error-icon">
+                        <WarningFilled />
+                      </el-icon>
+                      <span class="error-text">{{ wrapValidationError }}</span>
+                    </div>
+
+                    <div class="quick-amounts">
+                      <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                        @click="setWrapPercentage(percentage)">
+                        {{ percentage }}%
+                      </el-button>
+                      <el-button class="max-button" size="small" @click="setWrapPercentage(100)">
+                        Max
+                      </el-button>
+                    </div>
+                  </div>
                 </div>
-                
-                <div class="input-section">
+
+                <!-- Swap Arrow -->
+                <div class="swap-arrow">
+                  <el-button circle @click="switchMode" class="swap-button">
+                    <el-icon class="swap-icon">
+                      <Switch />
+                    </el-icon>
+                  </el-button>
+                </div>
+
+                <div class="token-input">
+                  <div class="input-header">
+                    <span class="input-label">{{ $t('wrap.to') }}</span>
+                  </div>
+
                   <div class="input-group">
-                    <el-input
-                      v-model="wrapAmount"
-                      :placeholder="formatNumberK(sRMBBalance) + '  ' + $t('available')"
-                      size="large"
-                      class="amount-input"
-                      @input="handleWrapAmountChange"
-                    >
+                    <el-input :value="wrapPreview?.outputAmount || '0'" :placeholder="$t('wrap.estimatedAmount')"
+                      size="large" class="amount-input" readonly>
                       <template #suffix>
-                        <span class="input-suffix">sRMB</span>
+                        <span class="input-suffix">sWRMB</span>
                       </template>
                     </el-input>
                   </div>
+                </div>
+              </div>
 
-                  <!-- Validation Error Message -->
-                  <div v-if="wrapValidationError" class="validation-error">
-                    <el-icon class="error-icon">
-                      <WarningFilled />
+              <!-- Preview -->
+              <div v-if="wrapPreview" class="preview-section">
+                <h4 class="preview-title">{{ $t('wrap.preview') }}</h4>
+                <div class="preview-details">
+                  <div class="preview-row">
+                    <span>{{ $t('wrap.fee') }} ({{ formatNumber(wrapPreview.feePercentage) }}%)</span>
+                    <span class="fee-value">{{ formatNumber(wrapPreview.fee) }} sRMB</span>
+                  </div>
+                  <div class="preview-row">
+                    <span>{{ $t('wrap.minimumReceived') }}</span>
+                    <span class="preview-value">{{ formatNumber(wrapPreview.minimumReceived) }} sWRMB</span>
+                  </div>
+                  <div class="preview-row exchange-rate">
+                    <span>{{ $t('wrap.rate') }}</span>
+                    <span class="preview-value">1 sRMB ≈ {{ formatNumber(wrapPreview.exchangeRate, 6) }} sWRMB</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 等待时间提示 -->
+              <div v-if="wrapWaitTime > 0" class="countdown-notice">
+                <el-icon class="countdown-icon">
+                  <Clock />
+                </el-icon>
+                <span class="countdown-text">
+                  {{ $t('wrap.availableAt') }}: {{ getExecutableTime(wrapWaitTime) }}
+                </span>
+              </div>
+
+              <el-button type="primary" size="large" :loading="wrapInProgress"
+                :disabled="!isWrapValid || !walletStore.isConnected || !canWrap" @click="handleWrap"
+                class="action-button">
+                <template v-if="!walletStore.isConnected">
+                  {{ $t('wallet.connectWallet') }}
+                </template>
+                <template v-else-if="!canWrap">
+                  {{ $t('wrap.waitingForCooldown') }}
+                </template>
+                <template v-else>
+                  {{ $t('wrap.wrapTokens') }}
+                </template>
+              </el-button>
+            </div>
+
+            <!-- Unwrap Form -->
+            <div v-else class="unwrap-form">
+              <div class="form-section">
+                <div class="token-input">
+                  <div class="input-header">
+                    <span class="input-label">{{ $t('wrap.desiredAmount') }}</span>
+                  </div>
+
+                  <div class="input-section">
+                    <div class="input-group">
+                      <el-input v-model="unwrapAmount"
+                        :placeholder="formatNumberK(userMaxUnwrappableAmount) + '  ' + $t('available')" size="large"
+                        class="amount-input" @input="handleUnwrapAmountChange">
+                        <template #suffix>
+                          <span class="input-suffix">sRMB</span>
+                        </template>
+                      </el-input>
+                    </div>
+
+                    <!-- Validation Error Message -->
+                    <div v-if="unwrapValidationError" class="validation-error">
+                      <el-icon class="error-icon">
+                        <WarningFilled />
+                      </el-icon>
+                      <span class="error-text">{{ unwrapValidationError }}</span>
+                    </div>
+
+                    <div class="quick-amounts">
+                      <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                        @click="setUnwrapPercentage(percentage)">
+                        {{ percentage }}%
+                      </el-button>
+                      <el-button class="max-button" size="small" @click="setUnwrapPercentage(100)">
+                        Max
+                      </el-button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Swap Arrow -->
+                <div class="swap-arrow">
+                  <el-button circle @click="switchMode" class="swap-button">
+                    <el-icon class="swap-icon">
+                      <Switch />
                     </el-icon>
-                    <span class="error-text">{{ wrapValidationError }}</span>
+                  </el-button>
+                </div>
+
+                <div class="token-input">
+                  <div class="input-header">
+                    <span class="input-label">{{ $t('wrap.requiredBurn') }}</span>
                   </div>
-                  
-                  <div class="quick-amounts">
-                    <el-button
-                      v-for="percentage in [25, 50, 75]"
-                      :key="percentage"
-                      size="small"
-                      @click="setWrapPercentage(percentage)"
-                    >
-                      {{ percentage }}%
-                    </el-button>
-                    <el-button
-                      class="max-button"
-                      size="small"
-                      @click="setWrapPercentage(100)"
-                    >
-                      Max
-                    </el-button>
-                  </div>
-                </div>
-              </div>
 
-              <!-- Swap Arrow -->
-              <div class="swap-arrow">
-                <el-button
-                  circle
-                  @click="switchMode"
-                  class="swap-button"
-                >
-                  <el-icon class="swap-icon">
-                    <Switch />
-                  </el-icon>
-                </el-button>
-              </div>
-
-              <div class="token-input">
-                <div class="input-header">
-                  <span class="input-label">{{ $t('wrap.to') }}</span>
-                </div>
-                
-                <div class="input-group">
-                  <el-input
-                    :value="wrapPreview?.outputAmount || '0'"
-                    :placeholder="$t('wrap.estimatedAmount')"
-                    size="large"
-                    class="amount-input"
-                    readonly
-                  >
-                    <template #suffix>
-                      <span class="input-suffix">sWRMB</span>
-                    </template>
-                  </el-input>
-                </div>
-              </div>
-            </div>
-
-            <!-- Preview -->
-            <div v-if="wrapPreview" class="preview-section">
-              <h4 class="preview-title">{{ $t('wrap.preview') }}</h4>
-              <div class="preview-details">
-                <div class="preview-row">
-                  <span>{{ $t('wrap.fee') }} ({{ formatNumber(wrapPreview.feePercentage) }}%)</span>
-                  <span class="fee-value">{{ formatNumber(wrapPreview.fee) }} sRMB</span>
-                </div>
-                <div class="preview-row">
-                  <span>{{ $t('wrap.minimumReceived') }}</span>
-                  <span class="preview-value">{{ formatNumber(wrapPreview.minimumReceived) }} sWRMB</span>
-                </div>
-                <div class="preview-row exchange-rate">
-                  <span>{{ $t('wrap.rate') }}</span>
-                  <span class="preview-value">1 sRMB ≈ {{ formatNumber(wrapPreview.exchangeRate, 6) }} sWRMB</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 等待时间提示 -->
-            <div v-if="wrapWaitTime > 0" class="countdown-notice">
-              <el-icon class="countdown-icon">
-                <Clock />
-              </el-icon>
-              <span class="countdown-text">
-                {{ $t('wrap.availableAt') }}: {{ getExecutableTime(wrapWaitTime) }}
-              </span>
-            </div>
-
-            <el-button
-              type="primary"
-              size="large"
-              :loading="wrapInProgress"
-              :disabled="!isWrapValid || !walletStore.isConnected || !canWrap"
-              @click="handleWrap"
-              class="action-button"
-            >
-              <template v-if="!walletStore.isConnected">
-                {{ $t('wallet.connectWallet') }}
-              </template>
-              <template v-else-if="!canWrap">
-                {{ $t('wrap.waitingForCooldown') }}
-              </template>
-              <template v-else>
-                {{ $t('wrap.wrapTokens') }}
-              </template>
-            </el-button>
-          </div>
-
-          <!-- Unwrap Form -->
-          <div v-else class="unwrap-form">
-            <div class="form-section">
-              <div class="token-input">
-                <div class="input-header">
-                  <span class="input-label">{{ $t('wrap.desiredAmount') }}</span>
-                </div>
-                
-                <div class="input-section">
                   <div class="input-group">
-                    <el-input
-                      v-model="unwrapAmount"
-                      :placeholder="formatNumberK(userMaxUnwrappableAmount) + '  ' + $t('available')"
-                      size="large"
-                      class="amount-input"
-                      @input="handleUnwrapAmountChange"
-                    >
+                    <el-input :value="unwrapPreview?.sWRMBBurned || '0'" :placeholder="$t('wrap.estimatedBurn')"
+                      size="large" class="amount-input" readonly>
                       <template #suffix>
-                        <span class="input-suffix">sRMB</span>
+                        <span class="input-suffix">sWRMB</span>
                       </template>
                     </el-input>
                   </div>
-                  
-                  <!-- Validation Error Message -->
-                  <div v-if="unwrapValidationError" class="validation-error">
-                    <el-icon class="error-icon">
-                      <WarningFilled />
-                    </el-icon>
-                    <span class="error-text">{{ unwrapValidationError }}</span>
+                </div>
+              </div>
+
+              <!-- Preview -->
+              <div v-if="unwrapPreview" class="preview-section">
+                <h4 class="preview-title">{{ $t('wrap.preview') }}</h4>
+                <div class="preview-details">
+                  <div class="preview-row">
+                    <span>{{ $t('savings.youWillReceive') }}</span>
+                    <span class="preview-value">{{ formatNumber(unwrapAmount) }} sRMB</span>
                   </div>
-                  
-                  <div class="quick-amounts">
-                    <el-button
-                      v-for="percentage in [25, 50, 75]"
-                      :key="percentage"
-                      size="small"
-                      @click="setUnwrapPercentage(percentage)"
-                    >
-                      {{ percentage }}%
-                    </el-button>
-                    <el-button
-                      class="max-button"
-                      size="small"
-                      @click="setUnwrapPercentage(100)"
-                    >
-                      Max
-                    </el-button>
+                  <div class="preview-row">
+                    <span>{{ $t('wrap.fee') }} ({{ formatNumber(unwrapPreview.feePercentage) }}%)</span>
+                    <span class="fee-value">{{ formatNumber(unwrapPreview.fee) }} sRMB</span>
+                  </div>
+                  <div class="preview-row exchange-rate">
+                    <span>{{ $t('wrap.rate') }}</span>
+                    <span class="preview-value">1 sWRMB ≈ {{ formatNumber(unwrapPreview.exchangeRate, 6) }} sRMB</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Swap Arrow -->
-              <div class="swap-arrow">
-                <el-button
-                  circle
-                  @click="switchMode"
-                  class="swap-button"
-                >
-                  <el-icon class="swap-icon">
-                    <Switch />
-                  </el-icon>
-                </el-button>
+              <!-- 等待时间提示 -->
+              <div v-if="unwrapWaitTime > 0" class="countdown-notice">
+                <el-icon class="countdown-icon">
+                  <Clock />
+                </el-icon>
+                <span class="countdown-text">
+                  {{ $t('wrap.availableAt') }}: {{ getExecutableTime(unwrapWaitTime) }}
+                </span>
               </div>
 
-              <div class="token-input">
-                <div class="input-header">
-                  <span class="input-label">{{ $t('wrap.requiredBurn') }}</span>
-                </div>
-                
-                <div class="input-group">
-                  <el-input
-                    :value="unwrapPreview?.sWRMBBurned || '0'"
-                    :placeholder="$t('wrap.estimatedBurn')"
-                    size="large"
-                    class="amount-input"
-                    readonly
-                  >
-                    <template #suffix>
-                      <span class="input-suffix">sWRMB</span>
-                    </template>
-                  </el-input>
-                </div>
-              </div>
+              <el-button type="primary" size="large" :loading="unwrapInProgress"
+                :disabled="!isUnwrapValid || !walletStore.isConnected || !canUnwrap" @click="handleUnwrap"
+                class="action-button">
+                <template v-if="!walletStore.isConnected">
+                  {{ $t('wallet.connectWallet') }}
+                </template>
+                <template v-else-if="!canUnwrap">
+                  {{ $t('wrap.waitingForCooldown') }}
+                </template>
+                <template v-else>
+                  {{ $t('wrap.unwrapTokens') }}
+                </template>
+              </el-button>
             </div>
-
-            <!-- Preview -->
-            <div v-if="unwrapPreview" class="preview-section">
-              <h4 class="preview-title">{{ $t('wrap.preview') }}</h4>
-              <div class="preview-details">
-                <div class="preview-row">
-                  <span>{{ $t('savings.youWillReceive') }}</span>
-                  <span class="preview-value">{{ formatNumber(unwrapAmount) }} sRMB</span>
-                </div>
-                <div class="preview-row">
-                  <span>{{ $t('wrap.fee') }} ({{ formatNumber(unwrapPreview.feePercentage) }}%)</span>
-                  <span class="fee-value">{{ formatNumber(unwrapPreview.fee) }} sRMB</span>
-                </div>
-                <div class="preview-row exchange-rate">
-                  <span>{{ $t('wrap.rate') }}</span>
-                  <span class="preview-value">1 sWRMB ≈ {{ formatNumber(unwrapPreview.exchangeRate, 6) }} sRMB</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 等待时间提示 -->
-            <div v-if="unwrapWaitTime > 0" class="countdown-notice">
-              <el-icon class="countdown-icon">
-                <Clock />
-              </el-icon>
-              <span class="countdown-text">
-                {{ $t('wrap.availableAt') }}: {{ getExecutableTime(unwrapWaitTime) }}
-              </span>
-            </div>
-
-            <el-button
-              type="primary"
-              size="large"
-              :loading="unwrapInProgress"
-              :disabled="!isUnwrapValid || !walletStore.isConnected || !canUnwrap"
-              @click="handleUnwrap"
-              class="action-button"
-            >
-              <template v-if="!walletStore.isConnected">
-                {{ $t('wallet.connectWallet') }}
-              </template>
-              <template v-else-if="!canUnwrap">
-                {{ $t('wrap.waitingForCooldown') }}
-              </template>
-              <template v-else>
-                {{ $t('wrap.unwrapTokens') }}
-              </template>
-            </el-button>
           </div>
         </div>
-      </div>
 
-      <!-- Information Cards -->
-      <div class="info-section">
-        <div class="info-grid">
-          <div class="info-card">
-            <div class="info-header">
-              <el-icon class="info-icon">
-                <InfoFilled />
-              </el-icon>
-              <h3 class="info-title">{{ $t('wrap.whatIsWrapping') }}</h3>
+        <!-- Information Cards -->
+        <div class="info-section">
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-header">
+                <el-icon class="info-icon">
+                  <InfoFilled />
+                </el-icon>
+                <h3 class="info-title">{{ $t('wrap.whatIsWrapping') }}</h3>
+              </div>
+              <p class="info-content">
+                {{ $t('wrap.wrappingDescription') }}
+              </p>
             </div>
-            <p class="info-content">
-              {{ $t('wrap.wrappingDescription') }}
-            </p>
-          </div>
 
-          <div class="info-card">
-            <div class="info-header">
-              <el-icon class="info-icon">
-                <QuestionFilled />
-              </el-icon>
-              <h3 class="info-title">{{ $t('wrap.fees') }}</h3>
+            <div class="info-card">
+              <div class="info-header">
+                <el-icon class="info-icon">
+                  <QuestionFilled />
+                </el-icon>
+                <h3 class="info-title">{{ $t('wrap.fees') }}</h3>
+              </div>
+              <p class="info-content">
+                {{ $t('wrap.feesDescription') }}
+              </p>
             </div>
-            <p class="info-content">
-              {{ $t('wrap.feesDescription') }}
-            </p>
-          </div>
 
-          <div class="info-card">
-            <div class="info-header">
-              <el-icon class="info-icon">
-                <WarningFilled />
-              </el-icon>
-              <h3 class="info-title">{{ $t('wrap.risks') }}</h3>
+            <div class="info-card">
+              <div class="info-header">
+                <el-icon class="info-icon">
+                  <WarningFilled />
+                </el-icon>
+                <h3 class="info-title">{{ $t('wrap.risks') }}</h3>
+              </div>
+              <p class="info-content">
+                {{ $t('wrap.risksDescription') }}
+              </p>
             </div>
-            <p class="info-content">
-              {{ $t('wrap.risksDescription') }}
-            </p>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Transaction Modal -->
-    <TransactionModal
-      v-model:visible="showTransactionModal"
-      :title="transactionModalTitle"
-      :steps="transactionSteps"
-      :current-step="currentTransactionStep"
-      :status="transactionStatus"
-      :transaction-details="transactionDetails"
-      :transaction-hash="transactionHash"
-      :error-message="transactionError"
-      @close="handleTransactionModalClose"
-      @retry="handleTransactionRetry"
-    />
-  </div>
+    <TransactionModal v-model:visible="showTransactionModal" :title="transactionModalTitle" :steps="transactionSteps"
+      :current-step="currentTransactionStep" :status="transactionStatus" :transaction-details="transactionDetails"
+      :transaction-hash="transactionHash" :error-message="transactionError" @close="handleTransactionModalClose"
+      @retry="handleTransactionRetry" />
+  </PullToRefresh>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
-  Refresh,
-  Coin,
-  Wallet,
   Switch,
   InfoFilled,
   QuestionFilled,
@@ -366,10 +300,12 @@ import {
 import { formatUnits, parseUnits } from 'ethers'
 
 import TransactionModal from '@/components/common/TransactionModal.vue'
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
 import { formatNumber, formatNumberK } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 // Type definitions
 interface WrapPreview {
@@ -406,6 +342,24 @@ interface UserWrapStats {
 
 const { t } = useI18n()
 const walletStore = useWalletStore()
+
+// Pull to refresh
+const { isRefreshing, pullDistance, isPulling, canRefresh } = usePullToRefresh({
+  onRefresh: async (): Promise<void> => {
+    try {
+      if (walletStore.isConnected) {
+        await Promise.all([
+          loadBalances(),
+          loadWrapConfig(),
+          loadUserWrapStats(),
+          loadTotalReserveTransferred()
+        ])
+      }
+    } catch (error) {
+      console.error('Failed to refresh wrap data:', error)
+    }
+  }
+})
 
 const loading = ref(false)
 const mode = ref<'wrap' | 'unwrap'>('wrap')
@@ -450,20 +404,25 @@ const transactionSteps = ref([
 ])
 
 const transactionDetails = computed(() => {
-  const details = []
-  
+  const details: {
+    label: string
+    value: string
+    highlight?: boolean
+    type?: 'debit' | 'credit'
+  }[] = []
+
   if (mode.value === 'wrap' && wrapAmount.value) {
     details.push(
-      { label: t('pay'), value: `-${formatNumber(wrapAmount.value, 2)} sRMB`, highlight: true },
-      { label: t('receive'), value: `${formatNumber(wrapPreview.value?.outputAmount || '0', 6)} sWRMB` },
+      { label: t('pay'), value: `-${formatNumber(wrapAmount.value, 2)} sRMB`, highlight: true, type: 'debit' },
+      { label: t('receive'), value: `+${formatNumber(wrapPreview.value?.outputAmount || '0', 6)} sWRMB`, type: 'credit' },
     )
   } else if (mode.value === 'unwrap' && unwrapAmount.value) {
     details.push(
-      { label: t('pay'), value: `-${formatNumber(unwrapPreview.value?.sWRMBBurned || '0', 6)} sWRMB`, highlight: true },
-      { label: t('receive'), value: `${formatNumber(unwrapPreview.value?.sRMBReceived || '0', 2)} sRMB` },
+      { label: t('pay'), value: `-${formatNumber(unwrapPreview.value?.sWRMBBurned || '0', 6)} sWRMB`, highlight: true, type: 'debit' },
+      { label: t('receive'), value: `+${formatNumber(unwrapPreview.value?.sRMBReceived || '0', 2)} sRMB`, type: 'credit' },
     )
   }
-  
+
   return details
 })
 
@@ -471,7 +430,7 @@ const isWrapValid = computed(() => {
   const amount = parseFloat(wrapAmount.value)
   if (!amount || amount <= 0) return false
   if (amount > parseFloat(sRMBBalance.value)) return false
-  
+
   // Check min/max amounts if config is loaded
   if (wrapConfig.value) {
     const minAmount = parseFloat(wrapConfig.value.minWrapAmount)
@@ -479,17 +438,17 @@ const isWrapValid = computed(() => {
     if (minAmount > 0 && amount < minAmount) return false
     if (maxAmount > 0 && amount > maxAmount) return false
   }
-  
+
   return true
 })
 
 const wrapValidationError = computed(() => {
   if (!wrapAmount.value) return ''
-  
+
   const amount = parseFloat(wrapAmount.value)
   if (!amount || amount <= 0) return t('wrap.invalidAmount')
   if (amount > parseFloat(sRMBBalance.value)) return t('wrap.insufficientBalance')
-  
+
   // Check min/max amounts if config is loaded
   if (wrapConfig.value) {
     const minAmount = parseFloat(wrapConfig.value.minWrapAmount)
@@ -497,14 +456,14 @@ const wrapValidationError = computed(() => {
     if (minAmount > 0 && amount < minAmount) return t('wrap.belowMinAmount', { min: formatNumber(minAmount) })
     if (maxAmount > 0 && amount > maxAmount) return t('wrap.aboveMaxAmount', { max: formatNumber(maxAmount) })
   }
-  
+
   return ''
 })
 
 const isUnwrapValid = computed(() => {
   const amount = parseFloat(unwrapAmount.value)
   if (!amount || amount <= 0) return false
-  
+
   // Check if user has enough wrapped amount to unwrap
   const unwrappableAmount = parseFloat(userMaxUnwrappableAmount.value)
   if (amount > unwrappableAmount) return false
@@ -516,16 +475,16 @@ const isUnwrapValid = computed(() => {
     if (minAmount > 0 && amount < minAmount) return false
     if (maxAmount > 0 && amount > maxAmount) return false
   }
-  
+
   return true
 })
 
 const unwrapValidationError = computed(() => {
   if (!unwrapAmount.value) return ''
-  
+
   const amount = parseFloat(unwrapAmount.value)
   if (!amount || amount <= 0) return t('wrap.invalidAmount')
-  
+
   // Check if user has enough wrapped amount to unwrap
   const unwrappableAmount = parseFloat(userMaxUnwrappableAmount.value)
   if (amount > unwrappableAmount) return t('wrap.insufficientUnwrappableAmount')
@@ -537,7 +496,7 @@ const unwrapValidationError = computed(() => {
     if (minAmount > 0 && amount < minAmount) return t('wrap.belowMinUnwrapAmount', { min: formatNumber(minAmount) })
     if (maxAmount > 0 && amount > maxAmount) return t('wrap.aboveMaxUnwrapAmount', { max: formatNumber(maxAmount) })
   }
-  
+
   return ''
 })
 
@@ -546,22 +505,22 @@ const generateWrapPreview = async (amount: string): Promise<WrapPreview | null> 
   try {
     const inputAmount = parseFloat(amount)
     if (!inputAmount || inputAmount <= 0) return null
-    
+
     const wrapManager = contractService.getWrapManagerContract()
     if (!wrapManager) return null
-    
+
     const amountWei = parseUnits(amount, 18)
     const [sWRMBReceived, wrmBMinted, fee, waitTime, currentNAV] = await wrapManager.previewWrap(walletStore.address, amountWei)
-    
+
     const outputAmount = formatUnits(sWRMBReceived, 18)
     const feeAmount = formatUnits(fee, 18)
     const feePercentage = (parseFloat(feeAmount) / inputAmount * 100)
     const exchangeRate = parseFloat(outputAmount) / inputAmount
-    
+
     // 处理等待时间
     const waitTimeSeconds = Number(waitTime)
     wrapWaitTime.value = waitTimeSeconds
-    
+
     return {
       outputAmount: outputAmount,
       fee: feeAmount,
@@ -580,10 +539,10 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
   try {
     const inputAmount = parseFloat(amount)
     if (!inputAmount || inputAmount <= 0) return null
-    
+
     const wrapManager = contractService.getWrapManagerContract()
     if (!wrapManager) return null
-    
+
     // Now passing sRMB amount as input parameter
     const amountWei = parseUnits(amount, 18)
     const [sRMBReceived, sWRMBBurned, fee, waitTime, currentNAV] = await wrapManager.previewUnwrap(walletStore.address, amountWei)
@@ -592,14 +551,14 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
     const sRMBReceivedAmount = formatUnits(sRMBReceived, 18)
     const feeAmount = formatUnits(fee, 18)
     const feePercentage = (parseFloat(feeAmount) / inputAmount * 100)
-    
+
     // 处理等待时间
     const waitTimeSeconds = Number(waitTime)
     unwrapWaitTime.value = waitTimeSeconds
-    
+
     // 计算汇率：1 sWRMB = ? sRMB
     const exchangeRate = parseFloat(sWRMBBurnedAmount) > 0 ? inputAmount / parseFloat(sWRMBBurnedAmount) : 0
-    
+
     return {
       sWRMBBurned: sWRMBBurnedAmount,
       sRMBReceived: sRMBReceivedAmount,
@@ -617,10 +576,10 @@ const generateUnwrapPreview = async (amount: string): Promise<UnwrapPreview | nu
 // 计算最终可执行时间
 const getExecutableTime = (waitTimeSeconds: number): string => {
   if (waitTimeSeconds <= 0) return ''
-  
+
   const now = new Date()
   const executableTime = new Date(now.getTime() + waitTimeSeconds * 1000)
-  
+
   return executableTime.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -657,7 +616,7 @@ const handleWrapAmountChange = (value: string) => {
     wrapAmount.value = parts[0] + '.' + parts[1].substring(0, 6)
     return
   }
-  
+
   debouncedWrapPreview(value)
 }
 
@@ -673,7 +632,7 @@ const handleUnwrapAmountChange = (value: string) => {
     unwrapAmount.value = parts[0] + '.' + parts[1].substring(0, 6)
     return
   }
-  
+
   debouncedUnwrapPreview(value)
 }
 
@@ -684,7 +643,7 @@ const handleModeChange = (newMode: 'wrap' | 'unwrap') => {
   unwrapAmount.value = ''
   wrapPreview.value = null
   unwrapPreview.value = null
-  
+
   // 清理等待时间状态
   wrapWaitTime.value = 0
   unwrapWaitTime.value = 0
@@ -716,54 +675,54 @@ const getPriceImpactClass = (impact: number) => {
 
 const handleWrap = async () => {
   if (!isWrapValid.value || !walletStore.isConnected) return
-  
+
   transactionModalTitle.value = t('wrap.wrapTransaction')
   showTransactionModal.value = true
   currentTransactionStep.value = 0
   transactionStatus.value = 'pending'
   wrapInProgress.value = true
-  
+
   try {
     const amountWei = parseUnits(wrapAmount.value, 18)
-    
+
     // Step 1: Check and approve sRMB if needed
     const sRMBContract = contractService.getSRMBContract(true)
     const wrapManagerAddress = contractService.getAddresses().WRAP_MANAGER
-    
+
     if (!sRMBContract || !wrapManagerAddress) {
       throw new Error('Contract not available')
     }
-    
+
     const allowance = await sRMBContract.allowance(walletStore.address, wrapManagerAddress)
-    
+
     if (allowance < amountWei) {
       transactionStatus.value = 'loading'
       const approveTx = await sRMBContract.approve(wrapManagerAddress, amountWei)
       await approveTx.wait()
     }
-    
+
     currentTransactionStep.value = 1
-    
+
     // Step 2: Execute wrap
     const wrapManager = contractService.getWrapManagerContract(true)
     if (!wrapManager) {
       throw new Error('Wrap manager contract not available')
     }
-    
+
     transactionStatus.value = 'loading'
     const wrapTx = await wrapManager.wrap(amountWei)
     currentTransactionStep.value = 2
     const receipt = await wrapTx.wait()
-    
+
     transactionHash.value = receipt.hash
     currentTransactionStep.value = 3
     transactionStatus.value = 'success'
-    
+
     // Reset form and refresh balances
     wrapAmount.value = ''
     wrapPreview.value = null
     await Promise.all([loadBalances(), loadUserWrapStats()])
-    
+
     ElMessage.success(t('wrap.wrapSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'
@@ -776,7 +735,7 @@ const handleWrap = async () => {
 
 const handleUnwrap = async () => {
   if (!isUnwrapValid.value || !walletStore.isConnected) return
-  
+
   // Additional runtime check for unwrappable amount
   const amount = parseFloat(unwrapAmount.value)
   const unwrappableAmount = parseFloat(userMaxUnwrappableAmount.value)
@@ -784,61 +743,61 @@ const handleUnwrap = async () => {
     ElMessage.error(t('wrap.insufficientUnwrappableAmount'))
     return
   }
-  
+
   transactionModalTitle.value = t('wrap.unwrapTransaction')
   showTransactionModal.value = true
   currentTransactionStep.value = 0
   transactionStatus.value = 'pending'
   unwrapInProgress.value = true
-  
+
   try {
     const sRMBAmountWei = parseUnits(unwrapAmount.value, 18)
-    
+
     // Get required sWRMB amount from preview
     if (!unwrapPreview.value) {
       throw new Error('Unable to calculate required sWRMB amount')
     }
-    
+
     const sWRMBRequiredWei = parseUnits(unwrapPreview.value.sWRMBBurned, 18)
-    
+
     // Step 1: Check and approve sWRMB if needed
     const savingsVault = contractService.getSavingsVaultContract(true)
     const wrapManagerAddress = contractService.getAddresses().WRAP_MANAGER
-    
+
     if (!savingsVault || !wrapManagerAddress) {
       throw new Error('Contract not available')
     }
-    
+
     const allowance = await savingsVault.allowance(walletStore.address, wrapManagerAddress)
-    
+
     if (allowance < sWRMBRequiredWei) {
       transactionStatus.value = 'loading'
       const approveTx = await savingsVault.approve(wrapManagerAddress, sWRMBRequiredWei)
       await approveTx.wait()
     }
-    
+
     currentTransactionStep.value = 1
-    
+
     // Step 2: Execute unwrap with sRMB amount
     const wrapManager = contractService.getWrapManagerContract(true)
     if (!wrapManager) {
       throw new Error('Wrap manager contract not available')
     }
-    
+
     transactionStatus.value = 'loading'
     const unwrapTx = await wrapManager.unwrap(sRMBAmountWei)
     currentTransactionStep.value = 2
     const receipt = await unwrapTx.wait()
-    
+
     transactionHash.value = receipt.hash
     currentTransactionStep.value = 3
     transactionStatus.value = 'success'
-    
+
     // Reset form and refresh balances
     unwrapAmount.value = ''
     unwrapPreview.value = null
     await Promise.all([loadBalances(), loadUserWrapStats(), loadTotalReserveTransferred()])
-    
+
     ElMessage.success(t('wrap.unwrapSuccess'))
   } catch (error: any) {
     transactionStatus.value = 'error'
@@ -870,13 +829,13 @@ const loadUserWrapStats = async () => {
     userWrapStats.value = null
     return
   }
-  
+
   try {
     const wrapManager = contractService.getWrapManagerContract()
     if (!wrapManager) return
-    
+
     const [wrappedAmount, availableToUnwrap, userMaxUnwrappedAmount] = await wrapManager.getUserWrapStats(walletStore.address)
-    
+
     userUnwrappableAmount.value = formatUnits(availableToUnwrap, 18)
     userMaxUnwrappableAmount.value = formatUnits(userMaxUnwrappedAmount, 18)
     userWrapStats.value = {
@@ -897,19 +856,19 @@ const loadBalances = async () => {
     sWRMBBalance.value = '0'
     return
   }
-  
+
   try {
     const [sRMBContract, savingsVault] = await Promise.all([
       contractService.getSRMBContract(),
       contractService.getSavingsVaultContract()
     ])
-    
+
     if (sRMBContract && savingsVault) {
       const [sRMBBal, sWRMBBal] = await Promise.all([
         sRMBContract.balanceOf(walletStore.address),
         savingsVault.balanceOf(walletStore.address)
       ])
-      
+
       sRMBBalance.value = formatUnits(sRMBBal, 18)
       sWRMBBalance.value = formatUnits(sWRMBBal, 18)
     }
@@ -925,7 +884,7 @@ const loadWrapConfig = async () => {
   try {
     const wrapManager = contractService.getWrapManagerContract()
     if (!wrapManager) return
-    
+
     const config = await wrapManager.getConfiguration()
 
     wrapConfig.value = {
@@ -946,7 +905,7 @@ const loadTotalReserveTransferred = async () => {
   try {
     const wrapManager = contractService.getWrapManagerContract()
     if (!wrapManager) return
-    
+
     const totalReserve = await wrapManager.totalReserveTransferred()
     totalReserveTransferred.value = formatUnits(totalReserve, 18)
   } catch (error) {
@@ -994,7 +953,7 @@ watch(() => walletStore.address, () => {
 })
 
 // Watch for chainId changes
-watch(()=>walletStore.chainId, (chainId) => {
+watch(() => walletStore.chainId, (chainId) => {
   if (chainId) {
     refreshData()
   }
@@ -1245,23 +1204,23 @@ onMounted(() => {
   .wrap-header {
     @apply px-4 py-6;
   }
-  
+
   .header-content {
     @apply flex-col items-start space-y-4;
   }
-  
+
   .wrap-content {
     @apply px-4 py-6;
   }
-  
+
   .balance-grid {
     @apply grid-cols-1 gap-4;
   }
-  
+
   .interface-card {
     @apply p-6;
   }
-  
+
   .info-grid {
     @apply grid-cols-1 gap-4;
   }

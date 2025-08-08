@@ -1,193 +1,194 @@
 <template>
-  <div class="savings">
-    <div class="savings-content">
-      <!-- Vault Overview -->
-      <div class="vault-overview">
-        <h2 class="section-title">
-          {{ $t('savings.vaultOverview') }}
-        </h2>
+  <PullToRefresh :is-pulling="isPulling" :is-refreshing="isRefreshing" :pull-distance="pullDistance"
+    :can-refresh="canRefresh">
+    <div class="savings">
+      <div class="savings-content">
+        <!-- Vault Overview -->
+        <div class="vault-overview">
+          <h2 class="section-title">
+            {{ $t('savings.vaultOverview') }}
+          </h2>
 
-        <div class="overview-grid">
-          <!-- Total Assets -->
-          <div class="overview-card">
-            <div class="card-header">
-              <h3 class="card-title">{{ $t('savings.assetValue') }}</h3>
-              <div class="card-subtitle">
-                {{ $t('savings.apy') }} {{ formatNumber(savingsStore.dynamicAPY) }}%
+          <div class="overview-grid">
+            <!-- Total Assets -->
+            <div class="overview-card">
+              <div class="card-header">
+                <h3 class="card-title">{{ $t('savings.assetValue') }}</h3>
+                <div class="card-subtitle">
+                  {{ $t('savings.apy') }} {{ formatNumber(savingsStore.dynamicAPY) }}%
+                </div>
+              </div>
+              <div class="card-value">
+                <img src="../assets/wrmb.png" alt="" class="wrmb-icon">
+                <AnimatedNumber class="animated-number" :value="savingsStore.userAssetValue" :decimals="dynamicDecimals"
+                  :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
+                  :increment-amount="parseFloat(savingsStore.userIncrementAmount)" :increment-interval="1000"
+                  :cache-key="`userAssetValue_${walletStore.address}`" :use-cache="false" />
               </div>
             </div>
-            <div class="card-value">
-              <img src="../assets/wrmb.png" alt="" class="wrmb-icon"> 
-              <AnimatedNumber 
-                class="animated-number"
-                :value="savingsStore.userAssetValue" 
-                :decimals="dynamicDecimals"
-                :auto-increment="walletStore.isConnected && parseFloat(savingsStore.userAssetValue) > 0"
-                :increment-amount="parseFloat(savingsStore.userIncrementAmount)"
-                :increment-interval="1000"
-                :cache-key="`userAssetValue_${walletStore.address}`"
-                :use-cache="false"
-              />
+          </div>
+        </div>
+
+        <!-- Action Tabs -->
+        <div class="action-section">
+          <el-tabs v-model="activeTab" class="savings-tabs">
+            <!-- Deposit Tab -->
+            <el-tab-pane :label="$t('savings.deposit')" name="deposit">
+              <div class="tab-content">
+                <div class="action-form">
+                  <div class="input-section">
+                    <div class="input-group">
+                      <el-input v-model="depositAmount"
+                        :placeholder="formatNumberK(savingsStore.wrmbBalance) + '  ' + $t('available')" size="large"
+                        class="amount-input" @input="handleDepositAmountChange">
+                        <template #suffix>
+                          <span class="input-suffix">WRMB</span>
+                        </template>
+                      </el-input>
+                    </div>
+
+                    <!-- Quick Amount Buttons -->
+                    <div class="quick-amounts">
+                      <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                        @click="setDepositPercentage(percentage)">
+                        {{ percentage }}%
+                      </el-button>
+                      <el-button @click="setMaxDeposit" class="max-button" size="small">
+                        {{ $t('common.max') }}
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <!-- Preview -->
+                  <div v-if="depositPreview.shares" class="preview-section">
+                    <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
+                    <div class="preview-details">
+                      <div class="preview-row">
+                        <span>{{ $t('savings.youWillReceive') }}</span>
+                        <span class="preview-value">{{ formatNumber(depositPreview.shares, 2) }} sWRMB</span>
+                      </div>
+                      <div class="preview-row exchange-rate">
+                        <span>{{ $t('savings.currentExchangeRate') }}</span>
+                        <span class="preview-value">1 WRMB ≈ {{ formatNumber((1 / parseFloat(savingsStore.currentNAV ||
+                          '1')), 6) }}
+                          sWRMB</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <el-button type="primary" size="large" :loading="savingsStore.depositInProgress"
+                    :disabled="!isDepositValid" @click="handleDeposit" class="action-button">
+                    {{ $t('savings.deposit') }}
+                  </el-button>
+                </div>
+              </div>
+            </el-tab-pane>
+
+            <!-- Withdraw Tab -->
+            <el-tab-pane :label="$t('savings.withdraw')" name="withdraw">
+              <div class="tab-content">
+                <div class="action-form">
+                  <div class="input-section">
+                    <div class="input-group">
+                      <el-input v-model="withdrawAmount"
+                        :placeholder="formatNumberK(savingsStore.userAssetValue) + '  ' + $t('available')" size="large"
+                        class="amount-input" @input="handleWithdrawAmountChange">
+                        <template #suffix>
+                          <span class="input-suffix">WRMB</span>
+                        </template>
+                      </el-input>
+                    </div>
+
+                    <!-- Quick Amount Buttons -->
+                    <div class="quick-amounts">
+                      <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
+                        @click="setWithdrawPercentage(percentage)">
+                        {{ percentage }}%
+                      </el-button>
+                      <el-button @click="setMaxWithdraw" class="max-button" size="small">
+                        {{ $t('common.max') }}
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <!-- Preview -->
+                  <div v-if="withdrawPreview.shares" class="preview-section">
+                    <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
+                    <div class="preview-details">
+                      <div class="preview-row">
+                        <span>{{ $t('savings.youWillReceive') }}</span>
+                        <span class="preview-value">{{ formatNumber(withdrawPreview.assets, 2) }} WRMB</span>
+                      </div>
+                      <div class="preview-row">
+                        <span>{{ $t('savings.fee') }} ({{ formatNumber((parseFloat(withdrawPreview.fee) *
+                          100).toString())
+                          }}%)</span>
+                        <span class="fee-value">{{ formatNumber(withdrawPreviewFee, 2) }} WRMB</span>
+                      </div>
+
+                      <div class="preview-row exchange-rate">
+                        <span>{{ $t('savings.currentExchangeRate') }}</span>
+                        <span class="preview-value">1 sWRMB ≈ {{ formatNumber(savingsStore.currentNAV, 6) }} WRMB</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <el-button type="primary" size="large" :loading="savingsStore.withdrawInProgress"
+                    :disabled="!isWithdrawValid" @click="handleWithdraw" class="action-button">
+                    {{ $t('savings.withdraw') }}
+                  </el-button>
+                </div>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+
+        <!-- Statistics -->
+        <div class="statistics-section">
+          <h2 class="section-title">
+            {{ $t('savings.statistics') }}
+          </h2>
+
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">{{ $t('savings.totalSupply') }}</div>
+              <div class="stat-value">{{ formatNumberK(savingsStore.totalAssets) }}</div>
+            </div>
+
+            <div class="stat-item">
+              <div class="stat-label">{{ $t('savings.yourShare') }}</div>
+              <div class="stat-value">{{ formatNumberK(savingsStore.userSharePercentage) }}%</div>
+            </div>
+
+            <div class="stat-item">
+              <div class="stat-label">{{ $t('savings.totalValue') }}</div>
+              <div class="stat-value">${{ formatNumberK(parseFloat(savingsStore.totalAssets) * 0.14, 2) }}</div>
+            </div>
+
+            <div class="stat-item">
+              <div class="stat-label">{{ $t('savings.yourValue') }}</div>
+              <div class="stat-value">${{ formatNumberK(parseFloat(savingsStore.userAssetValue) * 0.14, 2) }}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Action Tabs -->
-      <div class="action-section">
-        <el-tabs v-model="activeTab" class="savings-tabs">
-          <!-- Deposit Tab -->
-          <el-tab-pane :label="$t('savings.deposit')" name="deposit">
-            <div class="tab-content">
-              <div class="action-form">
-                <div class="input-section">
-                  <div class="input-group">
-                    <el-input v-model="depositAmount" :placeholder="formatNumberK(savingsStore.wrmbBalance) + '  ' + $t('available')" size="large"
-                      class="amount-input" @input="handleDepositAmountChange">
-                      <template #suffix>
-                        <span class="input-suffix">WRMB</span>
-                      </template>
-                    </el-input>
-                  </div>
-                  
-                  <!-- Quick Amount Buttons -->
-                  <div class="quick-amounts">
-                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                    @click="setDepositPercentage(percentage)">
-                    {{ percentage }}%
-                  </el-button>
-                  <el-button @click="setMaxDeposit" class="max-button" size="small">
-                    {{ $t('common.max') }}
-                  </el-button>
-                  </div>
-                </div>
-
-                <!-- Preview -->
-                <div v-if="depositPreview.shares" class="preview-section">
-                  <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
-                  <div class="preview-details">
-                    <div class="preview-row">
-                      <span>{{ $t('savings.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(depositPreview.shares, 2) }} sWRMB</span>
-                    </div>
-                    <div class="preview-row exchange-rate">
-                      <span>{{ $t('savings.currentExchangeRate') }}</span>
-                      <span class="preview-value">1 WRMB ≈ {{ formatNumber((1 / parseFloat(savingsStore.currentNAV || '1')), 6) }} sWRMB</span>
-                    </div>
-                  </div>
-                </div>
-
-                <el-button type="primary" size="large" :loading="savingsStore.depositInProgress"
-                  :disabled="!isDepositValid" @click="handleDeposit" class="action-button">
-                  {{ $t('savings.deposit') }}
-                </el-button>
-              </div>
-            </div>
-          </el-tab-pane>
-
-          <!-- Withdraw Tab -->
-          <el-tab-pane :label="$t('savings.withdraw')" name="withdraw">
-            <div class="tab-content">
-              <div class="action-form">
-                <div class="input-section">
-                  <div class="input-group">
-                    <el-input v-model="withdrawAmount" :placeholder="formatNumberK(savingsStore.userAssetValue) + '  ' + $t('available')" size="large"
-                      class="amount-input" @input="handleWithdrawAmountChange">
-                      <template #suffix>
-                        <span class="input-suffix">WRMB</span>
-                      </template>
-                    </el-input>
-                  </div>
-
-                  <!-- Quick Amount Buttons -->
-                  <div class="quick-amounts">
-                    <el-button v-for="percentage in [25, 50, 75]" :key="percentage" size="small"
-                      @click="setWithdrawPercentage(percentage)">
-                      {{ percentage }}%
-                    </el-button>
-                    <el-button @click="setMaxWithdraw" class="max-button" size="small">
-                      {{ $t('common.max') }}
-                    </el-button>
-                  </div>
-                </div>
-
-                <!-- Preview -->
-                <div v-if="withdrawPreview.shares" class="preview-section">
-                  <h4 class="preview-title">{{ $t('savings.preview') }}</h4>
-                  <div class="preview-details">
-                    <div class="preview-row">
-                      <span>{{ $t('savings.youWillReceive') }}</span>
-                      <span class="preview-value">{{ formatNumber(withdrawPreview.assets, 2) }} WRMB</span>
-                    </div>
-                    <div class="preview-row">
-                      <span>{{ $t('savings.fee') }} ({{ formatNumber((parseFloat(withdrawPreview.fee)*100).toString()) }}%)</span>
-                      <span class="fee-value">{{formatNumber(withdrawPreviewFee, 2)}} WRMB</span>
-                    </div>
-
-                    <div class="preview-row exchange-rate">
-                      <span>{{ $t('savings.currentExchangeRate') }}</span>
-                      <span class="preview-value">1 sWRMB ≈ {{ formatNumber(savingsStore.currentNAV, 6) }} WRMB</span>
-                    </div>
-                  </div>
-                </div>
-
-                <el-button type="primary" size="large" :loading="savingsStore.withdrawInProgress"
-                  :disabled="!isWithdrawValid" @click="handleWithdraw" class="action-button">
-                  {{ $t('savings.withdraw') }}
-                </el-button>
-              </div>
-            </div>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
-
-      <!-- Statistics -->
-      <div class="statistics-section">
-        <h2 class="section-title">
-          {{ $t('savings.statistics') }}
-        </h2>
-
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-label">{{ $t('savings.totalSupply') }}</div>
-            <div class="stat-value">{{ formatNumberK(savingsStore.totalAssets) }}</div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-label">{{ $t('savings.yourShare') }}</div>
-            <div class="stat-value">{{ formatNumberK(savingsStore.userSharePercentage) }}%</div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-label">{{ $t('savings.totalValue') }}</div>
-            <div class="stat-value">${{ formatNumberK(parseFloat(savingsStore.totalAssets) * 0.14, 2) }}</div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-label">{{ $t('savings.yourValue') }}</div>
-            <div class="stat-value">${{ formatNumberK(parseFloat(savingsStore.userAssetValue) * 0.14, 2) }}</div>
-          </div>
-        </div>
-      </div>
+      <!-- Transaction Modal -->
+      <TransactionModal v-model:visible="showTransactionModal" :title="transactionModalTitle" :steps="transactionSteps"
+        :current-step="currentTransactionStep" :status="transactionStatus" :transaction-details="transactionDetails"
+        :transaction-hash="transactionHash" :error-message="transactionError" @close="handleTransactionModalClose"
+        @retry="handleTransactionRetry" />
     </div>
-
-    <!-- Transaction Modal -->
-    <TransactionModal v-model:visible="showTransactionModal" :title="transactionModalTitle" :steps="transactionSteps"
-      :current-step="currentTransactionStep" :status="transactionStatus" :transaction-details="transactionDetails"
-      :transaction-hash="transactionHash" :error-message="transactionError"
-      @close="handleTransactionModalClose" @retry="handleTransactionRetry" />
-  </div>
+  </PullToRefresh>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Wallet,
-} from '@element-plus/icons-vue'
 import { parseUnits } from 'ethers'
 
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { useSavingsStore } from '@/stores/savings'
@@ -195,6 +196,7 @@ import { useWalletStore } from '@/stores/wallet'
 import { contractService } from '@/services/contracts'
 import { formatNumber, formatNumberK } from '@/utils/format'
 import { debounce } from '@/utils/debounce'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 const { t } = useI18n()
 const savingsStore = useSavingsStore()
@@ -228,19 +230,26 @@ const transactionSteps = ref([
 ])
 
 const transactionDetails = computed(() => {
-  const details = []
+  const details: {
+    label: string
+    value: string
+    highlight?: boolean
+    type?: 'debit' | 'credit'
+  }[] = []
 
   if (activeTab.value === 'deposit' && depositAmount.value) {
     details.push(
-      { label: t('pay'), value: `-${formatNumber(depositAmount.value, 6)} WRMB`, highlight: true },
-      { label: t('receive'), value: `${formatNumber(depositPreview.value?.shares || '0', 6)} sWRMB` }
+      { label: t('pay'), value: `-${formatNumber(depositAmount.value, 6)} WRMB`, highlight: true, type: 'debit' },
+      { label: t('receive'), value: `+${formatNumber(depositPreview.value?.shares || '0', 6)} sWRMB`, type: 'credit' }
     )
   } else if (activeTab.value === 'withdraw' && withdrawAmount.value) {
     details.push(
-      { label: t('pay'), value: `-${formatNumber(withdrawPreview.value?.shares || '0', 6)} sWRMB` },
-      { label: t('receive'), value: `${formatNumber(withdrawAmount.value, 6)} WRMB`, highlight: true },
-      { label: t('savings.fee'), value: `${formatNumber(withdrawPreview.value?.assets, 6)} WRMB` }
+      { label: t('pay'), value: `-${formatNumber(withdrawPreview.value?.shares || '0', 6)} sWRMB`, type: 'debit' },
+      { label: t('receive'), value: `+${formatNumber(withdrawPreview.value?.assets || '0', 6)} WRMB`, highlight: true, type: 'credit' },
     )
+    if (parseFloat(withdrawPreviewFee.value) > 0) {
+      details.push({ label: t('savings.fee'), value: `-${formatNumber(withdrawPreviewFee.value, 6)} WRMB`, type: 'debit' })
+    }
   }
 
   return details
@@ -346,35 +355,35 @@ const handleDeposit = async () => {
 
   try {
     const amountWei = parseUnits(depositAmount.value, 18)
-    
+
     // Step 1: Check and approve WRMB if needed
     const wrmbContract = contractService.getWRMBContract(true)
     const savingsContract = contractService.getSavingsVaultContract(true)
-    
+
     if (!wrmbContract || !savingsContract) {
       throw new Error('Contract not available')
     }
-    
+
     const savingsAddress = await savingsContract.getAddress()
     const allowance = await wrmbContract.allowance(walletStore.address, savingsAddress)
-    
+
     if (allowance < amountWei) {
       transactionStatus.value = 'loading'
       const approveTx = await wrmbContract.approve(savingsAddress, amountWei)
       await approveTx.wait()
     }
-    
+
     currentTransactionStep.value = 1
-    
+
     // Step 2: Execute deposit
     transactionStatus.value = 'loading'
     const depositTx = await savingsContract.deposit(amountWei, walletStore.address)
     const receipt = await depositTx.wait()
-    
+
     transactionHash.value = receipt.hash
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
-    
+
     // Reset form and refresh data
     depositAmount.value = ''
     depositPreview.value = { shares: '', fee: '0' }
@@ -404,7 +413,7 @@ const handleWithdraw = async () => {
         dangerouslyUseHTMLString: false
       }
     ).catch(() => false)
-    
+
     if (!confirmed) {
       return
     }
@@ -417,7 +426,7 @@ const handleWithdraw = async () => {
 
   try {
     const amountWei = parseUnits(withdrawAmount.value, 18)
-    
+
     // Execute withdraw
     const savingsContract = contractService.getSavingsVaultContract(true)
     if (!savingsContract) {
@@ -432,7 +441,7 @@ const handleWithdraw = async () => {
       )
       const receipt = await withdrawTx.wait()
       transactionHash.value = receipt.hash
-    }else{
+    } else {
       const withdrawTx = await savingsContract.withdraw(
         amountWei,
         walletStore.address,
@@ -441,10 +450,10 @@ const handleWithdraw = async () => {
       const receipt = await withdrawTx.wait()
       transactionHash.value = receipt.hash
     }
-    
+
     currentTransactionStep.value = 2
     transactionStatus.value = 'success'
-    
+
     // Reset form and refresh data
     withdrawAmount.value = ''
     withdrawPreview.value = { shares: '', assets: '', fee: '0' }
@@ -479,6 +488,12 @@ const refreshData = async () => {
     savingsStore.fetchWRMBPrice()
   ])
 }
+
+// Pull to refresh functionality
+const { isRefreshing, pullDistance, isPulling, canRefresh } = usePullToRefresh({
+  onRefresh: refreshData,
+  enabled: true
+})
 
 onMounted(async () => {
   if (walletStore.isConnected) {
