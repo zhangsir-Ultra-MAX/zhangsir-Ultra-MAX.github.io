@@ -36,16 +36,16 @@ export const formatNumber = (
   if (minAbbreviated > 0) {
     const absNum = Math.abs(num)
     if (absNum >= 1e12 && minAbbreviated >= 1) {
-      return (num / 1e12).toFixed(2) + 'T'
+      return removeTrailingZeros((num / 1e12).toFixed(2)) + 'T'
     }
     if (absNum >= 1e9 && minAbbreviated >= 1) {
-      return (num / 1e9).toFixed(2) + 'B'
+      return removeTrailingZeros((num / 1e9).toFixed(2)) + 'B'
     }
     if (absNum >= 1e6 && minAbbreviated >= 2) {
-      return (num / 1e6).toFixed(2) + 'M'
+      return removeTrailingZeros((num / 1e6).toFixed(2)) + 'M'
     }
     if (absNum >= 1e3 && minAbbreviated >= 3) {
-      return (num / 1e3).toFixed(2) + 'K'
+      return removeTrailingZeros((num / 1e3).toFixed(2)) + 'K'
     }
   }
 
@@ -67,11 +67,11 @@ export const formatNumber = (
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
       }).format(minValue)
-      return `<${minFormatted}`
+      return `<${removeTrailingZeros(minFormatted)}`
     }
   }
 
-  return formatted
+  return removeTrailingZeros(formatted)
 }
 
 /**
@@ -97,6 +97,18 @@ export const formatCurrency = (
 }
 
 /**
+ * Remove trailing zeros from decimal part
+ * @param numStr - Number string with potential trailing zeros
+ * @returns Number string without trailing zeros
+ */
+const removeTrailingZeros = (numStr: string): string => {
+  if (numStr.includes('.')) {
+    return numStr.replace(/\.?0+$/, '')
+  }
+  return numStr
+}
+
+/**
  * Format a large number with K, M, B, T suffixes
  * @param value - The number to format
  * @param decimals - Number of decimal places (default: 1)
@@ -114,16 +126,16 @@ export const formatLargeNumber = (
   const sign = num < 0 ? '-' : ''
 
   if (absNum >= 1e12) {
-    return sign + (absNum / 1e12).toFixed(decimals) + 'T'
+    return sign + removeTrailingZeros(Math.floor(absNum / 1e12 * Math.pow(10, decimals)) / Math.pow(10, decimals) + '') + 'T'
   } else if (absNum >= 1e9) {
-    return sign + (absNum / 1e9).toFixed(decimals) + 'B'
+    return sign + removeTrailingZeros(Math.floor(absNum / 1e9 * Math.pow(10, decimals)) / Math.pow(10, decimals) + '') + 'B'
   } else if (absNum >= 1e6) {
-    return sign + (absNum / 1e6).toFixed(decimals) + 'M'
+    return sign + removeTrailingZeros(Math.floor(absNum / 1e6 * Math.pow(10, decimals)) / Math.pow(10, decimals) + '') + 'M'
   } else if (absNum >= 1e3) {
-    return sign + (absNum / 1e3).toFixed(decimals) + 'K'
+    return sign + removeTrailingZeros(Math.floor(absNum / 1e3 * Math.pow(10, decimals)) / Math.pow(10, decimals) + '') + 'K'
   }
 
-  return sign + absNum.toFixed(decimals)
+  return sign + removeTrailingZeros(Math.floor(absNum * Math.pow(10, decimals)) / Math.pow(10, decimals) + '')
 }
 
 /**

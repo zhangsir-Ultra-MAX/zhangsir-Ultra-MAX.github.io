@@ -24,6 +24,9 @@
                 <div class="token-input">
                   <div class="input-header">
                     <span class="input-label">{{ $t('wrap.from') }}</span>
+                    <span class="balance-info">
+                      {{ $t('wrap.balance') }}: {{ formatNumberK(sRMBTotalBalance) }} sRMB
+                    </span>
                   </div>
 
                   <div class="input-section">
@@ -70,6 +73,9 @@
                 <div class="token-input">
                   <div class="input-header">
                     <span class="input-label">{{ $t('wrap.to') }}</span>
+                    <span class="balance-info">
+                      {{ $t('wrap.balance') }}: {{ formatNumberK(sWRMBBalance) }} sWRMB
+                    </span>
                   </div>
 
                   <div class="input-group">
@@ -317,6 +323,7 @@ import {
   Clock
 } from '@element-plus/icons-vue'
 import { formatUnits, parseUnits } from 'ethers'
+import BigNumber from 'bignumber.js'
 
 import TransactionModal from '@/components/common/TransactionModal.vue'
 import PullToRefresh from '@/components/common/PullToRefresh.vue'
@@ -444,6 +451,10 @@ const transactionDetails = computed(() => {
   }
 
   return details
+})
+
+const sRMBTotalBalance = computed(() => {
+  return new BigNumber(sRMBBalance.value).plus(userUnwrappableAmount.value).toString()
 })
 
 const isWrapValid = computed(() => {

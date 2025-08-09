@@ -63,9 +63,9 @@ const parseAbbreviatedValue = (value: string): string => {
     return numericPart.multipliedBy(new BigNumber('1e6')).toString()
   } else if (cleanValue.includes('k')) {
     return numericPart.multipliedBy(new BigNumber('1e3')).toString()
-  }
-  
-  return numericPart.toString()
+  } 
+
+  return value; 
 }
 
 // 格式化显示值
@@ -105,11 +105,10 @@ const handleInput = (value: string) => {
   }
   
   displayValue.value = processedValue
-  
+
   // 解析实际数值
   const actualValue = parseAbbreviatedValue(processedValue)
   rawValue.value = actualValue
-  
   emit('update:modelValue', rawValue.value)
   emit('inputChange', rawValue.value)
 }
@@ -121,8 +120,11 @@ const handleFocus = () => {
   if (rawValue.value) {
     try {
       const numValue = new BigNumber(rawValue.value)
+
       if (!numValue.isNaN() && numValue.isGreaterThan(0)) {
-        displayValue.value = rawValue.value
+        displayValue.value = numValue.toFixed()
+      }else if(numValue.isEqualTo(0)){
+        displayValue.value = ''
       }
     } catch (error) {
       // 忽略错误，保持当前显示值
@@ -137,7 +139,7 @@ const handleBlur = () => {
   if (rawValue.value) {
     try {
       const numValue = new BigNumber(rawValue.value)
-      if (!numValue.isNaN() && numValue.isGreaterThan(0)) {
+      if (!numValue.isNaN() && numValue.isGreaterThanOrEqualTo(0)) {
         displayValue.value = formatDisplayValue(rawValue.value)
       }
     } catch (error) {
@@ -152,18 +154,9 @@ watch(
   (newValue) => {
     const valueStr = typeof newValue === 'number' ? newValue.toString() : newValue
     rawValue.value = valueStr
-    
     if (!isFocused.value) {
       // 未聚焦时显示格式化值
       displayValue.value = formatDisplayValue(valueStr)
-    } else {
-      // 聚焦时显示原始值
-      try {
-        const numValue = new BigNumber(valueStr || '0')
-        displayValue.value = !numValue.isNaN() && numValue.isGreaterThan(0) ? valueStr : ''
-      } catch (error) {
-        displayValue.value = ''
-      }
     }
   },
   { immediate: true }
