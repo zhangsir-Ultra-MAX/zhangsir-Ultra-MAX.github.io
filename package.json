@@ -1,4 +1,5 @@
 {
+  "homepage": "https://zhangsir-Ultra-MAX.github.io/wrmb-dapp",
   "name": "wrmb-dapp",
   "version": "1.0.0",
   "description": "WRMB Protocol Web3 DApp - A modern Vue3 TypeScript application for WRMB token ecosystem",
@@ -45,3 +46,4 @@
     "node": ">=18.0.0"
   }
 }
+
