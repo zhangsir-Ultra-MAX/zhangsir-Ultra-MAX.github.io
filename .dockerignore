@@ -1,0 +1,26 @@
+logs/
+npm-debug.log
+yarn-error.log
+node_modules/
+coverage/
+.idea/
+run/
+.DS_Store
+*.sw*
+*.un~
+typings/
+.nyc_output/
+.travis.yml
+.gitignore
+.git/
+.eslintignore
+.eslintrc
+appveyor.yml
+start.sh
+test.sh
+test/
+http/
+.vscode/
+build/
+# Keep .env file for Docker build
+!.env
